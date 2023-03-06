@@ -1,0 +1,13 @@
+# MacOS thing
+**/.DS_Store
+
+# Rust directories
+**/target
+**/scripts/tmp
+
+# Typescript directories
+**/node_modules
+**/.yarn
+
+# Spec/Wasm build directory
+/build/
