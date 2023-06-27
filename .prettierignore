@@ -1,0 +1,19 @@
+# MacOS thing
+**/.DS_Store
+
+# Rust directories
+**/target
+**/scripts/tmp
+
+# Typescript directories
+**/node_modules
+**/.yarn
+
+# Spec/Wasm build directory
+/build/
+
+# Dist folders should not be formatted
+*/dist/
+
+# polkadot-launch config should not be formatted
+template/polkadot-launch/config.json
