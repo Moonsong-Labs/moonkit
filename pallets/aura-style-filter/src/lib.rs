@@ -1,18 +1,18 @@
-// Copyright 2019-2022 PureStake Inc.
-// This file is part of Nimbus.
+// Copyright Moonsong Labs
+// This file is part of Moonkit.
 
-// Nimbus is free software: you can redistribute it and/or modify
+// Moonkit is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
 
-// Nimbus is distributed in the hope that it will be useful,
+// Moonkit is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 // GNU General Public License for more details.
 
 // You should have received a copy of the GNU General Public License
-// along with Nimbus.  If not, see <http://www.gnu.org/licenses/>.
+// along with Moonkit.  If not, see <http://www.gnu.org/licenses/>.
 
 //! A Nimbus filter for the AuRa consensus algorithm. This filter does not use any entropy, it
 //! simply rotates authors in order. A single author is eligible at each slot.

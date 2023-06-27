@@ -267,5 +267,3 @@ jobs:
           cargo test --profile testnet --all
       - name: Run sccache stat for check pre test
         run: ${SCCACHE_PATH} --show-stats
-
- 
