@@ -25,7 +25,7 @@ cumulus-primitives-core = { git = "https://github.com/paritytech/cumulus", branc
 cumulus-primitives-parachain-inherent = { git = "https://github.com/paritytech/cumulus", branch = "polkadot-v0.9.43" }
 
 # Nimbus Dependencies
-nimbus-primitives = { path = "../nimbus-primitives" }
+nimbus-primitives = { path = "../../../primitives/nimbus-primitives" }
 
 # Other deps
 async-trait = "0.1"

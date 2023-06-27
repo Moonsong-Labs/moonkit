@@ -1,6 +1,6 @@
-# Cumulo -- Nimbus ⛈️
+# Moonkit
 
-Nimbus is a framework for building parachain consensus systems on [cumulus](https://github.com/paritytech/cumulus)-based parachains.
+Moonkit is a framework for building parachains.
 
 Given the regular six-second pulse-like nature of the relay chain, it is natural to think about slot-
 based consensus algorithms for parachains. The parachain network is responsible for liveness and

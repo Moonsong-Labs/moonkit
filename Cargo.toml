@@ -1,12 +1,12 @@
 [workspace]
 members = [
-	"nimbus-consensus",
-	"nimbus-primitives",
+	"client/consensus/nimbus-consensus",
 	"pallets/aura-style-filter",
 	"pallets/author-inherent",
 	"pallets/author-slot-filter",
 	"parachain-template/node",
 	"parachain-template/runtime",
+	"primitives/nimbus-primitives",
 ]
 
 [profile.release]

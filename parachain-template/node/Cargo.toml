@@ -29,8 +29,8 @@ serde = { version = "1.0.119", features = [ "derive" ] }
 jsonrpsee = { version = "0.16.2", features = [ "macros", "server" ] }
 
 # Local Dependencies
-nimbus-consensus = { path = "../../nimbus-consensus" }
-nimbus-primitives = { path = "../../nimbus-primitives" }
+nimbus-consensus = { path = "../../client/consensus/nimbus-consensus" }
+nimbus-primitives = { path = "../../primitives/nimbus-primitives" }
 parachain-template-runtime = { path = "../runtime" }
 
 # Substrate Dependencies

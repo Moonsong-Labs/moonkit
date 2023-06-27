@@ -66,7 +66,7 @@ pallet-collator-selection = { git = "https://github.com/paritytech/cumulus", def
 parachain-info = { git = "https://github.com/paritytech/cumulus", default-features = false, branch = "polkadot-v0.9.43" }
 
 # Nimbus Dependencies
-nimbus-primitives = { path = "../../nimbus-primitives", default-features = false }
+nimbus-primitives = { path = "../../primitives/nimbus-primitives", default-features = false }
 pallet-author-inherent = { path = "../../pallets/author-inherent", default-features = false }
 pallet-author-slot-filter = { path = "../../pallets/author-slot-filter", default-features = false }
 
