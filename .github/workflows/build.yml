@@ -1,85 +1,360 @@
-# This CI Tries to be both simple and effective. It is inspired by:
-# https://github.com/marketplace/actions/rust-cache
-# https://github.com/actions-rs/toolchain/issues/126#issuecomment-782989659
-# https://github.com/actions-rs/example/blob/master/.github/workflows/quickstart.yml
+name: Build
 
-name: Rust Checks
+# Using a single file workflow is the preferred solution for our CI over workflow_runs.
+# 1. It generates only 1 action item in the list making it more readable
+# 2. It includes the PR/Commit text in the action item
+# 3. Artifacts are not available between workflows.
 
 on:
   pull_request:
   push:
     branches:
-      - main
+      - master
+      - perm-*
+  workflow_dispatch:
+    inputs:
+      pull_request:
+        description: set to pull_request number to execute on external pr
+        required: false
+
+env:
+  NODE_OPTIONS: "--max-old-space-size=12288"
 
 jobs:
-  check-cargo-toml-format:
-    name: "Check Cargo.toml files format"
+  ####### Check files and formatting #######
+  set-tags:
     runs-on: ubuntu-latest
+    outputs:
+      git_branch: ${{ steps.check-git-ref.outputs.git_branch }}
+      git_ref: ${{ steps.check-git-ref.outputs.git_ref }}
+      image_exists: ${{ steps.check-docker-image.outputs.image_exists }}
+      sha: ${{ steps.get-sha.outputs.sha }}
+      sha8: ${{ steps.get-sha.outputs.sha8 }}
+      polkadot_repo: ${{ steps.get-sha.outputs.polkadot_repo }}
+      polkadot_commit: ${{ steps.get-sha.outputs.polkadot_commit }}
+      polkadot_ver: ${{ steps.get-sha.outputs.polkadot_ver}}
+      latest_rt: ${{ steps.get-sha.outputs.latest_rt }}
+      latest_rt_sha8: ${{ steps.get-sha.outputs.latest_rt_sha8 }}
     steps:
-      - name: Checkout
-        uses: actions/checkout@v2
-      # With rustup's nice new toml format, we just need to run rustup show to install the toolchain
-      # https://github.com/actions-rs/toolchain/issues/126#issuecomment-782989659
-      - name: Setup Rust toolchain
-        run: rustup show
-      - name: Check Cargo.toml files format with toml_sort
-        run: chmod u+x ./scripts/check-cargo-toml-files-format.sh && ./scripts/check-cargo-toml-files-format.sh
-
-  check-rust-fmt:
-    name: Check rustfmt
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v2
-
-      - name: Setup rust toolchain
-        run: rustup show
-
-      - name: Run cargo fmt check
-        uses: actions-rs/cargo@v1
-        with:
-          command: fmt
-          args: -- --check
-
-  cargo-check:
-    name: Cargo check
-    runs-on: ubuntu-latest
-    steps:
-      - name: Install tooling
+      - name: Check git ref
+        id: check-git-ref
+        # if PR
+        # else if manual PR
+        # else (push)
         run: |
-          sudo apt-get install -y protobuf-compiler
-          protoc --version
-      - name: Checkout sources
-        uses: actions/checkout@v2
+          if [[ -n "${{ github.event.pull_request.head.sha }}" ]]; then
+            echo "git_branch=$(echo ${GITHUB_HEAD_REF})" >> $GITHUB_OUTPUT
+            echo "git_ref=${{ github.event.pull_request.head.sha }}" >> $GITHUB_OUTPUT
+          elif [[ -n "${{ github.event.inputs.pull_request }}" ]]; then
+            echo "git_branch=$(echo ${GITHUB_HEAD_REF})" >> $GITHUB_OUTPUT
+            echo "git_ref=refs/pull/${{ github.event.inputs.pull_request }}/head" >> $GITHUB_OUTPUT
+          else
+            echo "git_branch=$(echo ${GITHUB_REF#refs/heads/})" >> $GITHUB_OUTPUT
+            echo "git_ref=$GITHUB_REF" >> $GITHUB_OUTPUT
+          fi
 
-      - name: Setup rust toolchain
-        run: rustup show
-
-      - name: Rust Cache
-        uses: Swatinem/rust-cache@v1
-
-      - name: Run cargo check
-        uses: actions-rs/cargo@v1
+      - uses: actions/checkout@v3
         with:
-          command: check
+          ref: ${{ steps.check-git-ref.outputs.git_ref }}
+      - name: Get Latest RT Release
+        id: get-latest-rt
+        run: |
+          LATEST_RUNTIME_RELEASE=$(curl -s https://api.github.com/repos/purestake/moonbeam/releases | jq -r '.[] | select(.name | test("runtime";"i")) | .tag_name' | head -n 1 | tr -d '[:blank:]') && [[ ! -z "${LATEST_RUNTIME_RELEASE}" ]]
+          echo $LATEST_RUNTIME_RELEASE
+          echo "latest_rt=$LATEST_RUNTIME_RELEASE" >> $GITHUB_OUTPUT
+      - name: Get Sha
+        id: get-sha
+        run: |
+          echo "sha=$(git log -1 --format='%H')" >> $GITHUB_OUTPUT
+          echo "sha8=$(git log -1 --format='%H' | cut -c1-8)" >> $GITHUB_OUTPUT
+          echo "polkadot_repo=$(egrep -o 'https.*/polkadot' Cargo.lock | head -1)" >> $GITHUB_OUTPUT
+          echo "polkadot_commit=$(egrep -o '/polkadot.*#([^\"]*)' Cargo.lock | \
+          head -1 | sed 's/.*#//' |  cut -c1-8)" >> $GITHUB_OUTPUT
+          echo "polkadot_ver=$(grep 'frame-system' Cargo.toml | sed -nE 's/.*moonbeam-polkadot-v([0-9]+\.[0-9]+\.[0-9]+).*/\1/p' | head -1)" >> $GITHUB_OUTPUT
 
-      - name: Run cargo test
-        uses: actions-rs/cargo@v1
-        with:
-          command: test
+          ENDPOINT="https://api.github.com/repos/PureStake/moonbeam/git/refs/tags/${{ steps.get-latest-rt.outputs.latest_rt }}"
+          RESPONSE=$(curl -s -H "Accept: application/vnd.github.v3+json" $ENDPOINT)
+          TYPE=$(echo $RESPONSE | jq -r '.object.type')
+
+          if [[ $TYPE == "commit" ]]
+          then
+            LATEST_RT_SHA8=$(echo $RESPONSE | jq -r '.object.sha' | cut -c -8)
+          elif [[ $TYPE == "tag" ]]
+          then
+            URL=$(echo $RESPONSE | jq -r '.object.url')
+            TAG_RESPONSE=$(curl -s -H "Accept: application/vnd.github.v3+json" $URL)
+            TAG_RESPONSE_CLEAN=$(echo $TAG_RESPONSE | tr -d '\000-\037')
+            LATEST_RT_SHA8=$(echo $TAG_RESPONSE_CLEAN | jq -r '.object.sha' | cut -c -8)
+          fi
+
+          echo $LATEST_RT_SHA8
+          echo "latest_rt_sha8=$LATEST_RT_SHA8" >> $GITHUB_OUTPUT
+
+      - name: Check existing docker image
+        id: check-docker-image
+        run: |
+          TAG=sha-${{ steps.get-sha.outputs.sha8 }}
+          echo "image_exists=$(docker image inspect purestake/moonbeam:$TAG > /dev/null && echo "true" || echo "false")" >> $GITHUB_OUTPUT
+      - name: Display variables
+        run: |
+          echo git_ref: ${{ steps.check-git-ref.outputs.git_ref }}
+          echo sha: ${{ steps.get-sha.outputs.sha }}
+          echo sha8: ${{ steps.get-sha.outputs.sha8 }}
+          echo image_exists: ${{ steps.check-docker-image.outputs.image_exists }}
+          echo latest_rt: ${{ steps.get-latest-rt.outputs.latest_rt }}
+          echo latest_rt_sha8: ${{ steps.get-sha.outputs.latest_rt_sha8 }}
+          echo polkadot_repo: ${{ steps.get-sha.outputs.polkadot_repo }}
+          echo polkadot_commit: ${{ steps.get-sha.outputs.polkadot_commit }}
+          echo polkadot_ver: ${{ steps.get-sha.outputs.polkadot_ver }}
 
   check-copyright:
     runs-on: ubuntu-latest
+    needs: ["set-tags"]
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
-
+        uses: actions/checkout@v3
+        with:
+          ref: ${{ needs.set-tags.outputs.git_ref }}
       - name: Find un-copyrighted files
         run: |
-          find . -name '*.rs' -not -path "*/parachain-template/*" -exec grep  -H -E -o -c Copyright {} \; | grep ':0' || true
-          FILECOUNT=$(find . -name '*.rs' -not -path "*/parachain-template/*" -exec grep  -H -E -o -c  'Copyright'  {} \; | grep -c ':0' || true)
+          find . \! -name '*.expanded.rs' -name '*.rs' -exec grep  -H -E -o -c Copyright {} \; | grep ':0' || true
+          FILECOUNT=$(find . \! -name '*.expanded.rs' -name '*.rs' -exec grep  -H -E -o -c Copyright {} \; | grep -c ':0' || true)
           if [[ $FILECOUNT -eq 0 ]]; then
             true
           else
             false
           fi
+
+  check-links:
+    runs-on: ubuntu-latest
+    needs: ["set-tags"]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          ref: ${{ needs.set-tags.outputs.git_ref }}
+      - uses: gaurav-nelson/github-action-markdown-link-check@v1
+        with:
+          use-quiet-mode: "yes"
+          max-depth: 4
+
+  check-editorconfig:
+    name: "Check editorconfig"
+    runs-on: ubuntu-latest
+    needs: ["set-tags"]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          ref: ${{ needs.set-tags.outputs.git_ref }}
+      - name: Setup editorconfig checker
+        run: |
+          ls /tmp/bin/ec-linux-amd64 || \
+          cd /tmp && \
+          wget https://github.com/editorconfig-checker/editorconfig-checker/releases/download/2.7.0/ec-linux-amd64.tar.gz && \
+          tar xvf ec-linux-amd64.tar.gz && \
+          chmod +x bin/ec-linux-amd64
+      - name: Check files
+        # Prettier and editorconfig-checker have different ideas about indentation
+        run: /tmp/bin/ec-linux-amd64 --exclude "(typescript-api\/src\/moon(?:base|beam|river)\/interfaces\/.*\.ts)|(test\/contracts\/lib\/.*)" -disable-indent-size
+
+  check-prettier:
+    name: "Check with Prettier"
+    runs-on: ubuntu-latest
+    needs: ["set-tags"]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          ref: ${{ needs.set-tags.outputs.git_ref }}
+      - name: Use Node.js 18.x
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18.x
+      - name: Check with Prettier
+        run: |
+          npx prettier --check --ignore-path .prettierignore '**/*.(yml|js|ts|json)' \
+          || (git diff --quiet \
+          || (echo 'Unable to show a diff because there are unstaged changes'; false) \
+          && (npx prettier --ignore-path \
+              .prettierignore '**/*.(yml|js|ts|json)' -w --loglevel silent \
+          && git --no-pager diff; git restore .) && false)
+
+          npx prettier --check --ignore-path .prettierignore '**/*.(yml|js|ts|json)'
+
+  check-rust-fmt:
+    name: "Check with rustfmt"
+    runs-on: ubuntu-latest
+    needs: ["set-tags"]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          ref: ${{ needs.set-tags.outputs.git_ref }}
+      # With rustup's nice new toml format, we just need to run rustup show to install the toolchain
+      # https://github.com/actions-rs/toolchain/issues/126#issuecomment-782989659
+      - name: Setup Rust toolchain
+        run: rustup show
+      - name: Format code with rustfmt
+        run: cargo fmt -- --check
+
+  ####### Preparing polkadot binary for parachain tests #######
+  ####### For non-official repo, the script will fail if a new version of
+  ####### polkadot needs to be pushed.
+  ####### This job must not be skipped (otherwise the ts-tests are not run)
+
+  prepare-polkadot:
+    runs-on: ubuntu-latest
+    needs: ["set-tags"]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          ref: ${{ needs.set-tags.outputs.git_ref }}
+      - name: Login to DockerHub
+        # We should make sure that external PRs can't login to docker,
+        # but the check to detect if a PR is "external" not work when
+        # this workflow is trigerred by a push.
+        if: |
+          github.event_name == 'push' ||
+          github.event.pull_request.head.repo.full_name == github.repository
+        uses: docker/login-action@v2.2.0
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+          registry: index.docker.io
+      - name: Check & build polkadot docker image
+        run: |
+          POLKADOT_REPO=${{ needs.set-tags.outputs.polkadot_repo }}
+          POLKADOT_COMMIT=${{ needs.set-tags.outputs.polkadot_commit }}
+          DOCKER_TAG="purestake/moonbase-relay-testnet:sha-$POLKADOT_COMMIT"
+
+          POLKADOT_EXISTS=$(docker image inspect $DOCKER_TAG > /dev/null && \
+            echo "true" || echo "false")
+          if [[ "$POLKADOT_EXISTS" == "false" ]]; then
+            # $POLKADOT_COMMIT and $POLKADOT_REPO is used to build the relay image
+            ./scripts/build-alphanet-relay-image.sh
+            docker push $DOCKER_TAG
+          fi
+      - name: Check & prepare para-test docker image
+        run: |
+          POLKADOT_REPO=${{ needs.set-tags.outputs.polkadot_repo }}
+          POLKADOT_COMMIT=${{ needs.set-tags.outputs.polkadot_commit }}
+          DOCKER_TAG="docker.io/purestake/polkadot-para-tests:sha-$POLKADOT_COMMIT"
+
+          POLKADOT_EXISTS=$(docker image inspect $DOCKER_TAG > /dev/null && \
+            echo "true" || echo "false")
+          if [[ "$POLKADOT_EXISTS" == "false" ]]; then
+            mkdir -p build
+            MOONBEAM_DOCKER_TAG="docker.io/purestake/moonbase-relay-testnet:sha-$POLKADOT_COMMIT"
+            # Clear the dummy container if it wasn't properly cleaned up
+            docker rm -f dummy 2> /dev/null | true
+            docker create --pull always -ti --name dummy $MOONBEAM_DOCKER_TAG bash
+            docker cp dummy:/usr/local/bin/polkadot build/polkadot
+            docker rm -f dummy
+            docker build . --pull --no-cache -f docker/polkadot-para-tests.Dockerfile \
+              --network=host \
+              --build-arg HOST_UID="$UID" \
+              -t $DOCKER_TAG
+            docker push $DOCKER_TAG
+          fi
+
+  ####### Building and Testing binaries #######
+
+  cargo-clippy:
+    runs-on:
+      labels: ubuntu-latest
+    needs: ["set-tags"]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          ref: ${{ needs.set-tags.outputs.git_ref }}
+      - name: Install Protoc
+        uses: arduino/setup-protoc@v1
+      - name: Setup Rust toolchain
+        run: rustup show
+      - name: Clippy
+        run: SKIP_WASM_BUILD=1 env -u RUSTFLAGS cargo clippy --features try-runtime,runtime-benchmarks
+
+  build:
+    runs-on:
+      labels: ubuntu-latest
+    needs: ["set-tags"]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          ref: ${{ needs.set-tags.outputs.git_ref }}
+      - name: Cargo build
+        uses: ./.github/workflow-templates/cargo-build
+      - name: Upload runtimes
+        uses: actions/upload-artifact@v3.1.2
+        with:
+          name: runtimes
+          path: runtimes
+      - name: Upload binary
+        uses: actions/upload-artifact@v3.1.2
+        with:
+          name: moonbeam
+          path: build
+
+  build-features:
+    runs-on:
+      labels: ubuntu-latest
+    needs: ["set-tags"]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          ref: ${{ needs.set-tags.outputs.git_ref }}
+      - name: Cargo build
+        uses: ./.github/workflow-templates/cargo-build
+        with:
+          features: "try-runtime,runtime-benchmarks"
+      - name: Upload binary
+        uses: actions/upload-artifact@v3.1.2
+        with:
+          name: moonkit-template-features
+          path: build
+
+  rust-test:
+    runs-on:
+      labels: ubuntu-latest
+    needs: ["set-tags"]
+    env:
+      RUSTC_WRAPPER: "sccache"
+      CARGO_INCREMENTAL: "0"
+      SCCACHE_CACHE_SIZE: "100GB"
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          ref: ${{ needs.set-tags.outputs.git_ref }}
+      - name: Run sccache-cache
+        uses: mozilla-actions/sccache-action@v0.0.3
+      - name: Setup Variables
+        shell: bash
+        run: |
+          echo "RUSTFLAGS=-C opt-level=3 -D warnings -C linker=clang -C link-arg=-fuse-ld=$(pwd)/mold/bin/mold" >> $GITHUB_ENV
+      - name: Setup Mold Linker
+        shell: bash
+        run: |
+          mkdir -p mold
+          curl -L --retry 10 --silent --show-error https://github.com/rui314/mold/releases/download/v1.1.1/mold-1.1.1-$(uname -m)-linux.tar.gz | tar -C $(realpath mold) --strip-components=1 -xzf -
+      # With rustup's nice new toml format, we just need to run rustup show to install the toolchain
+      # https://github.com/actions-rs/toolchain/issues/126#issuecomment-782989659
+      - name: Setup Rust toolchain
+        run: |
+          if ! which "rustup" > /dev/null; then
+            curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+          fi
+          rustup show
+      # Checks are run after uploading artifacts since they are modified by the tests
+      - name: Unit tests
+        run: |
+          cargo test --profile testnet --all
+      - name: Run sccache stat for check pre test
+        run: ${SCCACHE_PATH} --show-stats
+
+ 
