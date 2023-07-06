@@ -1,0 +1,16 @@
+[package]
+name = "xcm-primitives"
+authors = { workspace = true }
+description = "Primitives for XCM"
+edition = "2021"
+version = "0.1.0"
+
+[dependencies]
+sp-runtime = { workspace = true }
+
+[features]
+default = [ "std" ]
+std = [
+	"sp-runtime/std",
+]
+runtime-benchmarks = []

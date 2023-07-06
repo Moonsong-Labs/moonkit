@@ -47,9 +47,6 @@ mod tests;
 
 mod types;
 
-#[cfg(feature = "xcm-support")]
-mod xcm;
-
 use frame_support::pallet;
 
 pub use pallet::*;
@@ -57,8 +54,6 @@ pub use types::*;
 
 #[pallet]
 pub mod pallet {
-	#[cfg(feature = "xcm-support")]
-	use crate::xcm::PauseXcmExecution;
 	#[cfg(feature = "xcm-support")]
 	use cumulus_primitives_core::{
 		relay_chain::BlockNumber as RelayBlockNumber, DmpMessageHandler,
@@ -70,6 +65,8 @@ pub mod pallet {
 	use frame_system::pallet_prelude::*;
 	#[cfg(feature = "xcm-support")]
 	use sp_std::vec::Vec;
+	#[cfg(feature = "xcm-support")]
+	use xcm_primitives::PauseXcmExecution;
 
 	/// Pallet for migrations
 	#[pallet::pallet]

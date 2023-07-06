@@ -4715,6 +4715,7 @@ dependencies = [
  "sp-io",
  "sp-runtime",
  "sp-std",
+ "xcm-primitives",
 ]
 
 [[package]]
@@ -10012,6 +10013,13 @@ dependencies = [
  "scale-info",
  "sp-weights",
  "xcm-procedural",
+]
+
+[[package]]
+name = "xcm-primitives"
+version = "0.1.0"
+dependencies = [
+ "sp-runtime",
 ]
 
 [[package]]

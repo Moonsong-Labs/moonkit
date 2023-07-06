@@ -7,6 +7,9 @@ version = "0.1.0"
 
 [dependencies]
 
+# Local
+xcm-primitives = { workspace = true }
+
 # Crates.io
 log = { workspace = true }
 
