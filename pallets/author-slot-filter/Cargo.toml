@@ -1,6 +1,6 @@
 [package]
 name = "pallet-author-slot-filter"
-authors = [ "PureStake" ]
+authors = [ "Moonsong Labs" ]
 description = "Selects a pseudorandom Subset of eligible (probably staked) authors at each slot"
 edition = "2021"
 version = "0.9.0"

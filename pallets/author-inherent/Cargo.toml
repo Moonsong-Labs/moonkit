@@ -1,6 +1,6 @@
 [package]
 name = "pallet-author-inherent"
-authors = [ "PureStake" ]
+authors = [ "Moonsong Labs" ]
 description = "This pallet is the core of the in-runtime portion of Nimbus."
 edition = "2021"
 license = "GPL-3.0-only"

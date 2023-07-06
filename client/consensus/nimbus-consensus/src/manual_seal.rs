@@ -71,7 +71,7 @@ where
 			parent,
 			// For now we author all blocks in slot zero, which is consistent with  how we are
 			// mocking the relay chain height which the runtime uses for slot beacon.
-			// This should improve. See https://github.com/PureStake/nimbus/issues/3
+			// This should improve. See https://github.com/Moonsong Labs/nimbus/issues/3
 			slot_number,
 		);
 

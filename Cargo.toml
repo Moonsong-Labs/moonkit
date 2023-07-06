@@ -3,7 +3,9 @@ members = [
 	"client/consensus/nimbus-consensus",
 	"pallets/aura-style-filter",
 	"pallets/author-inherent",
+	"pallets/author-mapping",
 	"pallets/author-slot-filter",
+	"pallets/maintenance-mode",
 	"primitives/nimbus-primitives",
 	#"template/node",
 	#"template/runtime",
@@ -11,6 +13,9 @@ members = [
 ]
 resolver = "2"
 
+[workspace.package]
+authors = ["Moonsong-Labs"]
+repository = "Moonsong-Labs/moonkit"
 
 [workspace.dependencies]
 # Dependencies are split into 2 groups: wasm and client.

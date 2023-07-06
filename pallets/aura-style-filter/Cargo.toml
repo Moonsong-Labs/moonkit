@@ -1,6 +1,6 @@
 [package]
 name = "pallet-aura-style-filter"
-authors = [ "PureStake" ]
+authors = [ "Moonsong Labs" ]
 description = "The Aura (authority round) consensus engine implemented in the Nimbus framework"
 edition = "2021"
 version = "0.9.0"

@@ -1,6 +1,6 @@
 [package]
 name = "nimbus-primitives"
-authors = [ "PureStake" ]
+authors = [ "Moonsong Labs" ]
 description = "Primitive types and traits used in the Nimbus consensus framework"
 edition = "2021"
 version = "0.9.0"
