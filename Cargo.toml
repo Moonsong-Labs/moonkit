@@ -5,6 +5,7 @@ members = [
 	"pallets/author-inherent",
 	"pallets/author-mapping",
 	"pallets/author-slot-filter",
+	"pallets/migrations",
 	"pallets/maintenance-mode",
 	"pallets/randomness",
 	"primitives/nimbus-primitives",
@@ -27,7 +28,9 @@ repository = "Moonsong-Labs/moonkit"
 
 # Crates.io (wasm)
 async-trait = { version = "0.1.42" }
+environmental = { version = "1.1.2", default-features = false }
 hex = { version = "0.4.3", default-features = false }
+impl-trait-for-tuples = "0.2.1"
 parity-scale-codec = { version = "3.0.0", features = [ "derive" ] }
 futures = { version = "0.3.24", features = [ "compat" ] }
 log = { version = "0.4", default-features = false }
@@ -193,6 +196,8 @@ orml-xtokens = { git = "https://github.com/open-web3-stack/open-runtime-module-l
 pallet-author-inherent = { path = "pallets/author-inherent", default-features = false }
 pallet-author-mapping = { path = "pallets/author-mapping", default-features = false }
 pallet-author-slot-filter = { path = "pallets/author-slot-filter", default-features = false }
+pallet-maintenance_mode = { path = "pallets/maintenance_mode", default-features = false }
+pallet-migrations = { path = "pallets/migrations", default-features = false }
 nimbus-primitives = { path = "primitives/nimbus-primitives", default-features = false }
 session-keys-primitives = { path = "primitives/session-keys", default-features = false }
 xcm-primitives = { path = "primitives/xcm", default-features = false }
