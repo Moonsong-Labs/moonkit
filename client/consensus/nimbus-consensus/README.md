@@ -81,7 +81,7 @@ whether a specified author will be eligible at the specified slot.
 ### Nimbus Consensus Worker
 
 Nimbus consensus is the primary client-side consensus worker. It implements the `ParachainConsensus`
-trait introduced to cumulus in https://github.com/paritytech/cumulus/pull/329. It is not likely that
+trait introduced to cumulus in https://github.com/moonbeam-foundation/cumulus/pull/329. It is not likely that
 you will need to change this code directly to implement your engine as it is entirely abstracted over
 the filters you use. The consensus engine performs these tasks:
 
