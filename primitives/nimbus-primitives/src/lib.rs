@@ -121,7 +121,7 @@ pub trait CanAuthor<AuthorId> {
 	fn can_author(author: &AuthorId, slot: &u32) -> bool;
 	#[cfg(feature = "runtime-benchmarks")]
 	fn get_authors(_slot: &u32) -> Vec<AuthorId> {
-		vec![]
+		Vec::new()
 	}
 	#[cfg(feature = "runtime-benchmarks")]
 	fn set_eligible_author(_slot: &u32) {}
