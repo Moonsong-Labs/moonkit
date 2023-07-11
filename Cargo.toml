@@ -31,7 +31,7 @@ async-trait = { version = "0.1.42" }
 environmental = { version = "1.1.2", default-features = false }
 hex = { version = "0.4.3", default-features = false }
 impl-trait-for-tuples = "0.2.1"
-parity-scale-codec = { version = "3.0.0", features = [ "derive" ] }
+parity-scale-codec = { version = "3.0.0", default-features = false, features = [ "derive" ] }
 futures = { version = "0.3.24", features = [ "compat" ] }
 log = { version = "0.4", default-features = false }
 parking_lot = "0.12"
@@ -188,9 +188,9 @@ westend-runtime = { git = "https://github.com/moonbeam-foundation/polkadot", bra
 xcm-simulator = { git = "https://github.com/moonbeam-foundation/polkadot", branch = "moonbeam-polkadot-v0.9.43" }
 
 # ORML (wasm)
-orml-traits = { git = "https://github.com/open-web3-stack/open-runtime-module-library", branch = "moonbeam-polkadot-v0.9.43", default-features = false }
-orml-xcm-support = { git = "https://github.com/open-web3-stack/open-runtime-module-library", branch = "moonbeam-polkadot-v0.9.43", default-features = false }
-orml-xtokens = { git = "https://github.com/open-web3-stack/open-runtime-module-library", branch = "moonbeam-polkadot-v0.9.43", default-features = false }
+orml-traits = { git = "https://github.com/moonbeam-foundation/open-runtime-module-library", branch = "moonbeam-polkadot-v0.9.43", default-features = false }
+orml-xcm-support = { git = "https://github.com/moonbeam-foundation/open-runtime-module-library", branch = "moonbeam-polkadot-v0.9.43", default-features = false }
+orml-xtokens = { git = "https://github.com/moonbeam-foundation/open-runtime-module-library", branch = "moonbeam-polkadot-v0.9.43", default-features = false }
 
 # Local (wasm)
 pallet-author-inherent = { path = "pallets/author-inherent", default-features = false }
