@@ -61,13 +61,13 @@ pub trait Migration {
 
 	/// Run a standard pre-runtime test. This works the same way as in a normal runtime upgrade.
 	#[cfg(feature = "try-runtime")]
-	fn pre_upgrade(&self) -> Result<Vec<u8>, &'static str> {
+	fn pre_upgrade(&self) -> Result<Vec<u8>, sp_runtime::DispatchError> {
 		Ok(Vec::new())
 	}
 
 	/// Run a standard post-runtime test. This works the same way as in a normal runtime upgrade.
 	#[cfg(feature = "try-runtime")]
-	fn post_upgrade(&self, _state: Vec<u8>) -> Result<(), &'static str> {
+	fn post_upgrade(&self, _state: Vec<u8>) -> Result<(), sp_runtime::DispatchError> {
 		Ok(())
 	}
 }

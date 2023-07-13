@@ -51,7 +51,7 @@ where
 	}
 
 	#[cfg(feature = "try-runtime")]
-	fn pre_upgrade() -> Result<Vec<u8>, &'static str> {
+	fn pre_upgrade() -> Result<Vec<u8>, sp_runtime::DispatchError> {
 		let old_value = <Pallet<T>>::eligible_ratio();
 
 		let total_authors = <T as Config>::PotentialAuthors::get().len();
@@ -62,7 +62,7 @@ where
 	}
 
 	#[cfg(feature = "try-runtime")]
-	fn post_upgrade(state: Vec<u8>) -> Result<(), &'static str> {
+	fn post_upgrade(state: Vec<u8>) -> Result<(), sp_runtime::DispatchError> {
 		let expected: NonZeroU32 =
 			Decode::decode(&mut &state[..]).expect("pre_upgrade provides a valid state; qed");
 

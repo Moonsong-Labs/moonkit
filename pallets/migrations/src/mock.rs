@@ -194,8 +194,8 @@ impl pallet_preimage::Config for Runtime {
 pub struct MockMigrationManager<'test> {
 	name_fn_callbacks: Vec<Box<dyn 'test + FnMut() -> &'static str>>,
 	migrate_fn_callbacks: Vec<Box<dyn 'test + FnMut(Weight) -> Weight>>,
-	pre_upgrade_fn_callbacks: Vec<Box<dyn 'test + FnMut() -> Result<(), &'static str>>>,
-	post_upgrade_fn_callbacks: Vec<Box<dyn 'test + FnMut() -> Result<(), &'static str>>>,
+	pre_upgrade_fn_callbacks: Vec<Box<dyn 'test + FnMut() -> Result<(), sp_runtime::DispatchError>>>,
+	post_upgrade_fn_callbacks: Vec<Box<dyn 'test + FnMut() -> Result<(), sp_runtime::DispatchError>>>,
 }
 
 impl Default for MockMigrationManager<'_> {
@@ -250,12 +250,12 @@ impl<'test> MockMigrationManager<'test> {
 	}
 
 	#[cfg(feature = "try-runtime")]
-	pub(crate) fn invoke_pre_upgrade(&mut self, index: usize) -> Result<(), &'static str> {
+	pub(crate) fn invoke_pre_upgrade(&mut self, index: usize) -> Result<(), sp_runtime::DispatchError> {
 		self.pre_upgrade_fn_callbacks[index]()
 	}
 
 	#[cfg(feature = "try-runtime")]
-	pub(crate) fn invoke_post_upgrade(&mut self, index: usize) -> Result<(), &'static str> {
+	pub(crate) fn invoke_post_upgrade(&mut self, index: usize) -> Result<(), sp_runtime::DispatchError> {
 		self.post_upgrade_fn_callbacks[index]()
 	}
 
@@ -313,7 +313,7 @@ impl Migration for MockMigration {
 		result
 	}
 	#[cfg(feature = "try-runtime")]
-	fn pre_upgrade(&self) -> Result<(), &'static str> {
+	fn pre_upgrade(&self) -> Result<(), sp_runtime::DispatchError> {
 		let mut result: Result<(), &'static str> = Err("closure didn't set result");
 		MOCK_MIGRATIONS_LIST::with(|mgr: &mut MockMigrationManager| {
 			result = mgr.invoke_pre_upgrade(self.index);
@@ -321,7 +321,7 @@ impl Migration for MockMigration {
 		result
 	}
 	#[cfg(feature = "try-runtime")]
-	fn post_upgrade(&self) -> Result<(), &'static str> {
+	fn post_upgrade(&self) -> Result<(), sp_runtime::DispatchError> {
 		let mut result: Result<(), &'static str> = Err("closure didn't set result");
 		MOCK_MIGRATIONS_LIST::with(|mgr: &mut MockMigrationManager| {
 			result = mgr.invoke_post_upgrade(self.index);
