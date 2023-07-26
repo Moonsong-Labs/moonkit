@@ -17,12 +17,10 @@
 //! Unit testing
 use {
 	crate::{
-		mock::{
-			events, ExtBuilder, Migrations, MockMigrationManager, Runtime, System,
-		},
+		mock::{events, ExtBuilder, Migrations, MockMigrationManager, Runtime, System},
 		Event,
 	},
-	frame_support::{traits::OnRuntimeUpgrade, weights::Weight },
+	frame_support::{traits::OnRuntimeUpgrade, weights::Weight},
 	sp_runtime::traits::Get,
 	std::sync::{Arc, Mutex},
 };
