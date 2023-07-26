@@ -4767,7 +4767,7 @@ dependencies = [
 [[package]]
 name = "pallet-scheduler"
 version = "4.0.0-dev"
-source = "git+https://github.com/moonbeam-foundation/substrate?branch=moonbeam-polkadot-v0.9.43#a2037bdedef0aa812017efee1d0fa63d4f5fcbae"
+source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.43#5e49f6e44820affccaf517fd22af564f4b495d40"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
