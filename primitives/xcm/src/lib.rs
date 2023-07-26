@@ -14,6 +14,10 @@
 // You should have received a copy of the GNU General Public License
 // along with Moonkit.  If not, see <http://www.gnu.org/licenses/>.
 
+//! The XCM primitive trait implementations
+
+#![cfg_attr(not(feature = "std"), no_std)]
+
 use sp_runtime::DispatchResult;
 
 /// Pause and resume execution of XCM
