@@ -18,15 +18,14 @@
 
 use super::*;
 use crate as pallet_migrations;
-use frame_support::traits::EqualPrivilegeOnly;
 use frame_support::{
 	construct_runtime,
 	pallet_prelude::*,
 	parameter_types,
-	traits::{Everything, GenesisBuild},
+	traits::{EqualPrivilegeOnly, Everything, GenesisBuild},
 	weights::{constants::RocksDbWeight, Weight},
 };
-use frame_system::{EnsureRoot, EnsureSigned};
+use frame_system::EnsureRoot;
 use sp_core::H256;
 use sp_runtime::{
 	traits::{BlakeTwo256, IdentityLookup},
@@ -49,10 +48,8 @@ construct_runtime!(
 	{
 		System: frame_system::{Pallet, Call, Config, Storage, Event<T>},
 		Balances: pallet_balances::{Pallet, Call, Storage, Config<T>, Event<T>},
-		Migrations: pallet_migrations::{Pallet, Storage, Config, Event<T>, Call},
-		Democracy: pallet_democracy::{Pallet, Storage, Config<T>, Event<T>, Call},
+		Migrations: pallet_migrations::{Pallet, Storage, Config, Event<T>},
 		Scheduler: pallet_scheduler::{Pallet, Call, Storage, Event<T>},
-		Preimage: pallet_preimage::{Pallet, Event<T>, Call},
 	}
 );
 
@@ -123,37 +120,6 @@ parameter_types! {
 	pub const InstantAllowed: bool = false;
 }
 
-impl pallet_democracy::Config for Runtime {
-	type RuntimeEvent = RuntimeEvent;
-	type Currency = Balances;
-	type EnactmentPeriod = EnactmentPeriod;
-	type LaunchPeriod = LaunchPeriod;
-	type VotingPeriod = VotingPeriod;
-	type VoteLockingPeriod = VoteLockingPeriod;
-	type FastTrackVotingPeriod = FastTrackVotingPeriod;
-	type MinimumDeposit = MinimumDeposit;
-	type ExternalOrigin = EnsureRoot<AccountId>;
-	type ExternalMajorityOrigin = EnsureRoot<AccountId>;
-	type ExternalDefaultOrigin = EnsureRoot<AccountId>;
-	type FastTrackOrigin = EnsureRoot<AccountId>;
-	type InstantOrigin = EnsureRoot<AccountId>;
-	type CancellationOrigin = EnsureRoot<AccountId>;
-	type CancelProposalOrigin = EnsureRoot<AccountId>;
-	type BlacklistOrigin = EnsureRoot<AccountId>;
-	type VetoOrigin = EnsureSigned<AccountId>;
-	type CooloffPeriod = CooloffPeriod;
-	type Slash = ();
-	type InstantAllowed = InstantAllowed;
-	type Scheduler = Scheduler;
-	type MaxVotes = MaxVotes;
-	type PalletsOrigin = OriginCaller;
-	type WeightInfo = ();
-	type MaxProposals = MaxProposals;
-	type Preimages = Preimage;
-	type MaxDeposits = ConstU32<1000>;
-	type MaxBlacklisted = ConstU32<5>;
-	type SubmitOrigin = EnsureSigned<AccountId>;
-}
 impl pallet_scheduler::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type RuntimeOrigin = RuntimeOrigin;
@@ -170,15 +136,6 @@ impl pallet_scheduler::Config for Runtime {
 parameter_types! {
 	pub const BaseDeposit: u64 = 10;
 	pub const ByteDeposit: u64 = 10;
-}
-
-impl pallet_preimage::Config for Runtime {
-	type RuntimeEvent = RuntimeEvent;
-	type WeightInfo = ();
-	type Currency = Balances;
-	type ManagerOrigin = EnsureRoot<AccountId>;
-	type BaseDeposit = BaseDeposit;
-	type ByteDeposit = ByteDeposit;
 }
 
 /// MockMigrationManager stores the test-side callbacks/closures used in the Migrations list glue.
@@ -347,7 +304,6 @@ impl Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type MigrationsList = MockMigrations;
 	type XcmExecutionManager = ();
-	type WeightInfo = ();
 }
 
 /// Externality builder for pallet migration's mock runtime
