@@ -4702,24 +4702,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "pallet-democracy"
-version = "4.0.0-dev"
-source = "git+https://github.com/moonbeam-foundation/substrate?branch=moonbeam-polkadot-v0.9.43#a2037bdedef0aa812017efee1d0fa63d4f5fcbae"
-dependencies = [
- "frame-benchmarking",
- "frame-support",
- "frame-system",
- "log",
- "parity-scale-codec",
- "scale-info",
- "serde",
- "sp-core",
- "sp-io",
- "sp-runtime",
- "sp-std",
-]
-
-[[package]]
 name = "pallet-maintenance-mode"
 version = "0.1.0"
 dependencies = [
@@ -4747,8 +4729,6 @@ dependencies = [
  "impl-trait-for-tuples",
  "log",
  "pallet-balances",
- "pallet-democracy",
- "pallet-preimage",
  "pallet-scheduler",
  "parity-scale-codec",
  "scale-info",
@@ -4757,23 +4737,6 @@ dependencies = [
  "sp-runtime",
  "sp-std",
  "xcm-primitives",
-]
-
-[[package]]
-name = "pallet-preimage"
-version = "4.0.0-dev"
-source = "git+https://github.com/moonbeam-foundation/substrate?branch=moonbeam-polkadot-v0.9.43#a2037bdedef0aa812017efee1d0fa63d4f5fcbae"
-dependencies = [
- "frame-benchmarking",
- "frame-support",
- "frame-system",
- "log",
- "parity-scale-codec",
- "scale-info",
- "sp-core",
- "sp-io",
- "sp-runtime",
- "sp-std",
 ]
 
 [[package]]
