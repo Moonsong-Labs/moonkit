@@ -19,13 +19,10 @@
 #![allow(non_camel_case_types)]
 #![cfg_attr(not(feature = "std"), no_std)]
 
-#[cfg(any(test, feature = "runtime-benchmarks"))]
-mod benchmarks;
 #[cfg(test)]
 mod mock;
 #[cfg(test)]
 mod tests;
-pub mod weights;
 
 use frame_support::{pallet, weights::Weight};
 
@@ -91,7 +88,6 @@ impl GetMigrations for Tuple {
 #[pallet]
 pub mod pallet {
 	use super::*;
-	use crate::weights::WeightInfo;
 	use frame_support::pallet_prelude::*;
 	use frame_system::pallet_prelude::*;
 	use xcm_primitives::PauseXcmExecution;
@@ -113,8 +109,6 @@ pub mod pallet {
 
 		/// Handler to suspend and resume XCM execution
 		type XcmExecutionManager: PauseXcmExecution;
-
-		type WeightInfo: WeightInfo;
 	}
 
 	#[pallet::event]
