@@ -26,7 +26,7 @@ use sp_runtime::generic::DigestItem;
 use sp_runtime::traits::BlockNumberProvider;
 use sp_runtime::ConsensusEngineId;
 #[cfg(feature = "runtime-benchmarks")]
-use sp_std::vec::{self, Vec};
+use sp_std::vec::Vec;
 
 pub mod digests;
 mod inherents;
@@ -114,7 +114,7 @@ impl SlotBeacon for IntervalBeacon {
 pub trait CanAuthor<AuthorId> {
 	#[cfg(feature = "try-runtime")]
 	// With `try-runtime` the local author should always be able to author a block.
-	fn can_author(author: &AuthorId, slot: &u32) -> bool {
+	fn can_author(_author: &AuthorId, _slot: &u32) -> bool {
 		true
 	}
 	#[cfg(not(feature = "try-runtime"))]
