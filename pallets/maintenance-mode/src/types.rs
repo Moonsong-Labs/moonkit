@@ -119,7 +119,7 @@ impl<T: frame_system::Config> frame_support::traits::TryState<BlockNumberOf<T>>
 	fn try_state(
 		_: BlockNumberOf<T>,
 		_: frame_support::traits::TryStateSelect,
-	) -> Result<(), &'static str> {
+	) -> Result<(), sp_runtime::DispatchError> {
 		Ok(())
 	}
 }
