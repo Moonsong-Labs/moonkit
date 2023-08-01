@@ -144,7 +144,8 @@ benchmarks! {
 		let pubkey = schnorrkel::PublicKey::from_bytes(vrf_id.as_slice())
 			.expect("Expect VrfId is valid schnorrkel Public key");
 		let vrf_output: sp_consensus_babe::Randomness = vrf_pre_digest.vrf_output
-			.attach_input_hash(&pubkey, transcript)
+			.0
+			.attach_input_hash(&pubkey, transcript.0.clone())
 			.ok()
 			.map(|inout| inout.make_bytes(&session_keys_primitives::VRF_INOUT_CONTEXT))
 			.expect("VRF output encoded in pre-runtime digest must be valid");
