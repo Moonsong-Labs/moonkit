@@ -23,7 +23,7 @@ sp-consensus-babe = { workspace = true }
 
 # Benchmarks
 frame-benchmarking = { workspace = true, optional = true }
-hex = { workspace = true, optional = true }
+hex = { workspace = true }
 
 
 [dev-dependencies]
