@@ -190,7 +190,7 @@ pub mod pallet {
 		}
 
 		#[cfg(feature = "try-runtime")]
-		fn pre_upgrade() -> Result<Vec<u8>, &'static str> {
+		fn pre_upgrade() -> Result<Vec<u8>, sp_runtime::DispatchError> {
 			use sp_std::collections::btree_map::BTreeMap;
 			let mut state_map: BTreeMap<String, bool> = BTreeMap::new();
 			let mut migration_states_map: BTreeMap<String, Vec<u8>> = BTreeMap::new();
@@ -221,7 +221,7 @@ pub mod pallet {
 
 		/// Run a standard post-runtime test. This works the same way as in a normal runtime upgrade.
 		#[cfg(feature = "try-runtime")]
-		fn post_upgrade(state: Vec<u8>) -> Result<(), &'static str> {
+		fn post_upgrade(state: Vec<u8>) -> Result<(), sp_runtime::DispatchError> {
 			use sp_std::collections::btree_map::BTreeMap;
 
 			let (state_map, migration_states_map): (
@@ -256,7 +256,7 @@ pub mod pallet {
 						}
 						Err(msg) => {
 							log::error!(
-								"migration {} post_upgrade() => Err({})",
+								"migration {} post_upgrade() => Err({:?})",
 								migration_name,
 								msg
 							);
@@ -267,7 +267,9 @@ pub mod pallet {
 			}
 
 			if failed {
-				Err("One or more post_upgrade tests failed; see output above.")
+				Err(sp_runtime::DispatchError::Other(
+					"One or more post_upgrade tests failed; see output above.",
+				))
 			} else {
 				Ok(())
 			}
