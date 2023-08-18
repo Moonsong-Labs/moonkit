@@ -29,7 +29,7 @@ use frame_support::pallet;
 pub use pallet::*;
 
 pub mod weights;
-use weights::WeightInfo;
+pub use weights::WeightInfo;
 #[cfg(any(test, feature = "runtime-benchmarks"))]
 mod benchmarks;
 #[cfg(test)]
