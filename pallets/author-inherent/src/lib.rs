@@ -29,8 +29,8 @@ use sp_inherents::{InherentIdentifier, IsFatalError};
 use sp_runtime::{ConsensusEngineId, RuntimeString};
 
 mod exec;
+pub use crate::weights::WeightInfo;
 pub use exec::BlockExecutor;
-
 pub use pallet::*;
 
 #[cfg(any(test, feature = "runtime-benchmarks"))]
@@ -46,7 +46,6 @@ mod tests;
 #[frame_support::pallet]
 pub mod pallet {
 	use super::*;
-	use crate::weights::WeightInfo;
 	use frame_support::pallet_prelude::*;
 	use frame_system::pallet_prelude::*;
 
