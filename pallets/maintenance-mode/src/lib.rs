@@ -170,6 +170,7 @@ pub mod pallet {
 			// Write to storage
 			MaintenanceMode::<T>::put(true);
 			// Suspend XCM execution
+			#[cfg(feature = "xcm-support")]
 			if let Err(error) = T::XcmExecutionManager::suspend_xcm_execution() {
 				<Pallet<T>>::deposit_event(Event::FailedToSuspendIdleXcmExecution { error });
 			}
@@ -202,6 +203,7 @@ pub mod pallet {
 			// Write to storage
 			MaintenanceMode::<T>::put(false);
 			// Resume XCM execution
+			#[cfg(feature = "xcm-support")]
 			if let Err(error) = T::XcmExecutionManager::resume_xcm_execution() {
 				<Pallet<T>>::deposit_event(Event::FailedToResumeIdleXcmExecution { error });
 			}
