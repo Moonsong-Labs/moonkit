@@ -122,14 +122,14 @@ pub mod pallet {
 		/// Local per-block VRF requests must be at least this many blocks after the block in which
 		/// they were requested
 		#[pallet::constant]
-		type MinBlockDelay: Get<Self::BlockNumber>;
+		type MinBlockDelay: Get<BlockNumberFor<Self>>;
 		/// Local per-block VRF requests must be at most this many blocks after the block in which
 		/// they were requested
 		#[pallet::constant]
-		type MaxBlockDelay: Get<Self::BlockNumber>;
+		type MaxBlockDelay: Get<BlockNumberFor<Self>>;
 		/// Local requests expire and can be purged from storage after this many blocks/epochs
 		#[pallet::constant]
-		type BlockExpirationDelay: Get<Self::BlockNumber>;
+		type BlockExpirationDelay: Get<BlockNumberFor<Self>>;
 		/// Babe requests expire and can be purged from storage after this many blocks/epochs
 		#[pallet::constant]
 		type EpochExpirationDelay: Get<u64>;
@@ -174,7 +174,7 @@ pub mod pallet {
 			gas_limit: u64,
 			num_words: u8,
 			salt: H256,
-			earliest_block: T::BlockNumber,
+			earliest_block: BlockNumberFor<T>,
 		},
 		RequestFulfilled {
 			id: RequestId,

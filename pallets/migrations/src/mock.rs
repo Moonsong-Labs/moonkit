@@ -22,33 +22,28 @@ use frame_support::{
 	construct_runtime,
 	pallet_prelude::*,
 	parameter_types,
-	traits::{EqualPrivilegeOnly, Everything, GenesisBuild},
+	traits::{EqualPrivilegeOnly, Everything},
 	weights::{constants::RocksDbWeight, Weight},
 };
 use frame_system::EnsureRoot;
 use sp_core::H256;
 use sp_runtime::{
 	traits::{BlakeTwo256, IdentityLookup},
-	Perbill,
+	BuildStorage, Perbill,
 };
 
 pub type AccountId = u64;
-pub type BlockNumber = u32;
 pub type Balance = u128;
-
-type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Runtime>;
 type Block = frame_system::mocking::MockBlock<Runtime>;
+type BlockNumber = u64;
 
 // Configure a mock runtime to test the pallet.
 construct_runtime!(
-	pub enum Runtime where
-		Block = Block,
-		NodeBlock = Block,
-		UncheckedExtrinsic = UncheckedExtrinsic,
+	pub enum Runtime
 	{
-		System: frame_system::{Pallet, Call, Config, Storage, Event<T>},
+		System: frame_system::{Pallet, Call, Config<T>, Storage, Event<T>},
 		Balances: pallet_balances::{Pallet, Call, Storage, Config<T>, Event<T>},
-		Migrations: pallet_migrations::{Pallet, Storage, Config, Event<T>},
+		Migrations: pallet_migrations::{Pallet, Storage, Config<T>, Event<T>},
 		Scheduler: pallet_scheduler::{Pallet, Call, Storage, Event<T>},
 	}
 );
@@ -64,14 +59,13 @@ impl frame_system::Config for Runtime {
 	type BaseCallFilter = Everything;
 	type DbWeight = RocksDbWeight;
 	type RuntimeOrigin = RuntimeOrigin;
-	type Index = u64;
-	type BlockNumber = BlockNumber;
+	type Nonce = u64;
+	type Block = Block;
 	type RuntimeCall = RuntimeCall;
 	type Hash = H256;
 	type Hashing = BlakeTwo256;
 	type AccountId = AccountId;
 	type Lookup = IdentityLookup<Self::AccountId>;
-	type Header = sp_runtime::generic::Header<BlockNumber, BlakeTwo256>;
 	type RuntimeEvent = RuntimeEvent;
 	type BlockHashCount = BlockHashCount;
 	type Version = ();
@@ -100,7 +94,7 @@ impl pallet_balances::Config for Runtime {
 	type ExistentialDeposit = ExistentialDeposit;
 	type AccountStore = System;
 	type WeightInfo = ();
-	type HoldIdentifier = ();
+	type RuntimeHoldReason = ();
 	type FreezeIdentifier = ();
 	type MaxHolds = ();
 	type MaxFreezes = ();
@@ -334,12 +328,12 @@ impl ExtBuilder {
 		}
 	}
 	pub(crate) fn build(self) -> sp_io::TestExternalities {
-		let mut storage = frame_system::GenesisConfig::default()
-			.build_storage::<Runtime>()
+		let mut storage = frame_system::GenesisConfig::<Runtime>::default()
+			.build_storage()
 			.expect("Frame system builds valid default genesis config");
 
-		GenesisBuild::<Runtime>::assimilate_storage(
-			&pallet_migrations::GenesisConfig,
+		pallet_migrations::GenesisConfig::assimilate_storage(
+			&pallet_migrations::GenesisConfig::<Runtime>::default(),
 			&mut storage,
 		)
 		.expect("Pallet migration's storage can be assimilated");

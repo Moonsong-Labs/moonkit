@@ -17,35 +17,26 @@
 //! A minimal runtime including the pallet-randomness pallet
 use super::*;
 use crate as pallet_randomness;
-use frame_support::{
-	construct_runtime, parameter_types,
-	traits::{Everything, GenesisBuild},
-	weights::Weight,
-};
+use frame_support::{construct_runtime, parameter_types, traits::Everything, weights::Weight};
 use nimbus_primitives::NimbusId;
 use session_keys_primitives::VrfId;
 use sp_core::{H160, H256};
 use sp_runtime::{
 	traits::{BlakeTwo256, Identity, IdentityLookup},
-	Perbill,
+	BuildStorage, Perbill,
 };
 use sp_std::convert::{TryFrom, TryInto};
 
 pub type AccountId = H160;
 pub type Balance = u128;
-pub type BlockNumber = u32;
 
-type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
 type Block = frame_system::mocking::MockBlock<Test>;
 
 // Configure a mock runtime to test the pallet.
 construct_runtime!(
-	pub enum Test where
-		Block = Block,
-		NodeBlock = Block,
-		UncheckedExtrinsic = UncheckedExtrinsic,
+	pub enum Test
 	{
-		System: frame_system::{Pallet, Call, Config, Storage, Event<T>},
+		System: frame_system::{Pallet, Call, Config<T>, Storage, Event<T>},
 		Balances: pallet_balances::{Pallet, Call, Storage, Config<T>, Event<T>},
 		AuthorMapping: pallet_author_mapping::{Pallet, Call, Storage, Config<T>, Event<T>},
 		Randomness: pallet_randomness::{Pallet, Call, Storage, Event<T>, Inherent},
@@ -63,14 +54,13 @@ impl frame_system::Config for Test {
 	type BaseCallFilter = Everything;
 	type DbWeight = ();
 	type RuntimeOrigin = RuntimeOrigin;
-	type Index = u64;
-	type BlockNumber = BlockNumber;
+	type Nonce = u64;
+	type Block = Block;
 	type RuntimeCall = RuntimeCall;
 	type Hash = H256;
 	type Hashing = BlakeTwo256;
 	type AccountId = AccountId;
 	type Lookup = IdentityLookup<Self::AccountId>;
-	type Header = sp_runtime::generic::Header<BlockNumber, BlakeTwo256>;
 	type RuntimeEvent = RuntimeEvent;
 	type BlockHashCount = BlockHashCount;
 	type Version = ();
@@ -99,7 +89,7 @@ impl pallet_balances::Config for Test {
 	type ExistentialDeposit = ExistentialDeposit;
 	type AccountStore = System;
 	type WeightInfo = ();
-	type HoldIdentifier = ();
+	type RuntimeHoldReason = ();
 	type FreezeIdentifier = ();
 	type MaxHolds = ();
 	type MaxFreezes = ();
@@ -210,8 +200,8 @@ impl ExtBuilder {
 
 	#[allow(dead_code)]
 	pub(crate) fn build(self) -> sp_io::TestExternalities {
-		let mut t = frame_system::GenesisConfig::default()
-			.build_storage::<Test>()
+		let mut t = frame_system::GenesisConfig::<Test>::default()
+			.build_storage()
 			.expect("Frame system builds valid default genesis config");
 
 		pallet_balances::GenesisConfig::<Test> {

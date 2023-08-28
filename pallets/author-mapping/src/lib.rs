@@ -349,7 +349,7 @@ pub mod pallet {
 	}
 
 	#[pallet::genesis_build]
-	impl<T: Config> GenesisBuild<T> for GenesisConfig<T> {
+	impl<T: Config> BuildGenesisConfig for GenesisConfig<T> {
 		fn build(&self) {
 			for (nimbus_id, account_id) in &self.mappings {
 				if let Err(e) = Pallet::<T>::enact_registration(
