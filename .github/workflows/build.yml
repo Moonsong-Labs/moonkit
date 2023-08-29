@@ -197,6 +197,8 @@ jobs:
         uses: actions/checkout@v3
         with:
           ref: ${{ needs.set-tags.outputs.git_ref }}
+      - name: Install Protoc
+        uses: arduino/setup-protoc@v1
       - name: Cargo build
         uses: ./.github/workflow-templates/cargo-build
       - name: Upload runtimes
@@ -207,8 +209,8 @@ jobs:
       - name: Upload binary
         uses: actions/upload-artifact@v3.1.2
         with:
-          name: moonbeam
-          path: build
+          name: moonkit-template
+          path: build/moonkit-template
 
   build-features:
     runs-on:
@@ -219,6 +221,8 @@ jobs:
         uses: actions/checkout@v3
         with:
           ref: ${{ needs.set-tags.outputs.git_ref }}
+      - name: Install Protoc
+        uses: arduino/setup-protoc@v1
       - name: Cargo build
         uses: ./.github/workflow-templates/cargo-build
         with:
@@ -227,7 +231,7 @@ jobs:
         uses: actions/upload-artifact@v3.1.2
         with:
           name: moonkit-template-features
-          path: build
+          path: build/moonkit-template
 
   rust-test:
     runs-on:
@@ -242,6 +246,8 @@ jobs:
         uses: actions/checkout@v3
         with:
           ref: ${{ needs.set-tags.outputs.git_ref }}
+      - name: Install Protoc
+        uses: arduino/setup-protoc@v1
       - name: Run sccache-cache
         uses: mozilla-actions/sccache-action@v0.0.3
       - name: Setup Variables

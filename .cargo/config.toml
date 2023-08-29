@@ -31,5 +31,6 @@ rustflags = [
   "-Aclippy::while_immutable_condition", # false positives
   "-Aclippy::needless_option_as_deref",  # false positives
   "-Aclippy::derivable_impls",           # false positives
-  "-Aclippy::explicit_counter_loop"      # irrelevant
+  "-Aclippy::explicit_counter_loop",     # irrelevant
+  "-Aclippy::redundant_closure_call"     # false positives
 ]
