@@ -1,5 +1,5 @@
 [package]
-name = "parachain-template-runtime"
+name = "moonkit-template-runtime"
 authors = [ "Anonymous" ]
 description = "A FRAME-based Substrate Runtime, that demonstrates the Nimbus consensus framework."
 edition = "2021"
