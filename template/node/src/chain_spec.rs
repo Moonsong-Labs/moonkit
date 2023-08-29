@@ -1,5 +1,5 @@
 use cumulus_primitives_core::ParaId;
-use parachain_template_runtime::{AccountId, NimbusId, Signature};
+use moonkit_template_runtime::{AccountId, NimbusId, Signature};
 use sc_chain_spec::{ChainSpecExtension, ChainSpecGroup};
 use sc_service::ChainType;
 use serde::{Deserialize, Serialize};
@@ -8,7 +8,7 @@ use sp_runtime::traits::{IdentifyAccount, Verify};
 
 /// Specialized `ChainSpec` for the normal parachain runtime.
 pub type ChainSpec =
-	sc_service::GenericChainSpec<parachain_template_runtime::GenesisConfig, Extensions>;
+	sc_service::GenericChainSpec<moonkit_template_runtime::GenesisConfig, Extensions>;
 
 /// Helper function to generate a crypto pair from seed
 pub fn get_pair_from_seed<TPublic: Public>(seed: &str) -> <TPublic::Pair as Pair>::Public {
@@ -165,25 +165,25 @@ fn testnet_genesis(
 	authorities: Vec<(AccountId, NimbusId)>,
 	endowed_accounts: Vec<AccountId>,
 	id: ParaId,
-) -> parachain_template_runtime::GenesisConfig {
-	parachain_template_runtime::GenesisConfig {
-		system: parachain_template_runtime::SystemConfig {
-			code: parachain_template_runtime::WASM_BINARY
+) -> moonkit_template_runtime::GenesisConfig {
+	moonkit_template_runtime::GenesisConfig {
+		system: moonkit_template_runtime::SystemConfig {
+			code: moonkit_template_runtime::WASM_BINARY
 				.expect("WASM binary was not build, please build it!")
 				.to_vec(),
 		},
-		balances: parachain_template_runtime::BalancesConfig {
+		balances: moonkit_template_runtime::BalancesConfig {
 			balances: endowed_accounts
 				.iter()
 				.cloned()
 				.map(|k| (k, 1 << 60))
 				.collect(),
 		},
-		parachain_info: parachain_template_runtime::ParachainInfoConfig { parachain_id: id },
-		author_filter: parachain_template_runtime::AuthorFilterConfig {
-			eligible_count: parachain_template_runtime::EligibilityValue::default(),
+		parachain_info: moonkit_template_runtime::ParachainInfoConfig { parachain_id: id },
+		author_filter: moonkit_template_runtime::AuthorFilterConfig {
+			eligible_count: moonkit_template_runtime::EligibilityValue::default(),
 		},
-		potential_author_set: parachain_template_runtime::PotentialAuthorSetConfig {
+		potential_author_set: moonkit_template_runtime::PotentialAuthorSetConfig {
 			mapping: authorities,
 		},
 		parachain_system: Default::default(),
