@@ -209,8 +209,8 @@ jobs:
       - name: Upload binary
         uses: actions/upload-artifact@v3.1.2
         with:
-          name: moonbeam
-          path: build
+          name: moonkit-template
+          path: build/moonkit-template
 
   build-features:
     runs-on:
@@ -231,7 +231,7 @@ jobs:
         uses: actions/upload-artifact@v3.1.2
         with:
           name: moonkit-template-features
-          path: build
+          path: build/moonkit-template
 
   rust-test:
     runs-on:
