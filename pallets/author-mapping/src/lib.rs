@@ -29,7 +29,7 @@ use frame_support::pallet;
 pub use pallet::*;
 
 pub mod weights;
-use weights::WeightInfo;
+pub use weights::WeightInfo;
 #[cfg(any(test, feature = "runtime-benchmarks"))]
 mod benchmarks;
 #[cfg(test)]
@@ -335,17 +335,11 @@ pub mod pallet {
 		StorageMap<_, Blake2_128Concat, T::AccountId, NimbusId, OptionQuery>;
 
 	#[pallet::genesis_config]
+	#[derive(frame_support::DefaultNoBound)]
 	/// Genesis config for author mapping pallet
 	pub struct GenesisConfig<T: Config> {
 		/// The associations that should exist at chain genesis
 		pub mappings: Vec<(NimbusId, T::AccountId)>,
-	}
-
-	#[cfg(feature = "std")]
-	impl<T: Config> Default for GenesisConfig<T> {
-		fn default() -> Self {
-			Self { mappings: vec![] }
-		}
 	}
 
 	#[pallet::genesis_build]

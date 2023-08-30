@@ -258,7 +258,7 @@ where
 	let pre_hash = header.hash();
 
 	let raw_sig = Keystore::sign_with(
-		&*keystore,
+		keystore,
 		NIMBUS_KEY_ID,
 		*crypto_id,
 		public_pair,

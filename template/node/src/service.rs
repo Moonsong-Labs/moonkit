@@ -4,7 +4,7 @@
 use std::{sync::Arc, time::Duration};
 
 // Local Runtime Types
-use parachain_template_runtime::{opaque::Block, AccountId, Balance, Index as Nonce, RuntimeApi};
+use moonkit_template_runtime::{opaque::Block, AccountId, Balance, Nonce, RuntimeApi};
 
 use nimbus_consensus::{
 	BuildNimbusConsensusParams, NimbusConsensus, NimbusManualSealConsensusDataProvider,
@@ -41,19 +41,19 @@ use sp_api::ConstructRuntimeApi;
 use sp_keystore::KeystorePtr;
 use sp_runtime::traits::BlakeTwo256;
 use substrate_prometheus_endpoint::Registry;
-
-/// Native executor instance.
+use sc_client_api::Backend;
+use futures::FutureExt;/// Native executor instance.
 pub struct TemplateRuntimeExecutor;
 
 impl sc_executor::NativeExecutionDispatch for TemplateRuntimeExecutor {
 	type ExtendHostFunctions = frame_benchmarking::benchmarking::HostFunctions;
 
 	fn dispatch(method: &str, data: &[u8]) -> Option<Vec<u8>> {
-		parachain_template_runtime::api::dispatch(method, data)
+		moonkit_template_runtime::api::dispatch(method, data)
 	}
 
 	fn native_version() -> sc_executor::NativeVersion {
-		parachain_template_runtime::native_version()
+		moonkit_template_runtime::native_version()
 	}
 }
 
@@ -479,7 +479,7 @@ pub async fn start_parachain_node(
 	)
 	.await
 }
-
+use sc_transaction_pool_api::OffchainTransactionPoolFactory;
 /// Builds a new service for a full client.
 pub fn start_instant_seal_node(config: Configuration) -> Result<TaskManager, sc_service::Error> {
 	let sc_service::PartialComponents {
@@ -508,11 +508,23 @@ pub fn start_instant_seal_node(config: Configuration) -> Result<TaskManager, sc_
 		})?;
 
 	if config.offchain_worker.enabled {
-		sc_service::build_offchain_workers(
-			&config,
-			task_manager.spawn_handle(),
-			client.clone(),
-			network.clone(),
+		task_manager.spawn_handle().spawn(
+			"offchain-workers-runner",
+			"offchain-work",
+			sc_offchain::OffchainWorkers::new(sc_offchain::OffchainWorkerOptions {
+				runtime_api_provider: client.clone(),
+				keystore: Some(keystore_container.keystore()),
+				offchain_db: backend.offchain_storage(),
+				transaction_pool: Some(OffchainTransactionPoolFactory::new(
+					transaction_pool.clone(),
+				)),
+				network_provider: network.clone(),
+				is_validator: config.role.is_authority(),
+				enable_http_requests: false,
+				custom_extensions: move |_| vec![],
+			})
+			.run(client.clone(), task_manager.spawn_handle())
+			.boxed(),
 		);
 	}
 

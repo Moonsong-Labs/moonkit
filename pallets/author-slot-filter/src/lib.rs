@@ -27,6 +27,7 @@
 
 use frame_support::pallet;
 
+pub use crate::weights::WeightInfo;
 pub use pallet::*;
 
 #[cfg(any(test, feature = "runtime-benchmarks"))]
@@ -44,7 +45,7 @@ mod tests;
 #[allow(deprecated)]
 #[pallet]
 pub mod pallet {
-
+	use super::*;
 	use crate::num::NonZeroU32;
 	use crate::weights::WeightInfo;
 	use frame_support::{pallet_prelude::*, traits::Randomness};
@@ -208,7 +209,6 @@ pub mod pallet {
 		pub _config: sp_std::marker::PhantomData<T>,
 	}
 
-	#[cfg(feature = "std")]
 	impl<T: Config> Default for GenesisConfig<T> {
 		fn default() -> Self {
 			Self {

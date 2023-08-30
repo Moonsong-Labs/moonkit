@@ -52,6 +52,7 @@
 
 #![cfg_attr(not(feature = "std"), no_std)]
 
+pub use crate::weights::WeightInfo;
 use frame_support::pallet;
 pub use pallet::*;
 use sp_std::vec::Vec;
@@ -77,7 +78,6 @@ pub trait GetBabeData<EpochIndex, Randomness> {
 #[pallet]
 pub mod pallet {
 	use super::*;
-	use crate::weights::WeightInfo;
 	use frame_support::traits::{Currency, ExistenceRequirement::KeepAlive};
 	use frame_support::{pallet_prelude::*, PalletId};
 	use frame_system::pallet_prelude::*;
