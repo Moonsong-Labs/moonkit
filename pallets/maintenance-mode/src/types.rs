@@ -22,6 +22,8 @@ use frame_support::{
 	traits::{OffchainWorker, OnFinalize, OnIdle, OnInitialize, OnRuntimeUpgrade},
 	weights::Weight,
 };
+#[cfg(feature = "try-runtime")]
+use sp_runtime::TryRuntimeError;
 use sp_std::marker::PhantomData;
 #[cfg(feature = "try-runtime")]
 use sp_std::vec::Vec;
@@ -90,6 +92,15 @@ where
 			T::MaintenanceExecutiveHooks::on_runtime_upgrade()
 		} else {
 			T::NormalExecutiveHooks::on_runtime_upgrade()
+		}
+	}
+
+	#[cfg(feature = "try-runtime")]
+	fn try_on_runtime_upgrade(checks: bool) -> Result<Weight, TryRuntimeError> {
+		if Pallet::<T>::maintenance_mode() {
+			T::MaintenanceExecutiveHooks::try_on_runtime_upgrade(checks)
+		} else {
+			T::NormalExecutiveHooks::try_on_runtime_upgrade(checks)
 		}
 	}
 
