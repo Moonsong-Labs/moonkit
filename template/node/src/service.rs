@@ -285,7 +285,8 @@ where
 	.await
 	.map_err(|e| sc_service::Error::Application(Box::new(e) as Box<_>))?;
 
-	let block_announce_validator = RequireSecondedInBlockAnnounce::new(relay_chain_interface.clone(), id);
+	let block_announce_validator =
+		RequireSecondedInBlockAnnounce::new(relay_chain_interface.clone(), id);
 
 	let force_authoring = parachain_config.force_authoring;
 	let validator = parachain_config.role.is_authority();
