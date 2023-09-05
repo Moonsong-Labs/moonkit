@@ -65,7 +65,6 @@ impl SubstrateCli for Cli {
 	fn load_spec(&self, id: &str) -> std::result::Result<Box<dyn sc_service::ChainSpec>, String> {
 		load_spec(id)
 	}
-
 }
 
 impl SubstrateCli for RelayChainCli {
@@ -179,10 +178,7 @@ pub fn run() -> Result<()> {
 		Some(Subcommand::ExportGenesisState(cmd)) => {
 			let runner = cli.create_runner(cmd)?;
 			runner.sync_run(|config| {
-				let partials = new_partial::<
-				RuntimeApi,
-				TemplateRuntimeExecutor,
-			>(&config, false)?;
+				let partials = new_partial::<RuntimeApi, TemplateRuntimeExecutor>(&config, false)?;
 
 				cmd.run(&*config.chain_spec, &*partials.client)
 			})
@@ -268,7 +264,7 @@ pub fn run() -> Result<()> {
 					AccountIdConversion::<polkadot_primitives::AccountId>::into_account_truncating(
 						&id,
 					);
-				
+
 				let tokio_handle = config.tokio_handle.clone();
 				let polkadot_config =
 					SubstrateCli::create_configuration(&polkadot_cli, &polkadot_cli, tokio_handle)

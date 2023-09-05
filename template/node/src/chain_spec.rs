@@ -180,7 +180,10 @@ fn testnet_genesis(
 				.map(|k| (k, 1 << 60))
 				.collect(),
 		},
-		parachain_info: moonkit_template_runtime::ParachainInfoConfig { parachain_id: id, ..Default::default() },
+		parachain_info: moonkit_template_runtime::ParachainInfoConfig {
+			parachain_id: id,
+			..Default::default()
+		},
 		author_filter: moonkit_template_runtime::AuthorFilterConfig {
 			eligible_count: moonkit_template_runtime::EligibilityValue::default(),
 			..Default::default()

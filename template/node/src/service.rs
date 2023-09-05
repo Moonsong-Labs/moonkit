@@ -28,6 +28,8 @@ use cumulus_relay_chain_minimal_node::build_minimal_relay_chain_node;
 use polkadot_service::CollatorPair;
 
 // Substrate Imports
+use futures::FutureExt;
+use sc_client_api::Backend;
 use sc_consensus::ImportQueue;
 use sc_consensus_manual_seal::{run_instant_seal, InstantSealParams};
 use sc_executor::{
@@ -41,8 +43,7 @@ use sp_api::ConstructRuntimeApi;
 use sp_keystore::KeystorePtr;
 use sp_runtime::traits::BlakeTwo256;
 use substrate_prometheus_endpoint::Registry;
-use sc_client_api::Backend;
-use futures::FutureExt;/// Native executor instance.
+/// Native executor instance.
 pub struct TemplateRuntimeExecutor;
 
 impl sc_executor::NativeExecutionDispatch for TemplateRuntimeExecutor {
