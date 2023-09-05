@@ -8,7 +8,7 @@ use sp_runtime::traits::{IdentifyAccount, Verify};
 
 /// Specialized `ChainSpec` for the normal parachain runtime.
 pub type ChainSpec =
-	sc_service::GenericChainSpec<moonkit_template_runtime::GenesisConfig, Extensions>;
+	sc_service::GenericChainSpec<moonkit_template_runtime::RuntimeGenesisConfig, Extensions>;
 
 /// Helper function to generate a crypto pair from seed
 pub fn get_pair_from_seed<TPublic: Public>(seed: &str) -> <TPublic::Pair as Pair>::Public {
@@ -165,8 +165,8 @@ fn testnet_genesis(
 	authorities: Vec<(AccountId, NimbusId)>,
 	endowed_accounts: Vec<AccountId>,
 	id: ParaId,
-) -> moonkit_template_runtime::GenesisConfig {
-	moonkit_template_runtime::GenesisConfig {
+) -> moonkit_template_runtime::RuntimeGenesisConfig {
+	moonkit_template_runtime::RuntimeGenesisConfig {
 		system: moonkit_template_runtime::SystemConfig {
 			code: moonkit_template_runtime::WASM_BINARY
 				.expect("WASM binary was not build, please build it!")
