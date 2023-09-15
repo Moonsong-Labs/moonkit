@@ -116,7 +116,7 @@ benchmarks! {
 			.expect("decode into same type");
 		LocalVrfOutput::<T>::put(Some(last_vrf_output));
 		NotFirstBlock::<T>::put(());
-		let block_num: T::BlockNumber = frame_system::Pallet::<T>::block_number() + 100u32.into();
+		let block_num = frame_system::Pallet::<T>::block_number() + 100u32.into();
 		RandomnessResults::<T>::insert(
 			RequestType::Local(block_num),
 			RandomnessResult::new().increment_request_count()
