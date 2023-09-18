@@ -22,7 +22,7 @@ use crate::{
 	BalanceOf, Call, Config, InherentIncluded, LocalVrfOutput, NotFirstBlock, Pallet,
 	RandomnessResult, RandomnessResults, RelayEpoch, Request, RequestCount, RequestType,
 };
-use frame_benchmarking::{account, benchmarks, impl_benchmark_test_suite, Zero};
+use frame_benchmarking::{account, benchmarks, impl_benchmark_test_suite};
 use frame_support::{
 	dispatch::DispatchResult,
 	traits::{Currency, Get, OnInitialize},
@@ -39,6 +39,7 @@ use sp_core::{
 	crypto::{ByteArray, UncheckedFrom},
 	sr25519, H160, H256,
 };
+use sp_runtime::traits::Zero;
 use sp_runtime::traits::{Convert, One};
 use sp_std::{mem::size_of, vec};
 
