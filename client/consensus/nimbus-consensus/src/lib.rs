@@ -287,7 +287,6 @@ where
 	PF: Environment<B> + Send + Sync + 'static,
 	PF::Proposer: Proposer<
 		B,
-		Transaction = BI::Transaction,
 		ProofRecording = EnableProofRecording,
 		Proof = <EnableProofRecording as ProofRecording>::Proof,
 	>,

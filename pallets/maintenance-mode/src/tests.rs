@@ -22,11 +22,10 @@ use crate::{Call, Error, Event, ExecutiveHooks};
 use cumulus_primitives_core::DmpMessageHandler;
 use frame_support::{
 	assert_noop, assert_ok,
-	dispatch::Dispatchable,
 	traits::{OffchainWorker, OnFinalize, OnIdle, OnInitialize, OnRuntimeUpgrade},
 	weights::Weight,
 };
-
+use sp_runtime::traits::Dispatchable;
 #[test]
 fn can_remark_during_normal_operation() {
 	ExtBuilder::default().build().execute_with(|| {

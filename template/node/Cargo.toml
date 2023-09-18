@@ -89,7 +89,7 @@ cumulus-relay-chain-minimal-node = { workspace = true }
 
 # Polkadot dependencies
 polkadot-cli = { workspace = true }
-polkadot-parachain = { workspace = true }
+polkadot-parachain-primitives = { workspace = true }
 polkadot-primitives = { workspace = true }
 polkadot-service = { workspace = true }
 

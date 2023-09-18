@@ -3,8 +3,8 @@ use frame_support::{parameter_types, traits::Everything};
 use frame_system as system;
 use sp_core::H256;
 use sp_runtime::{
-	BuildStorage,
 	traits::{BlakeTwo256, IdentityLookup},
+	BuildStorage,
 };
 
 type Block = frame_system::mocking::MockBlock<Test>;
