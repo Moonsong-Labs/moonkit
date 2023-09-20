@@ -20,18 +20,15 @@ use frame_support::traits::ConstU32;
 use frame_support::weights::RuntimeDbWeight;
 use frame_support_test::TestRandomness;
 use sp_core::H256;
-use sp_runtime::{
-	traits::{BlakeTwo256, IdentityLookup},
-	BuildStorage,
-};
+use sp_runtime::{traits::{BlakeTwo256, IdentityLookup}, BuildStorage};
 
 type Block = frame_system::mocking::MockBlock<Test>;
 
 frame_support::construct_runtime!(
 	pub enum Test
 	{
-		System: frame_system::{Pallet, Call, Config<T>, Storage, Event<T>},
-		AuthorSlotFilter: pallet_testing::{Pallet, Call, Storage, Event},
+		System: frame_system,
+		AuthorSlotFilter: pallet_testing,
 	}
 );
 

@@ -301,11 +301,11 @@ fn try_runtime_functions_work() {
 			mgr.register_callback_with_try_fns(
 				move || "dummy_step",
 				move |_| -> Weight { 0u64.into() },
-				move || -> Result<(), &'static str> {
+				move || -> Result<Vec<u8>, sp_runtime::DispatchError> {
 					*pre_fn_called.lock().unwrap() = true;
-					Ok(())
+					Ok(vec![])
 				},
-				move || -> Result<(), &'static str> {
+				move || -> Result<(), sp_runtime::DispatchError> {
 					*post_fn_called.lock().unwrap() = true;
 					Ok(())
 				},
