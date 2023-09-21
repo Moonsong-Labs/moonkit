@@ -54,8 +54,8 @@ where
 {
 	async fn verify(
 		&mut self,
-		mut block_params: BlockImportParams<Block, ()>,
-	) -> Result<BlockImportParams<Block, ()>, String> {
+		mut block_params: BlockImportParams<Block>,
+	) -> Result<BlockImportParams<Block>, String> {
 		// Skip checks that include execution, if being told so or when importing only state.
 		//
 		// This is done for example when gap syncing and it is expected that the block after the gap
@@ -201,10 +201,9 @@ pub fn import_queue<Client, Block: BlockT, I, CIDP>(
 	spawner: &impl sp_core::traits::SpawnEssentialNamed,
 	registry: Option<&substrate_prometheus_endpoint::Registry>,
 	parachain: bool,
-) -> ClientResult<BasicQueue<Block, I::Transaction>>
+) -> ClientResult<BasicQueue<Block>>
 where
 	I: BlockImport<Block, Error = ConsensusError> + Send + Sync + 'static,
-	I::Transaction: Send,
 	Client: ProvideRuntimeApi<Block> + Send + Sync + 'static,
 	<Client as ProvideRuntimeApi<Block>>::Api: BlockBuilderApi<Block>,
 	CIDP: CreateInherentDataProviders<Block, ()> + 'static,
@@ -255,7 +254,6 @@ where
 	I: BlockImport<Block> + Send,
 {
 	type Error = I::Error;
-	type Transaction = I::Transaction;
 
 	async fn check_block(
 		&mut self,
@@ -266,7 +264,7 @@ where
 
 	async fn import_block(
 		&mut self,
-		mut block_import_params: sc_consensus::BlockImportParams<Block, Self::Transaction>,
+		mut block_import_params: sc_consensus::BlockImportParams<Block>,
 	) -> Result<sc_consensus::ImportResult, Self::Error> {
 		// If we are in the parachain context, best block is determined by the relay chain
 		// except during initial sync

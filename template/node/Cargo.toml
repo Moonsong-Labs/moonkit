@@ -20,7 +20,7 @@ path = "src/main.rs"
 # Local
 nimbus-consensus = { workspace = true }
 nimbus-primitives = { workspace = true }
-moonkit-template-runtime = { path = "../runtime" }
+moonkit-template-runtime = { path = "../runtime", features = [ "std" ] }
 
 # Crates.io
 clap = { workspace = true, features = [ "derive" ] }
@@ -31,6 +31,7 @@ hex-literal =  { workspace = true }
 log = { workspace = true }
 serde = { workspace = true, features = [ "derive" ] }
 jsonrpsee = { workspace = true, features = [ "macros", "server" ] }
+futures = { workspace = true }
 
 # Substrate Dependencies
 frame-benchmarking = { workspace = true }
@@ -51,6 +52,7 @@ sc-executor = { workspace = true }
 sc-network = { workspace = true }
 sc-network-sync = { workspace = true }
 sc-network-common = { workspace = true }
+sc-offchain = { workspace = true }
 sc-rpc = { workspace = true }
 sc-rpc-api = { workspace = true }
 sc-service = { workspace = true }
@@ -87,7 +89,7 @@ cumulus-relay-chain-minimal-node = { workspace = true }
 
 # Polkadot dependencies
 polkadot-cli = { workspace = true }
-polkadot-parachain = { workspace = true }
+polkadot-parachain-primitives = { workspace = true }
 polkadot-primitives = { workspace = true }
 polkadot-service = { workspace = true }
 

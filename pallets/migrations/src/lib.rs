@@ -166,7 +166,7 @@ pub mod pallet {
 			T::BlockWeights::get().max_block
 		}
 
-		fn on_initialize(_: T::BlockNumber) -> Weight {
+		fn on_initialize(_: BlockNumberFor<T>) -> Weight {
 			if ShouldPauseXcm::<T>::get() {
 				// Suspend XCM execution
 				if let Err(error) = T::XcmExecutionManager::suspend_xcm_execution() {
@@ -179,7 +179,7 @@ pub mod pallet {
 			}
 		}
 
-		fn on_finalize(_: T::BlockNumber) {
+		fn on_finalize(_: BlockNumberFor<T>) {
 			if ShouldPauseXcm::<T>::get() {
 				// Resume XCM execution
 				if let Err(error) = T::XcmExecutionManager::resume_xcm_execution() {
@@ -307,11 +307,14 @@ pub mod pallet {
 	}
 
 	#[pallet::genesis_config]
-	#[derive(Default)]
-	pub struct GenesisConfig;
+	#[derive(frame_support::DefaultNoBound)]
+	pub struct GenesisConfig<T: Config> {
+		#[serde(skip)]
+		pub _config: sp_std::marker::PhantomData<T>,
+	}
 
 	#[pallet::genesis_build]
-	impl<T: Config> GenesisBuild<T> for GenesisConfig {
+	impl<T: Config> BuildGenesisConfig for GenesisConfig<T> {
 		fn build(&self) {
 			// When building a new genesis, all listed migrations should be considered as already
 			// applied, they only make sense for networks that had been launched in the past.

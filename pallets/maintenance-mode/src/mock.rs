@@ -21,8 +21,7 @@ use cumulus_primitives_core::{relay_chain::BlockNumber as RelayBlockNumber, DmpM
 use frame_support::{
 	construct_runtime, parameter_types,
 	traits::{
-		Contains, Everything, GenesisBuild, OffchainWorker, OnFinalize, OnIdle, OnInitialize,
-		OnRuntimeUpgrade,
+		Contains, Everything, OffchainWorker, OnFinalize, OnIdle, OnInitialize, OnRuntimeUpgrade,
 	},
 	weights::Weight,
 };
@@ -30,25 +29,21 @@ use frame_system::EnsureRoot;
 use sp_core::H256;
 use sp_runtime::{
 	traits::{BlakeTwo256, IdentityLookup},
-	Perbill,
+	BuildStorage, Perbill,
 };
 
 //TODO use TestAccount once it is in a common place (currently it lives with democracy precompiles)
 pub type AccountId = u64;
-pub type BlockNumber = u32;
+pub type BlockNumber = u64;
 
-type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
 type Block = frame_system::mocking::MockBlock<Test>;
 
 // Configure a mock runtime to test the pallet.
 construct_runtime!(
-	pub enum Test where
-		Block = Block,
-		NodeBlock = Block,
-		UncheckedExtrinsic = UncheckedExtrinsic,
+	pub enum Test
 	{
-		System: frame_system::{Pallet, Call, Config, Storage, Event<T>},
-		MaintenanceMode: pallet_maintenance_mode::{Pallet, Call, Storage, Event, Config},
+		System: frame_system::{Pallet, Call, Config<T>, Storage, Event<T>},
+		MaintenanceMode: pallet_maintenance_mode::{Pallet, Call, Storage, Event, Config<T>},
 		MockPalletMaintenanceHooks: mock_pallet_maintenance_hooks::{Pallet, Call, Event},
 	}
 );
@@ -64,14 +59,13 @@ impl frame_system::Config for Test {
 	type BaseCallFilter = MaintenanceMode;
 	type DbWeight = ();
 	type RuntimeOrigin = RuntimeOrigin;
-	type Index = u64;
-	type BlockNumber = BlockNumber;
+	type Nonce = u64;
+	type Block = Block;
 	type RuntimeCall = RuntimeCall;
 	type Hash = H256;
 	type Hashing = BlakeTwo256;
 	type AccountId = AccountId;
 	type Lookup = IdentityLookup<Self::AccountId>;
-	type Header = sp_runtime::generic::Header<BlockNumber, BlakeTwo256>;
 	type RuntimeEvent = RuntimeEvent;
 	type BlockHashCount = BlockHashCount;
 	type Version = ();
@@ -282,13 +276,14 @@ impl ExtBuilder {
 	}
 
 	pub(crate) fn build(self) -> sp_io::TestExternalities {
-		let mut t = frame_system::GenesisConfig::default()
-			.build_storage::<Test>()
+		let mut t = frame_system::GenesisConfig::<Test>::default()
+			.build_storage()
 			.expect("Frame system builds valid default genesis config");
 
-		GenesisBuild::<Test>::assimilate_storage(
+		pallet_maintenance_mode::GenesisConfig::<Test>::assimilate_storage(
 			&pallet_maintenance_mode::GenesisConfig {
 				start_in_maintenance_mode: self.maintenance_mode,
+				..Default::default()
 			},
 			&mut t,
 		)

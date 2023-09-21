@@ -22,7 +22,7 @@ use scale_info::TypeInfo;
 use serde::de::Error as DeserializeError;
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 
-#[derive(Clone, Debug, TypeInfo, Encode, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[derive(Clone, Debug, Default, TypeInfo, Encode, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct NonZeroU32(u32);
 
 impl core::ops::Deref for NonZeroU32 {
@@ -58,7 +58,6 @@ impl NonZeroU32 {
 	}
 }
 
-#[cfg(feature = "std")]
 impl Serialize for NonZeroU32 {
 	fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
 	where
@@ -68,7 +67,6 @@ impl Serialize for NonZeroU32 {
 	}
 }
 
-#[cfg(feature = "std")]
 impl<'de> Deserialize<'de> for NonZeroU32 {
 	fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
 	where

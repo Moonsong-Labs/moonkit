@@ -22,7 +22,7 @@ use crate::{
 	BalanceOf, Call, Config, InherentIncluded, LocalVrfOutput, NotFirstBlock, Pallet,
 	RandomnessResult, RandomnessResults, RelayEpoch, Request, RequestCount, RequestType,
 };
-use frame_benchmarking::{account, benchmarks, impl_benchmark_test_suite, Zero};
+use frame_benchmarking::{account, benchmarks, impl_benchmark_test_suite};
 use frame_support::{
 	dispatch::DispatchResult,
 	traits::{Currency, Get, OnInitialize},
@@ -39,6 +39,7 @@ use sp_core::{
 	crypto::{ByteArray, UncheckedFrom},
 	sr25519, H160, H256,
 };
+use sp_runtime::traits::Zero;
 use sp_runtime::traits::{Convert, One};
 use sp_std::{mem::size_of, vec};
 
@@ -116,7 +117,7 @@ benchmarks! {
 			.expect("decode into same type");
 		LocalVrfOutput::<T>::put(Some(last_vrf_output));
 		NotFirstBlock::<T>::put(());
-		let block_num: T::BlockNumber = frame_system::Pallet::<T>::block_number() + 100u32.into();
+		let block_num = frame_system::Pallet::<T>::block_number() + 100u32.into();
 		RandomnessResults::<T>::insert(
 			RequestType::Local(block_num),
 			RandomnessResult::new().increment_request_count()
@@ -307,10 +308,11 @@ benchmarks! {
 mod tests {
 	use crate::mock::Test;
 	use sp_io::TestExternalities;
+	use sp_runtime::BuildStorage;
 
 	pub fn new_test_ext() -> TestExternalities {
-		let t = frame_system::GenesisConfig::default()
-			.build_storage::<Test>()
+		let t = frame_system::GenesisConfig::<Test>::default()
+			.build_storage()
 			.unwrap();
 		TestExternalities::new(t)
 	}

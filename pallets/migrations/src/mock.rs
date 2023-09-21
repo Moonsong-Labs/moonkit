@@ -22,33 +22,28 @@ use frame_support::{
 	construct_runtime,
 	pallet_prelude::*,
 	parameter_types,
-	traits::{EqualPrivilegeOnly, Everything, GenesisBuild},
+	traits::{EqualPrivilegeOnly, Everything},
 	weights::{constants::RocksDbWeight, Weight},
 };
 use frame_system::EnsureRoot;
 use sp_core::H256;
 use sp_runtime::{
 	traits::{BlakeTwo256, IdentityLookup},
-	Perbill,
+	BuildStorage, Perbill,
 };
 
 pub type AccountId = u64;
-pub type BlockNumber = u32;
 pub type Balance = u128;
-
-type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Runtime>;
 type Block = frame_system::mocking::MockBlock<Runtime>;
+type BlockNumber = u64;
 
 // Configure a mock runtime to test the pallet.
 construct_runtime!(
-	pub enum Runtime where
-		Block = Block,
-		NodeBlock = Block,
-		UncheckedExtrinsic = UncheckedExtrinsic,
+	pub enum Runtime
 	{
-		System: frame_system::{Pallet, Call, Config, Storage, Event<T>},
+		System: frame_system::{Pallet, Call, Config<T>, Storage, Event<T>},
 		Balances: pallet_balances::{Pallet, Call, Storage, Config<T>, Event<T>},
-		Migrations: pallet_migrations::{Pallet, Storage, Config, Event<T>},
+		Migrations: pallet_migrations::{Pallet, Storage, Config<T>, Event<T>},
 		Scheduler: pallet_scheduler::{Pallet, Call, Storage, Event<T>},
 	}
 );
@@ -64,14 +59,13 @@ impl frame_system::Config for Runtime {
 	type BaseCallFilter = Everything;
 	type DbWeight = RocksDbWeight;
 	type RuntimeOrigin = RuntimeOrigin;
-	type Index = u64;
-	type BlockNumber = BlockNumber;
+	type Nonce = u64;
+	type Block = Block;
 	type RuntimeCall = RuntimeCall;
 	type Hash = H256;
 	type Hashing = BlakeTwo256;
 	type AccountId = AccountId;
 	type Lookup = IdentityLookup<Self::AccountId>;
-	type Header = sp_runtime::generic::Header<BlockNumber, BlakeTwo256>;
 	type RuntimeEvent = RuntimeEvent;
 	type BlockHashCount = BlockHashCount;
 	type Version = ();
@@ -100,7 +94,7 @@ impl pallet_balances::Config for Runtime {
 	type ExistentialDeposit = ExistentialDeposit;
 	type AccountStore = System;
 	type WeightInfo = ();
-	type HoldIdentifier = ();
+	type RuntimeHoldReason = ();
 	type FreezeIdentifier = ();
 	type MaxHolds = ();
 	type MaxFreezes = ();
@@ -152,7 +146,7 @@ pub struct MockMigrationManager<'test> {
 	name_fn_callbacks: Vec<Box<dyn 'test + FnMut() -> &'static str>>,
 	migrate_fn_callbacks: Vec<Box<dyn 'test + FnMut(Weight) -> Weight>>,
 	pre_upgrade_fn_callbacks:
-		Vec<Box<dyn 'test + FnMut() -> Result<(), sp_runtime::DispatchError>>>,
+		Vec<Box<dyn 'test + FnMut() -> Result<Vec<u8>, sp_runtime::DispatchError>>>,
 	post_upgrade_fn_callbacks:
 		Vec<Box<dyn 'test + FnMut() -> Result<(), sp_runtime::DispatchError>>>,
 }
@@ -176,7 +170,8 @@ impl<'test> MockMigrationManager<'test> {
 	{
 		self.name_fn_callbacks.push(Box::new(name_fn));
 		self.migrate_fn_callbacks.push(Box::new(migrate_fn));
-		self.pre_upgrade_fn_callbacks.push(Box::new(|| Ok(())));
+		self.pre_upgrade_fn_callbacks
+			.push(Box::new(|| Ok(Vec::new())));
 		self.post_upgrade_fn_callbacks.push(Box::new(|| Ok(())));
 	}
 	#[cfg(feature = "try-runtime")]
@@ -189,9 +184,9 @@ impl<'test> MockMigrationManager<'test> {
 	) where
 		FN: 'test + FnMut() -> &'static str,
 		FM: 'test + FnMut(Weight) -> Weight,
-		FT1: 'test + FnMut() -> Result<(), &'static str>,
+		FT1: 'test + FnMut() -> Result<Vec<u8>, sp_runtime::DispatchError>,
 		// no two closures, even if identical, have the same type
-		FT2: 'test + FnMut() -> Result<(), &'static str>,
+		FT2: 'test + FnMut() -> Result<(), sp_runtime::DispatchError>,
 	{
 		self.name_fn_callbacks.push(Box::new(name_fn));
 		self.migrate_fn_callbacks.push(Box::new(migrate_fn));
@@ -212,7 +207,7 @@ impl<'test> MockMigrationManager<'test> {
 	pub(crate) fn invoke_pre_upgrade(
 		&mut self,
 		index: usize,
-	) -> Result<(), sp_runtime::DispatchError> {
+	) -> Result<Vec<u8>, sp_runtime::DispatchError> {
 		self.pre_upgrade_fn_callbacks[index]()
 	}
 
@@ -278,16 +273,16 @@ impl Migration for MockMigration {
 		result
 	}
 	#[cfg(feature = "try-runtime")]
-	fn pre_upgrade(&self) -> Result<(), sp_runtime::DispatchError> {
-		let mut result: Result<(), &'static str> = Err("closure didn't set result");
+	fn pre_upgrade(&self) -> Result<Vec<u8>, sp_runtime::DispatchError> {
+		let mut result = Ok(vec![]);
 		MOCK_MIGRATIONS_LIST::with(|mgr: &mut MockMigrationManager| {
 			result = mgr.invoke_pre_upgrade(self.index);
 		});
 		result
 	}
 	#[cfg(feature = "try-runtime")]
-	fn post_upgrade(&self) -> Result<(), sp_runtime::DispatchError> {
-		let mut result: Result<(), &'static str> = Err("closure didn't set result");
+	fn post_upgrade(&self, _state: Vec<u8>) -> Result<(), sp_runtime::DispatchError> {
+		let mut result = Ok(());
 		MOCK_MIGRATIONS_LIST::with(|mgr: &mut MockMigrationManager| {
 			result = mgr.invoke_post_upgrade(self.index);
 		});
@@ -334,12 +329,12 @@ impl ExtBuilder {
 		}
 	}
 	pub(crate) fn build(self) -> sp_io::TestExternalities {
-		let mut storage = frame_system::GenesisConfig::default()
-			.build_storage::<Runtime>()
+		let mut storage = frame_system::GenesisConfig::<Runtime>::default()
+			.build_storage()
 			.expect("Frame system builds valid default genesis config");
 
-		GenesisBuild::<Runtime>::assimilate_storage(
-			&pallet_migrations::GenesisConfig,
+		pallet_migrations::GenesisConfig::assimilate_storage(
+			&pallet_migrations::GenesisConfig::<Runtime>::default(),
 			&mut storage,
 		)
 		.expect("Pallet migration's storage can be assimilated");
@@ -376,9 +371,9 @@ pub(crate) fn events() -> Vec<pallet_migrations::Event<Runtime>> {
 
 #[cfg(feature = "try-runtime")]
 pub(crate) fn invoke_all_upgrade_hooks() -> Weight {
-	Migrations::pre_upgrade().expect("pre-upgrade hook succeeds");
+	let val = Migrations::pre_upgrade().expect("pre-upgrade hook succeeds");
 	let weight = Migrations::on_runtime_upgrade();
-	Migrations::post_upgrade().expect("post-upgrade hook succeeds");
+	Migrations::post_upgrade(val).expect("post-upgrade hook succeeds");
 
 	weight
 }

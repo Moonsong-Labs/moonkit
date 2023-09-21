@@ -335,21 +335,15 @@ pub mod pallet {
 		StorageMap<_, Blake2_128Concat, T::AccountId, NimbusId, OptionQuery>;
 
 	#[pallet::genesis_config]
+	#[derive(frame_support::DefaultNoBound)]
 	/// Genesis config for author mapping pallet
 	pub struct GenesisConfig<T: Config> {
 		/// The associations that should exist at chain genesis
 		pub mappings: Vec<(NimbusId, T::AccountId)>,
 	}
 
-	#[cfg(feature = "std")]
-	impl<T: Config> Default for GenesisConfig<T> {
-		fn default() -> Self {
-			Self { mappings: vec![] }
-		}
-	}
-
 	#[pallet::genesis_build]
-	impl<T: Config> GenesisBuild<T> for GenesisConfig<T> {
+	impl<T: Config> BuildGenesisConfig for GenesisConfig<T> {
 		fn build(&self) {
 			for (nimbus_id, account_id) in &self.mappings {
 				if let Err(e) = Pallet::<T>::enact_registration(

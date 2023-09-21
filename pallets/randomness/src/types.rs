@@ -17,6 +17,7 @@
 use crate::{BalanceOf, Config, Error, Event, Pallet, RandomnessResults, RelayEpoch, RequestId};
 use frame_support::pallet_prelude::*;
 use frame_support::traits::{Currency, ExistenceRequirement::KeepAlive};
+use frame_system::pallet_prelude::BlockNumberFor;
 use sp_core::{H160, H256};
 use sp_runtime::traits::{CheckedAdd, CheckedSub, Convert, Saturating};
 use sp_std::vec::Vec;
@@ -28,7 +29,7 @@ pub enum RequestType<T: Config> {
 	/// Babe one epoch ago
 	BabeEpoch(u64),
 	/// Local per parachain block VRF output
-	Local(T::BlockNumber),
+	Local(BlockNumberFor<T>),
 }
 
 #[derive(PartialEq, Copy, Clone, Encode, Decode, TypeInfo)]
@@ -41,7 +42,7 @@ pub enum RequestInfo<T: Config> {
 	/// Babe one epoch ago
 	BabeEpoch(u64, u64),
 	/// Local per parachain block VRF output
-	Local(T::BlockNumber, T::BlockNumber),
+	Local(BlockNumberFor<T>, BlockNumberFor<T>),
 }
 
 impl<T: Config> From<RequestType<T>> for RequestInfo<T> {

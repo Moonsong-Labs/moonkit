@@ -15,11 +15,12 @@
 // along with Moonkit.  If not, see <http://www.gnu.org/licenses/>.
 
 use super::*;
-use crate::mock::*;
+pub use crate::mock::*;
 use crate::num::NonZeroU32;
 
 use frame_support::assert_ok;
-use frame_support::{traits::OnRuntimeUpgrade, weights::Weight};
+use frame_support::traits::OnRuntimeUpgrade;
+use frame_support::weights::Weight;
 use sp_runtime::Percent;
 
 #[test]

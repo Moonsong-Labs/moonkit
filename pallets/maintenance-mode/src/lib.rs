@@ -60,7 +60,8 @@ pub mod pallet {
 	};
 	use frame_support::pallet_prelude::*;
 	use frame_support::traits::{
-		Contains, EnsureOrigin, OffchainWorker, OnFinalize, OnIdle, OnInitialize, OnRuntimeUpgrade,
+		BuildGenesisConfig, Contains, EnsureOrigin, OffchainWorker, OnFinalize, OnIdle,
+		OnInitialize, OnRuntimeUpgrade,
 	};
 	use frame_system::pallet_prelude::*;
 	#[cfg(feature = "xcm-support")]
@@ -105,18 +106,18 @@ pub mod pallet {
 		/// Important: Use AllPalletsWithSystem here if you dont want to modify the
 		/// hooks behaviour
 		type NormalExecutiveHooks: OnRuntimeUpgrade
-			+ OnInitialize<Self::BlockNumber>
-			+ OnIdle<Self::BlockNumber>
-			+ OnFinalize<Self::BlockNumber>
-			+ OffchainWorker<Self::BlockNumber>;
+			+ OnInitialize<BlockNumberFor<Self>>
+			+ OnIdle<BlockNumberFor<Self>>
+			+ OnFinalize<BlockNumberFor<Self>>
+			+ OffchainWorker<BlockNumberFor<Self>>;
 		/// The executive hooks that will be used in maintenance mode
 		/// Important: Use AllPalletsWithSystem here if you dont want to modify the
 		/// hooks behaviour
 		type MaintenanceExecutiveHooks: OnRuntimeUpgrade
-			+ OnInitialize<Self::BlockNumber>
-			+ OnIdle<Self::BlockNumber>
-			+ OnFinalize<Self::BlockNumber>
-			+ OffchainWorker<Self::BlockNumber>;
+			+ OnInitialize<BlockNumberFor<Self>>
+			+ OnIdle<BlockNumberFor<Self>>
+			+ OnFinalize<BlockNumberFor<Self>>
+			+ OffchainWorker<BlockNumberFor<Self>>;
 	}
 
 	#[pallet::event]
@@ -215,16 +216,18 @@ pub mod pallet {
 		}
 	}
 
-	#[derive(Default)]
+	#[derive(frame_support::DefaultNoBound)]
 	#[pallet::genesis_config]
 	/// Genesis config for maintenance mode pallet
-	pub struct GenesisConfig {
+	pub struct GenesisConfig<T: Config> {
 		/// Whether to launch in maintenance mode
 		pub start_in_maintenance_mode: bool,
+		#[serde(skip)]
+		pub _config: sp_std::marker::PhantomData<T>,
 	}
 
 	#[pallet::genesis_build]
-	impl<T: Config> GenesisBuild<T> for GenesisConfig {
+	impl<T: Config> BuildGenesisConfig for GenesisConfig<T> {
 		fn build(&self) {
 			if self.start_in_maintenance_mode {
 				MaintenanceMode::<T>::put(true);

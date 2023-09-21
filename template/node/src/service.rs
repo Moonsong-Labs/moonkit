@@ -4,7 +4,7 @@
 use std::{sync::Arc, time::Duration};
 
 // Local Runtime Types
-use moonkit_template_runtime::{opaque::Block, AccountId, Balance, Index as Nonce, RuntimeApi};
+use moonkit_template_runtime::{opaque::Block, AccountId, Balance, Nonce, RuntimeApi};
 
 use nimbus_consensus::{
 	BuildNimbusConsensusParams, NimbusConsensus, NimbusManualSealConsensusDataProvider,
@@ -13,7 +13,8 @@ use nimbus_consensus::{
 // Cumulus Imports
 use cumulus_client_cli::CollatorOptions;
 use cumulus_client_consensus_common::ParachainConsensus;
-use cumulus_client_network::BlockAnnounceValidator;
+use cumulus_client_network::RequireSecondedInBlockAnnounce;
+#[allow(deprecated)]
 use cumulus_client_service::{
 	prepare_node_config, start_collator, start_full_node, StartCollatorParams, StartFullNodeParams,
 };
@@ -23,11 +24,13 @@ use cumulus_primitives_parachain_inherent::{
 };
 use cumulus_relay_chain_inprocess_interface::build_inprocess_relay_chain;
 use cumulus_relay_chain_interface::{RelayChainInterface, RelayChainResult};
-use cumulus_relay_chain_minimal_node::build_minimal_relay_chain_node;
+use cumulus_relay_chain_minimal_node::build_minimal_relay_chain_node_with_rpc;
 
 use polkadot_service::CollatorPair;
 
 // Substrate Imports
+use futures::FutureExt;
+use sc_client_api::Backend;
 use sc_consensus::ImportQueue;
 use sc_consensus_manual_seal::{run_instant_seal, InstantSealParams};
 use sc_executor::{
@@ -41,7 +44,6 @@ use sp_api::ConstructRuntimeApi;
 use sp_keystore::KeystorePtr;
 use sp_runtime::traits::BlakeTwo256;
 use substrate_prometheus_endpoint::Registry;
-
 /// Native executor instance.
 pub struct TemplateRuntimeExecutor;
 
@@ -70,10 +72,7 @@ pub fn new_partial<RuntimeApi, Executor>(
 		TFullClient<Block, RuntimeApi, NativeElseWasmExecutor<Executor>>,
 		TFullBackend<Block>,
 		sc_consensus::LongestChain<TFullBackend<Block>, Block>,
-		sc_consensus::DefaultImportQueue<
-			Block,
-			TFullClient<Block, RuntimeApi, NativeElseWasmExecutor<Executor>>,
-		>,
+		sc_consensus::DefaultImportQueue<Block>,
 		sc_transaction_pool::FullPool<
 			Block,
 			TFullClient<Block, RuntimeApi, NativeElseWasmExecutor<Executor>>,
@@ -90,10 +89,8 @@ where
 	RuntimeApi::RuntimeApi: sp_transaction_pool::runtime_api::TaggedTransactionQueue<Block>
 		+ sp_api::Metadata<Block>
 		+ sp_session::SessionKeys<Block>
-		+ sp_api::ApiExt<
-			Block,
-			StateBackend = sc_client_api::StateBackendFor<TFullBackend<Block>, Block>,
-		> + sp_offchain::OffchainWorkerApi<Block>
+		+ sp_api::ApiExt<Block>
+		+ sp_offchain::OffchainWorkerApi<Block>
 		+ sp_block_builder::BlockBuilder<Block>,
 	sc_client_api::StateBackendFor<TFullBackend<Block>, Block>: sp_api::StateBackend<BlakeTwo256>,
 	Executor: sc_executor::NativeExecutionDispatch + 'static,
@@ -191,13 +188,11 @@ async fn build_relay_chain_interface(
 	Arc<(dyn RelayChainInterface + 'static)>,
 	Option<CollatorPair>,
 )> {
-	if !collator_options.relay_chain_rpc_urls.is_empty() {
-		build_minimal_relay_chain_node(
-			polkadot_config,
-			task_manager,
-			collator_options.relay_chain_rpc_urls,
-		)
-		.await
+	if let cumulus_client_cli::RelayChainMode::ExternalRpc(rpc_target_urls) =
+		collator_options.relay_chain_mode
+	{
+		build_minimal_relay_chain_node_with_rpc(polkadot_config, task_manager, rpc_target_urls)
+			.await
 	} else {
 		build_inprocess_relay_chain(
 			polkadot_config,
@@ -232,10 +227,8 @@ where
 	RuntimeApi::RuntimeApi: sp_transaction_pool::runtime_api::TaggedTransactionQueue<Block>
 		+ sp_api::Metadata<Block>
 		+ sp_session::SessionKeys<Block>
-		+ sp_api::ApiExt<
-			Block,
-			StateBackend = sc_client_api::StateBackendFor<TFullBackend<Block>, Block>,
-		> + sp_offchain::OffchainWorkerApi<Block>
+		+ sp_api::ApiExt<Block>
+		+ sp_offchain::OffchainWorkerApi<Block>
 		+ sp_block_builder::BlockBuilder<Block>
 		+ cumulus_primitives_core::CollectCollationInfo<Block>
 		+ pallet_transaction_payment_rpc::TransactionPaymentRuntimeApi<Block, Balance>
@@ -284,7 +277,8 @@ where
 	.await
 	.map_err(|e| sc_service::Error::Application(Box::new(e) as Box<_>))?;
 
-	let block_announce_validator = BlockAnnounceValidator::new(relay_chain_interface.clone(), id);
+	let block_announce_validator =
+		RequireSecondedInBlockAnnounce::new(relay_chain_interface.clone(), id);
 
 	let force_authoring = parachain_config.force_authoring;
 	let validator = parachain_config.role.is_authority();
@@ -379,7 +373,7 @@ where
 			relay_chain_slot_duration,
 			sync_service,
 		};
-
+		#[allow(deprecated)]
 		start_collator(params).await?;
 	} else {
 		let params = StartFullNodeParams {
@@ -393,7 +387,7 @@ where
 			recovery_handle: Box::new(overseer_handle),
 			sync_service,
 		};
-
+		#[allow(deprecated)]
 		start_full_node(params)?;
 	}
 
@@ -479,7 +473,7 @@ pub async fn start_parachain_node(
 	)
 	.await
 }
-
+use sc_transaction_pool_api::OffchainTransactionPoolFactory;
 /// Builds a new service for a full client.
 pub fn start_instant_seal_node(config: Configuration) -> Result<TaskManager, sc_service::Error> {
 	let sc_service::PartialComponents {
@@ -508,11 +502,23 @@ pub fn start_instant_seal_node(config: Configuration) -> Result<TaskManager, sc_
 		})?;
 
 	if config.offchain_worker.enabled {
-		sc_service::build_offchain_workers(
-			&config,
-			task_manager.spawn_handle(),
-			client.clone(),
-			network.clone(),
+		task_manager.spawn_handle().spawn(
+			"offchain-workers-runner",
+			"offchain-work",
+			sc_offchain::OffchainWorkers::new(sc_offchain::OffchainWorkerOptions {
+				runtime_api_provider: client.clone(),
+				keystore: Some(keystore_container.keystore()),
+				offchain_db: backend.offchain_storage(),
+				transaction_pool: Some(OffchainTransactionPoolFactory::new(
+					transaction_pool.clone(),
+				)),
+				network_provider: network.clone(),
+				is_validator: config.role.is_authority(),
+				enable_http_requests: false,
+				custom_extensions: move |_| vec![],
+			})
+			.run(client.clone(), task_manager.spawn_handle())
+			.boxed(),
 		);
 	}
 

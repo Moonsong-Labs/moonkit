@@ -22,7 +22,7 @@ use nimbus_primitives::{
 };
 use sc_consensus::BlockImportParams;
 use sc_consensus_manual_seal::{ConsensusDataProvider, Error};
-use sp_api::{BlockT, HeaderT, ProvideRuntimeApi, TransactionFor};
+use sp_api::{BlockT, HeaderT, ProvideRuntimeApi};
 use sp_application_crypto::ByteArray;
 use sp_core::sr25519;
 use sp_inherents::InherentData;
@@ -52,7 +52,6 @@ where
 	DP: DigestsProvider<NimbusId, <B as BlockT>::Hash> + Send + Sync,
 	P: Send + Sync,
 {
-	type Transaction = TransactionFor<C, B>;
 	type Proof = P;
 
 	fn create_digest(&self, parent: &B::Header, inherents: &InherentData) -> Result<Digest, Error> {
@@ -98,7 +97,7 @@ where
 	fn append_block_import(
 		&self,
 		_parent: &B::Header,
-		params: &mut BlockImportParams<B, Self::Transaction>,
+		params: &mut BlockImportParams<B>,
 		_inherents: &InherentData,
 		_proof: Self::Proof,
 	) -> Result<(), Error> {
