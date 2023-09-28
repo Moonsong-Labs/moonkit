@@ -21,7 +21,7 @@
 use core::marker::PhantomData;
 use cumulus_primitives_core::{relay_chain::BlockNumber as RelayBlockNumber, DmpMessageHandler};
 use frame_support::{
-	traits::{Get, Hooks, OffchainWorker, OnFinalize, OnIdle, OnInitialize, OnRuntimeUpgrade},
+	traits::{Get, OffchainWorker, OnFinalize, OnIdle, OnInitialize, OnRuntimeUpgrade},
 	weights::Weight,
 	inherent::Vec,
 };
@@ -33,20 +33,20 @@ pub type BlockNumber = u32;
 
 /// The hooks we want to run in Maintenance Mode
 pub struct MaintenanceHooks<T>(PhantomData<T>);
-impl<T: Hooks<BlockNumber>> OnInitialize<BlockNumber> for MaintenanceHooks<T> {
+impl<T: OnInitialize<BlockNumber>> OnInitialize<BlockNumber> for MaintenanceHooks<T> {
 	fn on_initialize(n: BlockNumber) -> Weight {
 		T::on_initialize(n)
 	}
 }
 
 // We override onIdle for xcmQueue and dmpQueue pallets to not process messages inside it
-impl<T: Hooks<BlockNumber>> OnIdle<BlockNumber> for MaintenanceHooks<T> {
+impl<T> OnIdle<BlockNumber> for MaintenanceHooks<T> {
 	fn on_idle(_n: BlockNumber, _max_weight: Weight) -> Weight {
 		Weight::zero()
 	}
 }
 
-impl<T: Hooks<BlockNumber>> OnRuntimeUpgrade for MaintenanceHooks<T> {
+impl<T: OnRuntimeUpgrade> OnRuntimeUpgrade for MaintenanceHooks<T> {
 	fn on_runtime_upgrade() -> Weight {
 		T::on_runtime_upgrade()
 	}
@@ -61,13 +61,13 @@ impl<T: Hooks<BlockNumber>> OnRuntimeUpgrade for MaintenanceHooks<T> {
 	}
 }
 
-impl<T: Hooks<BlockNumber>> OnFinalize<BlockNumber> for MaintenanceHooks<T> {
+impl<T: OnFinalize<BlockNumber>> OnFinalize<BlockNumber> for MaintenanceHooks<T> {
 	fn on_finalize(n: BlockNumber) {
 		T::on_finalize(n)
 	}
 }
 
-impl<T: Hooks<BlockNumber>> OffchainWorker<BlockNumber> for MaintenanceHooks<T> {
+impl<T: OffchainWorker<BlockNumber>> OffchainWorker<BlockNumber> for MaintenanceHooks<T> {
 	fn offchain_worker(n: BlockNumber) {
 		T::offchain_worker(n)
 	}
