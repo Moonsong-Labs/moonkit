@@ -1297,7 +1297,7 @@ dependencies = [
 [[package]]
 name = "cumulus-client-consensus-common"
 version = "0.1.0"
-source = "git+https://github.com/moondance-labs/cumulus?branch=tanssi-polkadot-v0.9.43#a953ae1c78b2f73240eb5d59822de7e51370301a"
+source = "git+https://github.com/moonbeam-foundation/cumulus?branch=moonbeam-polkadot-v0.9.43#db58573a1389849dea337221e0db24d24989dc2a"
 dependencies = [
  "async-trait",
  "cumulus-client-pov-recovery",
@@ -1323,7 +1323,7 @@ dependencies = [
 [[package]]
 name = "cumulus-client-pov-recovery"
 version = "0.1.0"
-source = "git+https://github.com/moondance-labs/cumulus?branch=tanssi-polkadot-v0.9.43#a953ae1c78b2f73240eb5d59822de7e51370301a"
+source = "git+https://github.com/moonbeam-foundation/cumulus?branch=moonbeam-polkadot-v0.9.43#db58573a1389849dea337221e0db24d24989dc2a"
 dependencies = [
  "async-trait",
  "cumulus-primitives-core",
@@ -1347,7 +1347,7 @@ dependencies = [
 [[package]]
 name = "cumulus-primitives-core"
 version = "0.1.0"
-source = "git+https://github.com/moondance-labs/cumulus?branch=tanssi-polkadot-v0.9.43#a953ae1c78b2f73240eb5d59822de7e51370301a"
+source = "git+https://github.com/moonbeam-foundation/cumulus?branch=moonbeam-polkadot-v0.9.43#db58573a1389849dea337221e0db24d24989dc2a"
 dependencies = [
  "parity-scale-codec",
  "polkadot-core-primitives",
@@ -1364,7 +1364,7 @@ dependencies = [
 [[package]]
 name = "cumulus-primitives-parachain-inherent"
 version = "0.1.0"
-source = "git+https://github.com/moondance-labs/cumulus?branch=tanssi-polkadot-v0.9.43#a953ae1c78b2f73240eb5d59822de7e51370301a"
+source = "git+https://github.com/moonbeam-foundation/cumulus?branch=moonbeam-polkadot-v0.9.43#db58573a1389849dea337221e0db24d24989dc2a"
 dependencies = [
  "cumulus-primitives-core",
  "parity-scale-codec",
@@ -1378,7 +1378,7 @@ dependencies = [
 [[package]]
 name = "cumulus-relay-chain-interface"
 version = "0.1.0"
-source = "git+https://github.com/moondance-labs/cumulus?branch=tanssi-polkadot-v0.9.43#a953ae1c78b2f73240eb5d59822de7e51370301a"
+source = "git+https://github.com/moonbeam-foundation/cumulus?branch=moonbeam-polkadot-v0.9.43#db58573a1389849dea337221e0db24d24989dc2a"
 dependencies = [
  "async-trait",
  "cumulus-primitives-core",
