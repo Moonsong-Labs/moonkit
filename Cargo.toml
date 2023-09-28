@@ -9,6 +9,7 @@ members = [
 	"pallets/maintenance-mode",
 	"pallets/randomness",
 	"primitives/nimbus-primitives",
+	"primitives/maintenance-primitives",
 	#"template/node",
 	#"template/runtime",
 	#"template/pallets/template",
