@@ -23,6 +23,7 @@ use cumulus_primitives_core::{relay_chain::BlockNumber as RelayBlockNumber, DmpM
 use frame_support::{
 	traits::{Get, Hooks, OffchainWorker, OnFinalize, OnIdle, OnInitialize, OnRuntimeUpgrade},
 	weights::Weight,
+	inherent::Vec,
 };
 
 #[cfg(feature = "try-runtime")]
