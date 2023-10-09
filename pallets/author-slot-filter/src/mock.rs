@@ -30,8 +30,8 @@ type Block = frame_system::mocking::MockBlock<Test>;
 frame_support::construct_runtime!(
 	pub enum Test
 	{
-		System: frame_system::{Pallet, Call, Config<T>, Storage, Event<T>},
-		AuthorSlotFilter: pallet_testing::{Pallet, Call, Storage, Event},
+		System: frame_system,
+		AuthorSlotFilter: pallet_testing,
 	}
 );
 

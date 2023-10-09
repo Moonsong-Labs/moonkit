@@ -146,7 +146,7 @@ pub struct MockMigrationManager<'test> {
 	name_fn_callbacks: Vec<Box<dyn 'test + FnMut() -> &'static str>>,
 	migrate_fn_callbacks: Vec<Box<dyn 'test + FnMut(Weight) -> Weight>>,
 	pre_upgrade_fn_callbacks:
-		Vec<Box<dyn 'test + FnMut() -> Result<(), sp_runtime::DispatchError>>>,
+		Vec<Box<dyn 'test + FnMut() -> Result<Vec<u8>, sp_runtime::DispatchError>>>,
 	post_upgrade_fn_callbacks:
 		Vec<Box<dyn 'test + FnMut() -> Result<(), sp_runtime::DispatchError>>>,
 }
@@ -170,7 +170,8 @@ impl<'test> MockMigrationManager<'test> {
 	{
 		self.name_fn_callbacks.push(Box::new(name_fn));
 		self.migrate_fn_callbacks.push(Box::new(migrate_fn));
-		self.pre_upgrade_fn_callbacks.push(Box::new(|| Ok(())));
+		self.pre_upgrade_fn_callbacks
+			.push(Box::new(|| Ok(Vec::new())));
 		self.post_upgrade_fn_callbacks.push(Box::new(|| Ok(())));
 	}
 	#[cfg(feature = "try-runtime")]
@@ -183,9 +184,9 @@ impl<'test> MockMigrationManager<'test> {
 	) where
 		FN: 'test + FnMut() -> &'static str,
 		FM: 'test + FnMut(Weight) -> Weight,
-		FT1: 'test + FnMut() -> Result<(), &'static str>,
+		FT1: 'test + FnMut() -> Result<Vec<u8>, sp_runtime::DispatchError>,
 		// no two closures, even if identical, have the same type
-		FT2: 'test + FnMut() -> Result<(), &'static str>,
+		FT2: 'test + FnMut() -> Result<(), sp_runtime::DispatchError>,
 	{
 		self.name_fn_callbacks.push(Box::new(name_fn));
 		self.migrate_fn_callbacks.push(Box::new(migrate_fn));
@@ -206,7 +207,7 @@ impl<'test> MockMigrationManager<'test> {
 	pub(crate) fn invoke_pre_upgrade(
 		&mut self,
 		index: usize,
-	) -> Result<(), sp_runtime::DispatchError> {
+	) -> Result<Vec<u8>, sp_runtime::DispatchError> {
 		self.pre_upgrade_fn_callbacks[index]()
 	}
 
@@ -272,16 +273,16 @@ impl Migration for MockMigration {
 		result
 	}
 	#[cfg(feature = "try-runtime")]
-	fn pre_upgrade(&self) -> Result<(), sp_runtime::DispatchError> {
-		let mut result: Result<(), &'static str> = Err("closure didn't set result");
+	fn pre_upgrade(&self) -> Result<Vec<u8>, sp_runtime::DispatchError> {
+		let mut result = Ok(vec![]);
 		MOCK_MIGRATIONS_LIST::with(|mgr: &mut MockMigrationManager| {
 			result = mgr.invoke_pre_upgrade(self.index);
 		});
 		result
 	}
 	#[cfg(feature = "try-runtime")]
-	fn post_upgrade(&self) -> Result<(), sp_runtime::DispatchError> {
-		let mut result: Result<(), &'static str> = Err("closure didn't set result");
+	fn post_upgrade(&self, _state: Vec<u8>) -> Result<(), sp_runtime::DispatchError> {
+		let mut result = Ok(());
 		MOCK_MIGRATIONS_LIST::with(|mgr: &mut MockMigrationManager| {
 			result = mgr.invoke_post_upgrade(self.index);
 		});
@@ -370,9 +371,9 @@ pub(crate) fn events() -> Vec<pallet_migrations::Event<Runtime>> {
 
 #[cfg(feature = "try-runtime")]
 pub(crate) fn invoke_all_upgrade_hooks() -> Weight {
-	Migrations::pre_upgrade().expect("pre-upgrade hook succeeds");
+	let val = Migrations::pre_upgrade().expect("pre-upgrade hook succeeds");
 	let weight = Migrations::on_runtime_upgrade();
-	Migrations::post_upgrade().expect("post-upgrade hook succeeds");
+	Migrations::post_upgrade(val).expect("post-upgrade hook succeeds");
 
 	weight
 }
