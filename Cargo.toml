@@ -189,9 +189,9 @@ westend-runtime = { git = "https://github.com/moonbeam-foundation/polkadot-sdk",
 xcm-simulator = { git = "https://github.com/moonbeam-foundation/polkadot-sdk", branch = "moonbeam-polkadot-v1.1.0" }
 
 # ORML (wasm)
-orml-traits = { git = "https://github.com/moonbeam-foundation/open-runtime-module-library", branch = "cem-upgrade-to-polkadot-v1.1.0", default-features = false }
-orml-xcm-support = { git = "https://github.com/moonbeam-foundation/open-runtime-module-library", branch = "cem-upgrade-to-polkadot-v1.1.0", default-features = false }
-orml-xtokens = { git = "https://github.com/moonbeam-foundation/open-runtime-module-library", branch = "cem-upgrade-to-polkadot-v1.1.0", default-features = false }
+orml-traits = { git = "https://github.com/moonbeam-foundation/open-runtime-module-library", branch = "moonbeam-polkadot-v1.1.0", default-features = false }
+orml-xcm-support = { git = "https://github.com/moonbeam-foundation/open-runtime-module-library", branch = "moonbeam-polkadot-v1.1.0", default-features = false }
+orml-xtokens = { git = "https://github.com/moonbeam-foundation/open-runtime-module-library", branch = "moonbeam-polkadot-v1.1.0", default-features = false }
 
 # Local (wasm)
 pallet-author-inherent = { path = "pallets/author-inherent", default-features = false }

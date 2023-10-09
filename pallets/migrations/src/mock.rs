@@ -170,7 +170,8 @@ impl<'test> MockMigrationManager<'test> {
 	{
 		self.name_fn_callbacks.push(Box::new(name_fn));
 		self.migrate_fn_callbacks.push(Box::new(migrate_fn));
-		self.pre_upgrade_fn_callbacks.push(Box::new(|| Ok(Vec::new())));
+		self.pre_upgrade_fn_callbacks
+			.push(Box::new(|| Ok(Vec::new())));
 		self.post_upgrade_fn_callbacks.push(Box::new(|| Ok(())));
 	}
 	#[cfg(feature = "try-runtime")]
