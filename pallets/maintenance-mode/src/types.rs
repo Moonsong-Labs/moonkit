@@ -23,9 +23,9 @@ use frame_support::{
 	weights::Weight,
 };
 use frame_system::pallet_prelude::BlockNumberFor as BlockNumberOf;
-use sp_std::marker::PhantomData;
 #[cfg(feature = "try-runtime")]
 use sp_runtime::TryRuntimeError;
+use sp_std::marker::PhantomData;
 
 pub struct ExecutiveHooks<T>(PhantomData<T>);
 
