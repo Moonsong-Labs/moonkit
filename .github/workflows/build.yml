@@ -242,6 +242,8 @@ jobs:
       CARGO_INCREMENTAL: "0"
       SCCACHE_CACHE_SIZE: "100GB"
     steps:
+      - name: Free Disk Space (Ubuntu)
+        uses: jlumbroso/free-disk-space@v1.3.0
       - name: Checkout
         uses: actions/checkout@v3
         with:
