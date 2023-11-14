@@ -1,11 +1,28 @@
+// Copyright Moonsong Labs
+// This file is part of Moonkit.
+
+// Moonkit is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+
+// Moonkit is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+
+// You should have received a copy of the GNU General Public License
+// along with Moonkit.  If not, see <http://www.gnu.org/licenses/>.
+
+use super::pallet;
 use cumulus_pallet_parachain_system::{
 	self as parachain_system,
 	consensus_hook::{ConsensusHook, UnincludedSegmentCapacity},
 	relay_state_snapshot::RelayChainStateProof,
 };
-use sp_std::{marker::PhantomData, num::NonZeroU32};
-use sp_consensus_slots::{Slot, SlotDuration};
 use frame_support::pallet_prelude::*;
+use sp_consensus_slots::{Slot, SlotDuration};
+use sp_std::{marker::PhantomData, num::NonZeroU32};
 
 /// A consensus hook for a fixed block processing velocity and unincluded segment capacity.
 ///
@@ -18,6 +35,7 @@ pub struct FixedVelocityConsensusHook<
 >(PhantomData<T>);
 
 impl<
+		T: pallet::Config,
 		const RELAY_CHAIN_SLOT_DURATION_MILLIS: u32,
 		const V: u32,
 		const C: u32,
@@ -27,24 +45,35 @@ impl<
 	fn on_state_proof(state_proof: &RelayChainStateProof) -> (Weight, UnincludedSegmentCapacity) {
 		// Ensure velocity is non-zero.
 		let velocity = V.max(1);
-		let relay_chain_slot = state_proof.read_slot().expect("failed to read relay chain slot");
+		let relay_chain_slot = state_proof
+			.read_slot()
+			.expect("failed to read relay chain slot");
 
-		/* let (slot, authored) = pallet::Pallet::<T>::slot_info()
-			.expect("slot info is inserted on block initialization"); */
+		let (slot, authored) = pallet::Pallet::<T>::get_highest_slot_info()
+			.expect("slot info is inserted on block initialization");
 
- 		// Convert relay chain timestamp.
+		let slot = u64::from(slot);
+
+		// Calculate the current relay slot in millis.
 		let relay_chain_timestamp =
 			u64::from(RELAY_CHAIN_SLOT_DURATION_MILLIS).saturating_mul(*relay_chain_slot);
-        /*
-		let para_slot_duration = SlotDuration::from_millis(Aura::<T>::slot_duration().into());
+
+		// Fetch the slot duration from parachain's config
+		let para_slot_duration =
+			SlotDuration::from_millis(pallet::Pallet::<T>::get_slot_duration());
 		let para_slot_from_relay =
 			Slot::from_timestamp(relay_chain_timestamp.into(), para_slot_duration);
 
-		// Perform checks.
-		assert_eq!(slot, para_slot_from_relay, "slot number mismatch");
+		// Check that the slot fetched from storage is the same as the calculated using relay timestamp
+		assert_eq!(
+			Slot::from(slot),
+			para_slot_from_relay,
+			"slot number mismatch"
+		);
+
 		if authored > velocity + 1 {
 			panic!("authored blocks limit is reached for the slot")
-		} */
+		}
 		let weight = T::DbWeight::get().reads(1);
 
 		(
@@ -56,8 +85,8 @@ impl<
 	}
 }
 
-/* impl<
-		T: parachain_system::Config,
+impl<
+		T: parachain_system::Config + pallet::Config,
 		const RELAY_CHAIN_SLOT_DURATION_MILLIS: u32,
 		const V: u32,
 		const C: u32,
@@ -73,9 +102,9 @@ impl<
 	/// When the unincluded segment is empty, i.e. `included_hash == at`, where at is the block
 	/// whose state we are querying against, this must always return `true` as long as the slot
 	/// is more recent than the included block itself.
-	pub fn can_build_upon(included_hash: T::Hash, new_slot: Slot) -> bool {
+	pub fn can_build_upon(included_hash: T::Hash, new_slot: u64) -> bool {
 		let velocity = V.max(1);
-		let (last_slot, authored_so_far) = match pallet::Pallet::<T>::slot_info() {
+		let (last_slot, authored_so_far) = match pallet::Pallet::<T>::get_highest_slot_info() {
 			None => return true,
 			Some(x) => x,
 		};
@@ -85,14 +114,14 @@ impl<
 
 		// can never author when the unincluded segment is full.
 		if size_after_included >= C {
-			return false
+			return false;
 		}
 
-		if last_slot == new_slot {
+		if u64::from(last_slot) == new_slot {
 			authored_so_far < velocity + 1
 		} else {
 			// disallow slot from moving backwards.
-			last_slot < new_slot
+			u64::from(last_slot) < new_slot
 		}
 	}
-} */
+}

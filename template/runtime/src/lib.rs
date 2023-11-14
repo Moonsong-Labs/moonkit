@@ -28,7 +28,7 @@ use frame_support::{
 	construct_runtime,
 	dispatch::DispatchClass,
 	match_types, parameter_types,
-	traits::{Everything, Nothing, OnInitialize, ConstBool},
+	traits::{ConstBool, ConstU64, Everything, Nothing, OnInitialize},
 	weights::{
 		constants::{
 			BlockExecutionWeight, ExtrinsicBaseWeight, RocksDbWeight, WEIGHT_REF_TIME_PER_SECOND,
@@ -398,8 +398,21 @@ impl cumulus_pallet_parachain_system::Config for Runtime {
 	type OutboundXcmpMessageSource = XcmpQueue;
 	type XcmpMessageHandler = XcmpQueue;
 	type ReservedXcmpWeight = ReservedXcmpWeight;
-	type CheckAssociatedRelayNumber = cumulus_pallet_parachain_system::RelayNumberStrictlyIncreases;
+	type CheckAssociatedRelayNumber =
+		cumulus_pallet_parachain_system::RelayNumberMonotonicallyIncreases;
+	type ConsensusHook = ConsensusHook;
 }
+
+pub const RELAY_CHAIN_SLOT_DURATION_MILLIS: u32 = 6000;
+pub const UNINCLUDED_SEGMENT_CAPACITY: u32 = 1;
+pub const BLOCK_PROCESSING_VELOCITY: u32 = 1;
+
+type ConsensusHook = pallet_author_inherent::consensus_hook::FixedVelocityConsensusHook<
+	Runtime,
+	RELAY_CHAIN_SLOT_DURATION_MILLIS,
+	BLOCK_PROCESSING_VELOCITY,
+	UNINCLUDED_SEGMENT_CAPACITY,
+>;
 
 impl pallet_insecure_randomness_collective_flip::Config for Runtime {}
 
@@ -589,6 +602,7 @@ impl pallet_author_inherent::Config for Runtime {
 	type AccountLookup = PotentialAuthorSet;
 	type CanAuthor = AuthorFilter;
 	type AllowMultipleBlocksPerSlot = ConstBool<false>;
+	type SlotDuration = ConstU64<SLOT_DURATION>;
 	type WeightInfo = ();
 }
 
