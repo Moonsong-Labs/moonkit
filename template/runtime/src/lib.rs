@@ -28,7 +28,7 @@ use frame_support::{
 	construct_runtime,
 	dispatch::DispatchClass,
 	match_types, parameter_types,
-	traits::{Everything, Nothing, OnInitialize},
+	traits::{Everything, Nothing, OnInitialize, ConstBool},
 	weights::{
 		constants::{
 			BlockExecutionWeight, ExtrinsicBaseWeight, RocksDbWeight, WEIGHT_REF_TIME_PER_SECOND,
@@ -588,6 +588,7 @@ impl pallet_author_inherent::Config for Runtime {
 	type SlotBeacon = cumulus_pallet_parachain_system::RelaychainDataProvider<Self>;
 	type AccountLookup = PotentialAuthorSet;
 	type CanAuthor = AuthorFilter;
+	type AllowMultipleBlocksPerSlot = ConstBool<false>;
 	type WeightInfo = ();
 }
 
