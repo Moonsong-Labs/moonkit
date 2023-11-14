@@ -73,6 +73,8 @@ pub mod pallet {
 		/// Some way of determining the current slot for purposes of verifying the author's eligibility
 		type SlotBeacon: SlotBeacon;
 
+		type AllowMultipleBlocksPerSlot: Get<bool>;
+
 		type WeightInfo: WeightInfo;
 	}
 
@@ -127,11 +129,19 @@ pub mod pallet {
 
 			// First check that the slot number is valid (greater than the previous highest)
 			let slot = T::SlotBeacon::slot();
-			assert!(
-				slot > HighestSlotSeen::<T>::get(),
-				"Block invalid; Supplied slot number is not high enough"
-			);
 
+			if T::AllowMultipleBlocksPerSlot::get() {
+				assert!(
+					slot >= HighestSlotSeen::<T>::get(),
+					"Block invalid; Supplied slot number must not decrease"
+				);
+			}else {
+				assert!(
+					slot > HighestSlotSeen::<T>::get(),
+					"Block invalid; Supplied slot number is not high enough"
+				);
+			}
+			
 			// Now check that the author is valid in this slot
 			assert!(
 				T::CanAuthor::can_author(&Self::get(), &slot),
