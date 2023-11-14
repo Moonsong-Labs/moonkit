@@ -5962,7 +5962,6 @@ name = "nimbus-primitives"
 version = "0.9.0"
 dependencies = [
  "async-trait",
- "cumulus-pallet-parachain-system",
  "frame-benchmarking",
  "frame-support",
  "frame-system",
@@ -5970,7 +5969,6 @@ dependencies = [
  "scale-info",
  "sp-api",
  "sp-application-crypto",
- "sp-consensus-slots",
  "sp-inherents",
  "sp-runtime",
  "sp-std",
@@ -6244,6 +6242,7 @@ dependencies = [
 name = "pallet-author-inherent"
 version = "0.9.0"
 dependencies = [
+ "cumulus-pallet-parachain-system",
  "frame-benchmarking",
  "frame-support",
  "frame-support-test",
@@ -6254,6 +6253,7 @@ dependencies = [
  "scale-info",
  "sp-api",
  "sp-application-crypto",
+ "sp-consensus-slots",
  "sp-core",
  "sp-inherents",
  "sp-io",

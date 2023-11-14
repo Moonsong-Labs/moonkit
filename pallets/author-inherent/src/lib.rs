@@ -36,6 +36,7 @@ pub use pallet::*;
 #[cfg(any(test, feature = "runtime-benchmarks"))]
 mod benchmarks;
 
+pub mod consensus_hook;
 pub mod weights;
 
 #[cfg(test)]
@@ -75,6 +76,9 @@ pub mod pallet {
 
 		type AllowMultipleBlocksPerSlot: Get<bool>;
 
+		#[pallet::constant]
+		type SlotDuration: Get<u64>;
+
 		type WeightInfo: WeightInfo;
 	}
 
@@ -96,10 +100,11 @@ pub mod pallet {
 	#[pallet::storage]
 	pub type Author<T: Config> = StorageValue<_, T::AuthorId, OptionQuery>;
 
-	/// The highest slot that has been seen in the history of this chain.
-	/// This is a strictly-increasing value.
+	/// First tuple element is the highest slot that has been seen in the history of this chain.
+	/// Second tuple element is the number of authored blocks so far.
+	/// This is a strictly-increasing value if T::AllowMultipleBlocksPerSlot = false.
 	#[pallet::storage]
-	pub type HighestSlotSeen<T: Config> = StorageValue<_, u32, ValueQuery>;
+	pub type HighestSlotInfo<T: Config> = StorageValue<_, (u32, u32), OptionQuery>;
 
 	#[pallet::hooks]
 	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {
@@ -128,28 +133,38 @@ pub mod pallet {
 			ensure_none(origin)?;
 
 			// First check that the slot number is valid (greater than the previous highest)
-			let slot = T::SlotBeacon::slot();
+			let new_slot = T::SlotBeacon::slot();
 
 			if T::AllowMultipleBlocksPerSlot::get() {
 				assert!(
-					slot >= HighestSlotSeen::<T>::get(),
+					new_slot >= HighestSlotInfo::<T>::get().unwrap_or((0u32, 0u32)).0,
 					"Block invalid; Supplied slot number must not decrease"
 				);
-			}else {
+			} else {
 				assert!(
-					slot > HighestSlotSeen::<T>::get(),
+					new_slot > HighestSlotInfo::<T>::get().unwrap_or((0u32, 0u32)).0,
 					"Block invalid; Supplied slot number is not high enough"
 				);
 			}
-			
+
 			// Now check that the author is valid in this slot
 			assert!(
-				T::CanAuthor::can_author(&Self::get(), &slot),
+				T::CanAuthor::can_author(&Self::get(), &new_slot),
 				"Block invalid, supplied author is not eligible."
 			);
 
+			// Fetch info of authored blocks for current slot (if any)
+			let (slot_to_update, authored_blocks) = match HighestSlotInfo::<T>::get() {
+				Some((slot, authored)) if slot == new_slot => (slot, authored + 1),
+				Some((slot, _)) if slot < new_slot => (new_slot, 1),
+				Some(..) => {
+					panic!("slot must not decrease")
+				}
+				None => (new_slot, 1),
+			};
+
 			// Once that is validated, update the stored slot number
-			HighestSlotSeen::<T>::put(slot);
+			HighestSlotInfo::<T>::put((slot_to_update, authored_blocks));
 
 			Ok(Pays::No.into())
 		}
@@ -229,6 +244,16 @@ pub mod pallet {
 			if let Some(author) = eligible_authors.first() {
 				Author::<T>::put(author)
 			}
+		}
+	}
+
+	impl<T: Config> Pallet<T> {
+		pub fn get_highest_slot_info() -> Option<(u32, u32)> {
+			HighestSlotInfo::<T>::get()
+		}
+
+		pub fn get_slot_duration() -> u64 {
+			T::SlotDuration::get()
 		}
 	}
 }
