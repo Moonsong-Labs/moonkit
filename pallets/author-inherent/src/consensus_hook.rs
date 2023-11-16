@@ -27,7 +27,7 @@ use sp_std::{marker::PhantomData, num::NonZeroU32};
 /// A consensus hook for a fixed block processing velocity and unincluded segment capacity.
 ///
 /// Relay chain slot duration must be provided in milliseconds.
-pub struct FixedVelocityConsensusHook<
+pub struct NimbusVelocityConsensusHook<
 	T,
 	const RELAY_CHAIN_SLOT_DURATION_MILLIS: u32,
 	const V: u32,
@@ -39,7 +39,7 @@ impl<
 		const RELAY_CHAIN_SLOT_DURATION_MILLIS: u32,
 		const V: u32,
 		const C: u32,
-	> ConsensusHook for FixedVelocityConsensusHook<T, RELAY_CHAIN_SLOT_DURATION_MILLIS, V, C>
+	> ConsensusHook for NimbusVelocityConsensusHook<T, RELAY_CHAIN_SLOT_DURATION_MILLIS, V, C>
 {
 	// Validates the number of authored blocks within the slot with respect to the `V + 1` limit.
 	fn on_state_proof(state_proof: &RelayChainStateProof) -> (Weight, UnincludedSegmentCapacity) {
@@ -90,7 +90,7 @@ impl<
 		const RELAY_CHAIN_SLOT_DURATION_MILLIS: u32,
 		const V: u32,
 		const C: u32,
-	> FixedVelocityConsensusHook<T, RELAY_CHAIN_SLOT_DURATION_MILLIS, V, C>
+	> NimbusVelocityConsensusHook<T, RELAY_CHAIN_SLOT_DURATION_MILLIS, V, C>
 {
 	/// Whether it is legal to extend the chain, assuming the given block is the most
 	/// recently included one as-of the relay parent that will be built against, and
