@@ -74,8 +74,11 @@ pub mod pallet {
 		/// Some way of determining the current slot for purposes of verifying the author's eligibility
 		type SlotBeacon: SlotBeacon;
 
+		/// Whether or not to allow more than one block per slot.
+		/// Setting it to 'true' will enable async-backing compatibility.
 		type AllowMultipleBlocksPerSlot: Get<bool>;
 
+		/// Current slot duration config, normally expressed in milliseconds.
 		#[pallet::constant]
 		type SlotDuration: Get<u64>;
 
