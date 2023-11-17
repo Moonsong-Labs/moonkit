@@ -16,7 +16,7 @@
 
 use crate::{self as pallet_testing, AccountLookup, NimbusId};
 use frame_support::parameter_types;
-use frame_support::traits::{ConstBool, ConstU32, ConstU64};
+use frame_support::traits::ConstU32;
 use frame_support::weights::RuntimeDbWeight;
 use frame_system;
 use sp_core::H256;
@@ -73,7 +73,7 @@ impl frame_system::Config for Test {
 pub struct DummyBeacon {}
 impl nimbus_primitives::SlotBeacon for DummyBeacon {
 	fn slot() -> u32 {
-		0
+		1
 	}
 }
 
@@ -92,13 +92,18 @@ impl AccountLookup<u64> for MockAccountLookup {
 	}
 }
 
+parameter_types! {
+	pub const AllowMultipleBlocksPerSlot: bool = true;
+	pub const SlotDuration: u64 = 12000;
+}
+
 impl pallet_testing::Config for Test {
 	type AuthorId = u64;
 	type AccountLookup = MockAccountLookup;
 	type CanAuthor = ();
 	type SlotBeacon = DummyBeacon;
-	type AllowMultipleBlocksPerSlot = ConstBool<false>;
-	type SlotDuration = ConstU64<12000>;
+	type AllowMultipleBlocksPerSlot = AllowMultipleBlocksPerSlot;
+	type SlotDuration = SlotDuration;
 	type WeightInfo = ();
 }
 
