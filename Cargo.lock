@@ -1461,7 +1461,7 @@ dependencies = [
 [[package]]
 name = "common"
 version = "0.1.0"
-source = "git+https://github.com/w3f/ring-proof#7275eb6f956219dd70400fce23e9b73593238981"
+source = "git+https://github.com/w3f/ring-proof#d3dcccd76cfdb8e2f905e789f129618898026447"
 dependencies = [
  "ark-ec",
  "ark-ff",
@@ -9540,7 +9540,7 @@ dependencies = [
 [[package]]
 name = "ring"
 version = "0.1.0"
-source = "git+https://github.com/w3f/ring-proof#7275eb6f956219dd70400fce23e9b73593238981"
+source = "git+https://github.com/w3f/ring-proof#d3dcccd76cfdb8e2f905e789f129618898026447"
 dependencies = [
  "ark-ec",
  "ark-ff",
