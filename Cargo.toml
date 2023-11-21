@@ -188,11 +188,6 @@ rococo-runtime = { git = "https://github.com/paritytech/polkadot-sdk", branch = 
 westend-runtime = { git = "https://github.com/paritytech/polkadot-sdk", branch = "release-polkadot-v1.3.0" }
 xcm-simulator = { git = "https://github.com/paritytech/polkadot-sdk", branch = "release-polkadot-v1.3.0" }
 
-# ORML (wasm)
-orml-traits = { git = "https://github.com/open-web3-stack/open-runtime-module-library", branch = "release-polkadot-v1.3.0", default-features = false }
-orml-xcm-support = { git = "https://github.com/open-web3-stack/open-runtime-module-library", branch = "release-polkadot-v1.3.0", default-features = false }
-orml-xtokens = { git = "https://github.com/open-web3-stack/open-runtime-module-library", branch = "release-polkadot-v1.3.0", default-features = false }
-
 # Local (wasm)
 pallet-author-inherent = { path = "pallets/author-inherent", default-features = false }
 pallet-author-mapping = { path = "pallets/author-mapping", default-features = false }
