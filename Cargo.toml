@@ -8,6 +8,10 @@ members = [
 	"pallets/migrations",
 	"pallets/maintenance-mode",
 	"pallets/randomness",
+	"precompiles/balances-erc20",
+	"precompiles/batch",
+	"precompiles/call-permit",
+	"precompiles/xcm-utils",
 	"primitives/nimbus-primitives",
 	"template/node",
 	"template/runtime",
@@ -42,6 +46,11 @@ schnorrkel = { version = "0.9.1", features = ["preaudit_deprecated", "u64_backen
 serde = { version = "1.0.101", default-features = false }
 smallvec = "1.6.1"
 tracing = "0.1.22"
+num_enum = { version = "0.7.1", default-features = false }
+paste = "1.0.6"
+slices = "0.2.0"
+libsecp256k1 = { version = "0.7.1", default-features = false }
+sha3 = { version = "0.10.8", default-features = false }
 
 # Crates.io (template only)
 clap = { version = "4.0.9" }
@@ -107,6 +116,7 @@ sp-consensus-slots = { git = "https://github.com/moondance-labs/polkadot-sdk", b
 sp-storage = { git = "https://github.com/moondance-labs/polkadot-sdk", branch = "tanssi-polkadot-v1.1.0", default-features = false  }
 sp-timestamp = { git = "https://github.com/moondance-labs/polkadot-sdk", branch = "tanssi-polkadot-v1.1.0", default-features = false  }
 sp-trie = { git = "https://github.com/moondance-labs/polkadot-sdk", branch = "tanssi-polkadot-v1.1.0", default-features = false }
+sp-weights = {  git = "https://github.com/moondance-labs/polkadot-sdk", branch = "tanssi-polkadot-v1.1.0", default-features = false }
 
 # Substrate (client)
 frame-benchmarking-cli = { git = "https://github.com/moondance-labs/polkadot-sdk", branch = "tanssi-polkadot-v1.1.0" }
@@ -179,6 +189,9 @@ polkadot-runtime-parachains = { git = "https://github.com/moondance-labs/polkado
 staging-xcm = { git = "https://github.com/moondance-labs/polkadot-sdk", branch = "tanssi-polkadot-v1.1.0", default-features = false }
 staging-xcm-builder = { git = "https://github.com/moondance-labs/polkadot-sdk", branch = "tanssi-polkadot-v1.1.0", default-features = false }
 staging-xcm-executor = { git = "https://github.com/moondance-labs/polkadot-sdk", branch = "tanssi-polkadot-v1.1.0", default-features = false }
+xcm = { package = "staging-xcm", git = "https://github.com/moondance-labs/polkadot-sdk", branch = "tanssi-polkadot-v1.1.0", default-features = false }
+xcm-builder = { package = "staging-xcm-builder", git = "https://github.com/moondance-labs/polkadot-sdk", branch = "tanssi-polkadot-v1.1.0", default-features = false }
+xcm-executor = { package = "staging-xcm-executor", git = "https://github.com/moondance-labs/polkadot-sdk", branch = "tanssi-polkadot-v1.1.0", default-features = false }
 
 # Polkadot (client)
 kusama-runtime = { git = "https://github.com/moondance-labs/polkadot-sdk", branch = "tanssi-polkadot-v1.1.0" }
@@ -189,12 +202,19 @@ rococo-runtime = { git = "https://github.com/moondance-labs/polkadot-sdk", branc
 westend-runtime = { git = "https://github.com/moondance-labs/polkadot-sdk", branch = "tanssi-polkadot-v1.1.0" }
 xcm-simulator = { git = "https://github.com/moondance-labs/polkadot-sdk", branch = "tanssi-polkadot-v1.1.0" }
 
-# ORML (wasm)
-orml-traits = { git = "https://github.com/open-web3-stack/open-runtime-module-library", branch = "tanssi-polkadot-v1.1.0", default-features = false }
-orml-xcm-support = { git = "https://github.com/open-web3-stack/open-runtime-module-library", branch = "tanssi-polkadot-v1.1.0", default-features = false }
-orml-xtokens = { git = "https://github.com/open-web3-stack/open-runtime-module-library", branch = "tanssi-polkadot-v1.1.0", default-features = false }
+# Frontier (wasm)
+fp-evm = { git = "https://github.com/moondance-labs/frontier", branch = "tanssi-polkadot-v1.1.0", default-features = false }
+pallet-evm = { git = "https://github.com/moondance-labs/frontier", branch = "tanssi-polkadot-v1.1.0", default-features = false }
+precompile-utils = { git = "https://github.com/moondance-labs/frontier", branch = "tanssi-polkadot-v1.1.0", default-features = false }
+
+# EVM
+evm = { git = "https://github.com/rust-blockchain/evm", rev = "b7b82c7e1fc57b7449d6dfa6826600de37cc1e65", default-features = false }
 
 # Local (wasm)
+pallet-evm-precompile-balances-erc20 = { path = "precompiles/balances-erc20", default-features = false }
+pallet-evm-precompile-batch = { path = "precompiles/batch", default-features = false }
+pallet-evm-precompile-call-permit = { path = "precompiles/call-permit", default-features = false }
+pallet-evm-precompile-xcm-utils = { path = "precompiles/xcm-utils", default-features = false }
 pallet-author-inherent = { path = "pallets/author-inherent", default-features = false }
 pallet-author-mapping = { path = "pallets/author-mapping", default-features = false }
 pallet-author-slot-filter = { path = "pallets/author-slot-filter", default-features = false }
