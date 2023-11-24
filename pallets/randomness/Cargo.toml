@@ -8,6 +8,7 @@ version = "0.1.0"
 [dependencies]
 frame-support = { workspace = true }
 frame-system = { workspace = true }
+environmental = { workspace = true }
 log = { workspace = true }
 nimbus-primitives = { workspace = true }
 parity-scale-codec = { workspace = true, features = [ "derive" ] }

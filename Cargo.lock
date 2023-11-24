@@ -6945,6 +6945,7 @@ name = "pallet-randomness"
 version = "0.1.0"
 dependencies = [
  "derive_more",
+ "environmental",
  "frame-benchmarking",
  "frame-support",
  "frame-system",
