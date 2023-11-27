@@ -3416,7 +3416,7 @@ dependencies = [
 [[package]]
 name = "fp-account"
 version = "1.0.0-dev"
-source = "git+https://github.com/moondance-labs/frontier?branch=tanssi-polkadot-v1.1.0#61c5ccca790e3eb945cf610991af58b2621f4a98"
+source = "git+https://github.com/moondance-labs/frontier?branch=tanssi-polkadot-v1.3.0#17b64ada67c9b52eeb32cea33565e456a0f39fbb"
 dependencies = [
  "hex",
  "impl-serde",
@@ -3435,7 +3435,7 @@ dependencies = [
 [[package]]
 name = "fp-evm"
 version = "3.0.0-dev"
-source = "git+https://github.com/moondance-labs/frontier?branch=tanssi-polkadot-v1.1.0#61c5ccca790e3eb945cf610991af58b2621f4a98"
+source = "git+https://github.com/moondance-labs/frontier?branch=tanssi-polkadot-v1.3.0#17b64ada67c9b52eeb32cea33565e456a0f39fbb"
 dependencies = [
  "evm",
  "frame-support",
@@ -6397,7 +6397,7 @@ dependencies = [
  "proc-macro-crate",
  "proc-macro2",
  "quote",
- "syn 2.0.32",
+ "syn 2.0.39",
 ]
 
 [[package]]
@@ -6913,7 +6913,7 @@ dependencies = [
 [[package]]
 name = "pallet-evm"
 version = "6.0.0-dev"
-source = "git+https://github.com/moondance-labs/frontier?branch=tanssi-polkadot-v1.1.0#61c5ccca790e3eb945cf610991af58b2621f4a98"
+source = "git+https://github.com/moondance-labs/frontier?branch=tanssi-polkadot-v1.3.0#17b64ada67c9b52eeb32cea33565e456a0f39fbb"
 dependencies = [
  "environmental",
  "evm",
@@ -9288,7 +9288,7 @@ checksum = "5b40af805b3121feab8a3c29f04d8ad262fa8e0561883e7653e024ae4479e6de"
 [[package]]
 name = "precompile-utils"
 version = "0.1.0"
-source = "git+https://github.com/moondance-labs/frontier?branch=tanssi-polkadot-v1.1.0#61c5ccca790e3eb945cf610991af58b2621f4a98"
+source = "git+https://github.com/moondance-labs/frontier?branch=tanssi-polkadot-v1.3.0#17b64ada67c9b52eeb32cea33565e456a0f39fbb"
 dependencies = [
  "derive_more",
  "environmental",
@@ -9318,7 +9318,7 @@ dependencies = [
 [[package]]
 name = "precompile-utils-macro"
 version = "0.1.0"
-source = "git+https://github.com/moondance-labs/frontier?branch=tanssi-polkadot-v1.1.0#61c5ccca790e3eb945cf610991af58b2621f4a98"
+source = "git+https://github.com/moondance-labs/frontier?branch=tanssi-polkadot-v1.3.0#17b64ada67c9b52eeb32cea33565e456a0f39fbb"
 dependencies = [
  "case",
  "num_enum",

@@ -27,7 +27,8 @@ use frame_support::{
 	traits::OriginTrait,
 };
 use pallet_evm::AddressMapping;
-use parity_scale_codec::{Decode, DecodeLimit, MaxEncodedLen};
+use pallet_xcm::Call as XcmCall;
+use parity_scale_codec::{DecodeLimit, MaxEncodedLen};
 use precompile_utils::precompile_set::SelectorFilter;
 use precompile_utils::prelude::*;
 use sp_core::{H160, U256};
@@ -50,8 +51,8 @@ pub type XcmOriginOf<XcmConfig> =
 pub type XcmAccountIdOf<XcmConfig> =
 	<<<XcmConfig as xcm_executor::Config>::RuntimeCall as Dispatchable>
 		::RuntimeOrigin as OriginTrait>::AccountId;
+pub type XcmCallOf<Runtime> = <Runtime as pallet_xcm::Config>::RuntimeCall;
 
-pub type SystemCallOf<Runtime> = <Runtime as frame_system::Config>::RuntimeCall;
 pub const XCM_SIZE_LIMIT: u32 = 2u32.pow(16);
 type GetXcmSizeLimit = ConstU32<XCM_SIZE_LIMIT>;
 
@@ -68,11 +69,15 @@ where
 	Runtime: pallet_evm::Config + frame_system::Config + pallet_xcm::Config,
 	XcmOriginOf<XcmConfig>: OriginTrait,
 	XcmAccountIdOf<XcmConfig>: Into<H160>,
-	XcmConfig: xcm_executor::Config,
-	SystemCallOf<Runtime>: Dispatchable<PostInfo = PostDispatchInfo> + Decode + GetDispatchInfo,
-	<<Runtime as frame_system::Config>::RuntimeCall as Dispatchable>::RuntimeOrigin:
+	<<Runtime as pallet_xcm::Config>::RuntimeCall as Dispatchable>::RuntimeOrigin:
 		From<Option<Runtime::AccountId>>,
-	<Runtime as frame_system::Config>::RuntimeCall: From<pallet_xcm::Call<Runtime>>,
+	XcmConfig: xcm_executor::Config,
+	<<Runtime as frame_system::Config>::RuntimeCall as Dispatchable>::RuntimeOrigin:
+	From<Option<Runtime::AccountId>>,
+	<Runtime as frame_system::Config>::RuntimeCall:
+	From<XcmCall<Runtime>>,
+	<Runtime as frame_system::Config>::RuntimeCall:
+		Dispatchable<PostInfo = PostDispatchInfo> + GetDispatchInfo,
 {
 	fn is_allowed(_caller: H160, selector: Option<u32>) -> bool {
 		match selector {
@@ -99,10 +104,15 @@ where
 	XcmOriginOf<XcmConfig>: OriginTrait,
 	XcmAccountIdOf<XcmConfig>: Into<H160>,
 	XcmConfig: xcm_executor::Config,
-	SystemCallOf<Runtime>: Dispatchable<PostInfo = PostDispatchInfo> + Decode + GetDispatchInfo,
-	<<Runtime as frame_system::Config>::RuntimeCall as Dispatchable>::RuntimeOrigin:
+	<<Runtime as pallet_xcm::Config>::RuntimeCall as Dispatchable>::RuntimeOrigin:
 		From<Option<Runtime::AccountId>>,
-	<Runtime as frame_system::Config>::RuntimeCall: From<pallet_xcm::Call<Runtime>>,
+	XcmConfig: xcm_executor::Config,
+	<<Runtime as frame_system::Config>::RuntimeCall as Dispatchable>::RuntimeOrigin:
+	From<Option<Runtime::AccountId>>,
+	<Runtime as frame_system::Config>::RuntimeCall:
+	From<XcmCall<Runtime>>,
+	<Runtime as frame_system::Config>::RuntimeCall:
+		Dispatchable<PostInfo = PostDispatchInfo> + GetDispatchInfo,
 {
 	#[precompile::public("multilocationToAddress((uint8,bytes[]))")]
 	#[precompile::view]
@@ -215,7 +225,7 @@ where
 		let origin = Runtime::AddressMapping::into_account_id(handle.context().caller);
 
 		let message: Vec<_> = message.to_vec();
-		let xcm = xcm::VersionedXcm::<SystemCallOf<Runtime>>::decode_all_with_depth_limit(
+		let xcm = xcm::VersionedXcm::<XcmCallOf<Runtime>>::decode_all_with_depth_limit(
 			xcm::MAX_XCM_DECODE_DEPTH,
 			&mut message.as_slice(),
 		)
