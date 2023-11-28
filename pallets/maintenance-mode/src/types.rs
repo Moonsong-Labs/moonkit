@@ -112,13 +112,13 @@ where
 	}
 
 	#[cfg(feature = "try-runtime")]
-     fn try_on_runtime_upgrade(checks: bool) -> Result<Weight, sp_runtime::TryRuntimeError> {
+	fn try_on_runtime_upgrade(checks: bool) -> Result<Weight, sp_runtime::TryRuntimeError> {
 		if Pallet::<T>::maintenance_mode() {
 			T::MaintenanceExecutiveHooks::try_on_runtime_upgrade(checks)
 		} else {
 			T::NormalExecutiveHooks::try_on_runtime_upgrade(checks)
 		}
-	 }
+	}
 }
 
 #[cfg(feature = "try-runtime")]
