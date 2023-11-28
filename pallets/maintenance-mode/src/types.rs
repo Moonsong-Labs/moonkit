@@ -94,20 +94,11 @@ where
 	}
 
 	#[cfg(feature = "try-runtime")]
-	fn pre_upgrade() -> Result<Vec<u8>, sp_runtime::DispatchError> {
+	fn try_on_runtime_upgrade(checks: bool) -> Result<Weight, sp_runtime::TryRuntimeError> {
 		if Pallet::<T>::maintenance_mode() {
-			T::MaintenanceExecutiveHooks::pre_upgrade()
+			T::MaintenanceExecutiveHooks::try_on_runtime_upgrade(checks)
 		} else {
-			T::NormalExecutiveHooks::pre_upgrade()
-		}
-	}
-
-	#[cfg(feature = "try-runtime")]
-	fn post_upgrade(state: Vec<u8>) -> Result<(), sp_runtime::DispatchError> {
-		if Pallet::<T>::maintenance_mode() {
-			T::MaintenanceExecutiveHooks::post_upgrade(state)
-		} else {
-			T::NormalExecutiveHooks::post_upgrade(state)
+			T::NormalExecutiveHooks::try_on_runtime_upgrade(checks)
 		}
 	}
 }
