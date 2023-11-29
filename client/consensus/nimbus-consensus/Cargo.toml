@@ -24,6 +24,9 @@ cumulus-client-consensus-common = { workspace = true }
 cumulus-primitives-core = { workspace = true }
 cumulus-primitives-parachain-inherent = { workspace = true }
 
+# Polkadot dependencies
+polkadot-node-primitives = { workspace = true }
+
 # Nimbus Dependencies
 nimbus-primitives = { workspace = true }
 

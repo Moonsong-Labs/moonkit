@@ -20,16 +20,19 @@
 //! stored in its keystore are eligible to author at this slot. If it has an eligible
 //! key it authors.
 
+pub use import_queue::import_queue;
+pub use manual_seal::NimbusManualSealConsensusDataProvider;
+
 use cumulus_client_consensus_common::{
 	ParachainBlockImport, ParachainCandidate, ParachainConsensus,
 };
 use cumulus_primitives_core::{relay_chain::Hash as PHash, ParaId, PersistedValidationData};
-pub use import_queue::import_queue;
 use log::{debug, info, warn};
 use nimbus_primitives::{
 	CompatibleDigestItem, DigestsProvider, NimbusApi, NimbusId, NIMBUS_KEY_ID,
 };
 use parking_lot::Mutex;
+use polkadot_node_primitives::{Collation, MaybeCompressedPoV};
 use sc_client_api::backend::Backend;
 use sc_consensus::{BlockImport, BlockImportParams};
 use sp_api::ProvideRuntimeApi;
@@ -47,14 +50,128 @@ use sp_runtime::{
 use std::convert::TryInto;
 use std::{marker::PhantomData, sync::Arc, time::Duration};
 use tracing::error;
+
 mod import_queue;
 mod manual_seal;
-pub use manual_seal::NimbusManualSealConsensusDataProvider;
 
 const LOG_TARGET: &str = "filtering-consensus";
 
+/// Run bare Nimbus consensus as a relay-chain-driven collator.
+pub fn run_relay_driven_collator<B, BI, CIDP, Client, RClient, SO, Proposer, CS>(
+	params: BuildNimbusConsensusParams<PF, BI, BE, ParaClient, CIDP, CS>,
+) -> impl Future<Output = ()> + Send + 'static
+where
+	B: BlockT,
+	BI: 'static,
+	CIDP: CreateInherentDataProviders<B, (PHash, PersistedValidationData, NimbusId)> + 'static,
+	CIDP::InherentDataProviders: Send,
+	CS: CollatorServiceInterface<Block> + Send + Sync + 'static,
+{
+	async move {
+		let mut collation_requests = cumulus_client_collator::relay_chain_driven::init(
+			params.collator_key,
+			params.para_id,
+			params.overseer_handle,
+		)
+		.await;
+
+		let mut nimbus_consensus = NimbusConsensus::<Block, _, _, _, _, _, _, _>::build(params);
+
+		while let Some(request) = collation_requests.next().await {
+			macro_rules! reject_with_error {
+				($err:expr) => {{
+					request.complete(None);
+					tracing::error!(target: crate::LOG_TARGET, err = ?{ $err });
+					continue;
+				}};
+			}
+
+			macro_rules! try_request {
+				($x:expr) => {{
+					match $x {
+						Ok(x) => x,
+						Err(e) => reject_with_error!(e),
+					}
+				}};
+			}
+
+			let validation_data = request.persisted_validation_data();
+
+			let parent_header = try_request!(Block::Header::decode(
+				&mut &validation_data.parent_head.0[..]
+			));
+
+			let parent_hash = parent_header.hash();
+
+			if !collator
+				.collator_service()
+				.check_block_status(parent_hash, &parent_header)
+			{
+				continue;
+			}
+
+			let relay_parent_header = match params
+				.relay_client
+				.header(RBlockId::hash(*request.relay_parent()))
+				.await
+			{
+				Err(e) => reject_with_error!(e),
+				Ok(None) => continue, // sanity: would be inconsistent to get `None` here
+				Ok(Some(h)) => h,
+			};
+
+			let nimbus_id = match nimbus_consensus
+				.claim_slot::<_, _, P>(&parent_header, &relay_parent_header, &params.keystore)
+				.await
+			{
+				Ok(None) => continue,
+				Ok(Some(nimbus_id)) => nimbus_id,
+				Err(e) => reject_with_error!(e),
+			};
+
+			let inherent_data = try_request!(
+				nimbus_consensus
+					.inherent_data(
+						parent_header.hash(),
+						&validation_data,
+						*request.relay_parent(),
+						nimbus_id.clone(),
+					)
+					.await
+			);
+
+			let (collation, _, post_hash) = try_request!(
+				nimbus_consensus
+					.collate(
+						&parent_header,
+						nimbus_id,
+						None,
+						inherent_data,
+						params.authoring_duration,
+						// Set the block limit to 50% of the maximum PoV size.
+						//
+						// TODO: If we got benchmarking that includes the proof size,
+						// we should be able to use the maximum pov size.
+						(validation_data.max_pov_size / 2) as usize,
+					)
+					.await
+			);
+
+			let result_sender = Some(
+				nimbus_consensus
+					.collator_service()
+					.announce_with_barrier(post_hash),
+			);
+			request.complete(Some(CollationResult {
+				collation,
+				result_sender,
+			}));
+		}
+	}
+}
+
 /// The implementation of the relay-chain provided consensus for parachains.
-pub struct NimbusConsensus<B: BlockT, PF, BI, BE, ParaClient, CIDP, DP = ()> {
+struct NimbusConsensus<B: BlockT, PF, BI, BE, ParaClient, CIDP, CS, DP = ()> {
 	para_id: ParaId,
 	proposer_factory: Arc<Mutex<PF>>,
 	create_inherent_data_providers: Arc<CIDP>,
@@ -63,11 +180,12 @@ pub struct NimbusConsensus<B: BlockT, PF, BI, BE, ParaClient, CIDP, DP = ()> {
 	keystore: KeystorePtr,
 	skip_prediction: bool,
 	additional_digests_provider: Arc<DP>,
+	collator_service: CS,
 	_phantom: PhantomData<B>,
 }
 
-impl<B: BlockT, PF, BI, BE, ParaClient, CIDP, DP> Clone
-	for NimbusConsensus<B, PF, BI, BE, ParaClient, CIDP, DP>
+impl<B: BlockT, PF, BI, BE, ParaClient, CIDP, CS, DP> Clone
+	for NimbusConsensus<B, PF, BI, BE, ParaClient, CIDP, CS, DP>
 {
 	fn clone(&self) -> Self {
 		Self {
@@ -84,14 +202,15 @@ impl<B: BlockT, PF, BI, BE, ParaClient, CIDP, DP> Clone
 	}
 }
 
-impl<B, PF, BI, BE, ParaClient, CIDP, DP> NimbusConsensus<B, PF, BI, BE, ParaClient, CIDP, DP>
+impl<B, PF, BI, BE, ParaClient, CIDP, DP> NimbusConsensus<B, PF, BI, BE, ParaClient, CIDP, CS, DP>
 where
 	B: BlockT,
 	PF: 'static,
-	BI: 'static,
+	BI: BlockImport<Block> + ParachainBlockImportMarker + Send + Sync + 'static,
 	BE: Backend<B> + 'static,
 	ParaClient: ProvideRuntimeApi<B> + 'static,
 	CIDP: CreateInherentDataProviders<B, (PHash, PersistedValidationData, NimbusId)> + 'static,
+	CS: CollatorServiceInterface<Block>,
 	DP: DigestsProvider<NimbusId, <B as BlockT>::Hash> + 'static,
 {
 	/// Create a new instance of nimbus consensus.
@@ -163,6 +282,187 @@ where
 				)
 			})
 			.ok()
+	}
+
+	/// Attempt to claim a slot derived from the given relay-parent header's slot.
+	pub async fn claim_slot<B, P>(
+		parent: &B::Header,
+		relay_parent_header: &PHeader,
+		keystore: &KeystorePtr,
+	) -> Result<Option<NimbusId>, Box<dyn Error>> {
+		// Determine if runtime change
+		let runtime_upgraded = if *parent.number() > sp_runtime::traits::Zero::zero() {
+			use sp_api::Core as _;
+			let previous_runtime_version: sp_api::RuntimeVersion = self
+				.parachain_client
+				.runtime_api()
+				.version(parent.hash())
+				.ok()?;
+			let runtime_version: sp_api::RuntimeVersion = self
+				.parachain_client
+				.runtime_api()
+				.version(parent.hash())
+				.ok()?;
+
+			previous_runtime_version != runtime_version
+		} else {
+			false
+		};
+
+		let maybe_key = if self.skip_prediction || runtime_upgraded {
+			first_available_key(&*self.keystore)
+		} else {
+			first_eligible_key::<B, ParaClient>(
+				self.parachain_client.clone(),
+				&*self.keystore,
+				parent,
+				validation_data.relay_parent_number,
+			)
+		};
+
+		if let Some(key) = maybe_key {
+			Some(
+				NimbusId::from_slice(&author_key)
+					.map_err(
+						|e| error!(target: LOG_TARGET, error = ?e, "Invalid Nimbus ID (wrong length)."),
+					)
+					.ok()?,
+			)
+		} else {
+			None
+		}
+	}
+
+	/// Propose, seal, and import a block, packaging it into a collation.
+	///
+	/// Provide the slot to build at as well as any other necessary pre-digest logs,
+	/// the inherent data, and the proposal duration and PoV size limits.
+	///
+	/// The Aura pre-digest should not be explicitly provided and is set internally.
+	///
+	/// This does not announce the collation to the parachain network or the relay chain.
+	pub async fn collate(
+		&mut self,
+		parent_header: &Block::Header,
+		nimbus_id: NimbusId,
+		additional_pre_digest: impl Into<Option<Vec<DigestItem>>>,
+		inherent_data: InherentData,
+		proposal_duration: Duration,
+		max_pov_size: usize,
+	) -> Result<(Collation, Block::Hash), Box<dyn Error + Send + 'static>> {
+		let proposer_future = self.proposer_factory.lock().init(&parent);
+
+		let proposer = proposer_future
+			.await
+			.map_err(|e| error!(target: LOG_TARGET, error = ?e, "Could not create proposer."))
+			.ok()?;
+
+		let mut logs = vec![CompatibleDigestItem::nimbus_pre_digest(nimbus_id.clone())];
+		logs.extend(
+			self.additional_digests_provider
+				.provide_digests(nimbus_id, parent.hash()),
+		);
+		let inherent_digests = sp_runtime::generic::Digest { logs };
+
+		let Proposal {
+			block,
+			storage_changes,
+			proof,
+		} = proposer
+			.propose(
+				inherent_data,
+				inherent_digests,
+				//TODO: Fix this.
+				Duration::from_millis(500),
+				// Set the block limit to 50% of the maximum PoV size.
+				//
+				// TODO: If we got benchmarking that includes that encapsulates the proof size,
+				// we should be able to use the maximum pov size.
+				Some((validation_data.max_pov_size / 2) as usize),
+			)
+			.await
+			.map_err(|e| error!(target: LOG_TARGET, error = ?e, "Proposing failed."))
+			.ok()?;
+
+		let (header, extrinsics) = block.clone().deconstruct();
+
+		let sig_digest = seal_header::<B>(
+			&header,
+			&*self.keystore,
+			&type_public_pair,
+			&sr25519::CRYPTO_ID,
+		);
+
+		let mut block_import_params = BlockImportParams::new(BlockOrigin::Own, header.clone());
+		block_import_params.post_digests.push(sig_digest.clone());
+		block_import_params.body = Some(extrinsics.clone());
+		block_import_params.state_action = sc_consensus::StateAction::ApplyChanges(
+			sc_consensus::StorageChanges::Changes(storage_changes),
+		);
+
+		let post_hash = block_import_params.post_hash();
+
+		// Print the same log line as slots (aura and babe)
+		info!(
+			"🔖 Sealed block for proposal at {}. Hash now {:?}, previously {:?}.",
+			*header.number(),
+			block_import_params.post_hash(),
+			header.hash(),
+		);
+
+		if let Err(err) = self
+			.block_import
+			.lock()
+			.await
+			.import_block(block_import_params)
+			.await
+		{
+			error!(
+				target: LOG_TARGET,
+				at = ?parent.hash(),
+				error = ?err,
+				"Error importing built block.",
+			);
+
+			return None;
+		}
+
+		// Compute info about the block after the digest is added
+		let mut post_header = header.clone();
+		post_header.digest_mut().logs.push(sig_digest.clone());
+		let post_block = B::new(post_header, extrinsics);
+
+		if let Some((collation, block_data)) = self.collator_service.build_collation(
+			parent_header,
+			post_hash,
+			ParachainCandidate {
+				block: post_block,
+				proof: proof,
+			},
+		) {
+			tracing::info!(
+				target: crate::LOG_TARGET,
+				"PoV size {{ header: {}kb, extrinsics: {}kb, storage_proof: {}kb }}",
+				block_data.header().encode().len() as f64 / 1024f64,
+				block_data.extrinsics().encode().len() as f64 / 1024f64,
+				block_data.storage_proof().encode().len() as f64 / 1024f64,
+			);
+
+			if let MaybeCompressedPoV::Compressed(ref pov) = collation.proof_of_validity {
+				tracing::info!(
+					target: crate::LOG_TARGET,
+					"Compressed PoV size: {}kb",
+					pov.block_data.0.len() as f64 / 1024f64,
+				);
+			}
+
+			Ok((collation, block_data, post_hash))
+		} else {
+			Err(
+				Box::<dyn Error + Send + Sync>::from("Unable to produce collation")
+					as Box<dyn Error + Send>,
+			)
+		}
 	}
 }
 
@@ -277,183 +577,30 @@ where
 	<DigestItem as CompatibleDigestItem>::nimbus_seal(signature)
 }
 
-#[async_trait::async_trait]
-impl<B, PF, BI, BE, ParaClient, CIDP, DP> ParachainConsensus<B>
-	for NimbusConsensus<B, PF, BI, BE, ParaClient, CIDP, DP>
-where
-	B: BlockT,
-	BI: BlockImport<B> + Send + Sync + 'static,
-	BE: Backend<B> + Send + Sync + 'static,
-	PF: Environment<B> + Send + Sync + 'static,
-	PF::Proposer: Proposer<
-		B,
-		ProofRecording = EnableProofRecording,
-		Proof = <EnableProofRecording as ProofRecording>::Proof,
-	>,
-	ParaClient: ProvideRuntimeApi<B> + Send + Sync + 'static,
-	ParaClient::Api: NimbusApi<B>,
-	CIDP: CreateInherentDataProviders<B, (PHash, PersistedValidationData, NimbusId)> + 'static,
-	DP: DigestsProvider<NimbusId, <B as BlockT>::Hash> + 'static + Send + Sync,
-{
-	async fn produce_candidate(
-		&mut self,
-		parent: &B::Header,
-		relay_parent: PHash,
-		validation_data: &PersistedValidationData,
-	) -> Option<ParachainCandidate<B>> {
-		// Determine if runtime change
-		let runtime_upgraded = if *parent.number() > sp_runtime::traits::Zero::zero() {
-			use sp_api::Core as _;
-			let previous_runtime_version: sp_api::RuntimeVersion = self
-				.parachain_client
-				.runtime_api()
-				.version(parent.hash())
-				.ok()?;
-			let runtime_version: sp_api::RuntimeVersion = self
-				.parachain_client
-				.runtime_api()
-				.version(parent.hash())
-				.ok()?;
-
-			previous_runtime_version != runtime_version
-		} else {
-			false
-		};
-
-		let maybe_key = if self.skip_prediction || runtime_upgraded {
-			first_available_key(&*self.keystore)
-		} else {
-			first_eligible_key::<B, ParaClient>(
-				self.parachain_client.clone(),
-				&*self.keystore,
-				parent,
-				validation_data.relay_parent_number,
-			)
-		};
-
-		// If there are no eligible keys, print the log, and exit early.
-		let type_public_pair = match maybe_key {
-			Some(p) => p,
-			None => {
-				return None;
-			}
-		};
-
-		let proposer_future = self.proposer_factory.lock().init(&parent);
-
-		let proposer = proposer_future
-			.await
-			.map_err(|e| error!(target: LOG_TARGET, error = ?e, "Could not create proposer."))
-			.ok()?;
-
-		let nimbus_id = NimbusId::from_slice(&type_public_pair)
-			.map_err(
-				|e| error!(target: LOG_TARGET, error = ?e, "Invalid Nimbus ID (wrong length)."),
-			)
-			.ok()?;
-
-		let inherent_data = self
-			.inherent_data(
-				parent.hash(),
-				&validation_data,
-				relay_parent,
-				nimbus_id.clone(),
-			)
-			.await?;
-
-		let mut logs = vec![CompatibleDigestItem::nimbus_pre_digest(nimbus_id.clone())];
-		logs.extend(
-			self.additional_digests_provider
-				.provide_digests(nimbus_id, parent.hash()),
-		);
-		let inherent_digests = sp_runtime::generic::Digest { logs };
-
-		let Proposal {
-			block,
-			storage_changes,
-			proof,
-		} = proposer
-			.propose(
-				inherent_data,
-				inherent_digests,
-				//TODO: Fix this.
-				Duration::from_millis(500),
-				// Set the block limit to 50% of the maximum PoV size.
-				//
-				// TODO: If we got benchmarking that includes that encapsulates the proof size,
-				// we should be able to use the maximum pov size.
-				Some((validation_data.max_pov_size / 2) as usize),
-			)
-			.await
-			.map_err(|e| error!(target: LOG_TARGET, error = ?e, "Proposing failed."))
-			.ok()?;
-
-		let (header, extrinsics) = block.clone().deconstruct();
-
-		let sig_digest = seal_header::<B>(
-			&header,
-			&*self.keystore,
-			&type_public_pair,
-			&sr25519::CRYPTO_ID,
-		);
-
-		let mut block_import_params = BlockImportParams::new(BlockOrigin::Own, header.clone());
-		block_import_params.post_digests.push(sig_digest.clone());
-		block_import_params.body = Some(extrinsics.clone());
-		block_import_params.state_action = sc_consensus::StateAction::ApplyChanges(
-			sc_consensus::StorageChanges::Changes(storage_changes),
-		);
-
-		// Print the same log line as slots (aura and babe)
-		info!(
-			"🔖 Sealed block for proposal at {}. Hash now {:?}, previously {:?}.",
-			*header.number(),
-			block_import_params.post_hash(),
-			header.hash(),
-		);
-
-		if let Err(err) = self
-			.block_import
-			.lock()
-			.await
-			.import_block(block_import_params)
-			.await
-		{
-			error!(
-				target: LOG_TARGET,
-				at = ?parent.hash(),
-				error = ?err,
-				"Error importing built block.",
-			);
-
-			return None;
-		}
-
-		// Compute info about the block after the digest is added
-		let mut post_header = header.clone();
-		post_header.digest_mut().logs.push(sig_digest.clone());
-		let post_block = B::new(post_header, extrinsics);
-
-		// Returning the block WITH the seal for distribution around the network.
-		Some(ParachainCandidate {
-			block: post_block,
-			proof,
-		})
-	}
-}
-
 /// Paramaters of [`build_relay_chain_consensus`].
 ///
 /// I briefly tried the async keystore approach, but decided to go sync so I can copy
 /// code from Aura. Maybe after it is working, Jeremy can help me go async.
 pub struct BuildNimbusConsensusParams<PF, BI, BE, ParaClient, CIDP, DP> {
 	pub para_id: ParaId,
+	/// A handle to the relay-chain client's "Overseer" or task orchestrator.
+	pub overseer_handle: OverseerHandle,
 	pub proposer_factory: PF,
+	/// A builder for inherent data builders.
 	pub create_inherent_data_providers: CIDP,
+	/// The block import handle.
 	pub block_import: BI,
+	/// An interface to the relay-chain client.
+	pub relay_client: RClient,
 	pub backend: Arc<BE>,
 	pub parachain_client: Arc<ParaClient>,
+	/// The underlying keystore, which should contain Nimbus consensus keys.
 	pub keystore: KeystorePtr,
+	/// The collator key used to sign collations before submitting to validators.
+	pub collator_key: CollatorPair,
 	pub skip_prediction: bool,
 	pub additional_digests_provider: DP,
+	/// The collator service used for bundling proposals into collations and announcing
+	/// to the network.
+	pub collator_service: CS,
 }
