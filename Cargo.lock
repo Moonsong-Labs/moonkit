@@ -6386,7 +6386,6 @@ dependencies = [
 name = "pallet-author-inherent"
 version = "0.9.0"
 dependencies = [
- "cumulus-pallet-parachain-system",
  "frame-benchmarking",
  "frame-support",
  "frame-support-test",
@@ -6397,7 +6396,6 @@ dependencies = [
  "scale-info",
  "sp-api",
  "sp-application-crypto",
- "sp-consensus-slots",
  "sp-core",
  "sp-inherents",
  "sp-io",
@@ -6429,7 +6427,6 @@ dependencies = [
 name = "pallet-author-slot-filter"
 version = "0.9.0"
 dependencies = [
- "cumulus-pallet-parachain-system",
  "frame-benchmarking",
  "frame-support",
  "frame-support-test",

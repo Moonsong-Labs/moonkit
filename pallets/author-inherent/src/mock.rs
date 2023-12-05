@@ -73,7 +73,7 @@ impl frame_system::Config for Test {
 pub struct DummyBeacon {}
 impl nimbus_primitives::SlotBeacon for DummyBeacon {
 	fn slot() -> u32 {
-		1
+		0
 	}
 }
 
@@ -90,11 +90,6 @@ impl AccountLookup<u64> for MockAccountLookup {
 			None
 		}
 	}
-}
-
-parameter_types! {
-	pub const AllowMultipleBlocksPerSlot: bool = true;
-	pub const SlotDuration: u64 = 12000;
 }
 
 impl pallet_testing::Config for Test {
