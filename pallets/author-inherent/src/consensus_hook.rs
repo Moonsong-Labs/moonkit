@@ -21,7 +21,7 @@ use cumulus_pallet_parachain_system::{
 	relay_state_snapshot::RelayChainStateProof,
 };
 use frame_support::pallet_prelude::*;
-use sp_consensus_slots::{Slot, SlotDuration};
+use nimbus_primitives::SlotBeacon;
 use sp_std::{marker::PhantomData, num::NonZeroU32};
 
 /// A consensus hook for a fixed block processing velocity and unincluded segment capacity.
@@ -45,31 +45,16 @@ impl<
 	fn on_state_proof(state_proof: &RelayChainStateProof) -> (Weight, UnincludedSegmentCapacity) {
 		// Ensure velocity is non-zero.
 		let velocity = V.max(1);
-		let relay_chain_slot = state_proof
-			.read_slot()
-			.expect("failed to read relay chain slot");
 
-		let (slot, authored) = pallet::Pallet::<T>::get_highest_slot_info()
-			.expect("slot info is inserted on block initialization");
+		let (slot, mut authored) = pallet::Pallet::<T>::get_highest_slot_info().unwrap_or_default();
 
-		let slot = u64::from(slot);
-
-		// Calculate the current relay slot in millis.
-		let relay_chain_timestamp =
-			u64::from(RELAY_CHAIN_SLOT_DURATION_MILLIS).saturating_mul(*relay_chain_slot);
-
-		// Fetch the slot duration from parachain's config
-		let para_slot_duration =
-			SlotDuration::from_millis(pallet::Pallet::<T>::get_slot_duration());
-		let para_slot_from_relay =
-			Slot::from_timestamp(relay_chain_timestamp.into(), para_slot_duration);
-
-		// Check that the slot fetched from storage is the same as the calculated using relay timestamp
-		assert_eq!(
-			Slot::from(slot),
-			para_slot_from_relay,
-			"slot number mismatch"
-		);
+		// The highest slot informations are upodated after this hook,
+		// so the current block is not taken into account.
+		// If the current slot is the same as is the previous block,
+		// we should account for the current block
+		if T::SlotBeacon::slot() == slot {
+			authored += 1;
+		}
 
 		if authored > velocity + 1 {
 			panic!("authored blocks limit is reached for the slot")
