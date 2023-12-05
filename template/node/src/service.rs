@@ -299,6 +299,7 @@ where
 			})),
 			warp_sync_params: None,
 			net_config,
+			block_relay: None,
 		})?;
 
 	let rpc_extensions_builder = {
@@ -513,6 +514,7 @@ pub fn start_instant_seal_node(config: Configuration) -> Result<TaskManager, sc_
 			block_announce_validator_builder: None,
 			warp_sync_params: None,
 			net_config,
+			block_relay: None,
 		})?;
 
 	if config.offchain_worker.enabled {

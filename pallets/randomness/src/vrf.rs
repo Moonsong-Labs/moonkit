@@ -25,10 +25,33 @@ use sp_core::crypto::ByteArray;
 /// VRF output
 type Randomness = sp_consensus_babe::Randomness;
 
+environmental::environmental!(FAKE_VRF: ());
+
+/// TODO doc
+pub fn using_fake_vrf<'a, R, F: FnOnce() -> R>(mutator: F) -> R {
+	FAKE_VRF::using(&mut (), mutator)
+}
+
 /// Gets VRF output from system digests and verifies it using the block author's VrfId
 /// Transforms VRF output into randomness value and puts it into `LocalVrfOutput`
 /// Fills the `RandomnessResult` associated with the current block if any requests exist
 pub(crate) fn verify_and_set_output<T: Config>() {
+	let randomness = if FAKE_VRF::with(|_| ()).is_some() {
+		T::Hash::default()
+	} else {
+		get_and_verify_randomness::<T>()
+	};
+
+	LocalVrfOutput::<T>::put(Some(randomness));
+	// Supply randomness result if any requests exist for the VRF output this block
+	let local_vrf_this_block = RequestType::Local(frame_system::Pallet::<T>::block_number());
+	if let Some(mut results) = RandomnessResults::<T>::get(&local_vrf_this_block) {
+		results.randomness = Some(randomness);
+		RandomnessResults::<T>::insert(local_vrf_this_block, results);
+	}
+}
+
+fn get_and_verify_randomness<T: Config>() -> T::Hash {
 	let mut block_author_vrf_id: Option<VrfId> = None;
 	// Get VrfOutput and VrfProof from system digests
 	// Expect client to insert VrfOutput, VrfProof into digests by setting
@@ -86,14 +109,7 @@ pub(crate) fn verify_and_set_output<T: Config>() {
 		.ok()
 		.map(|inout| inout.make_bytes(&VRF_INOUT_CONTEXT))
 		.expect("Transforming VrfOutput into randomness bytes failed");
-	let randomness = T::Hash::decode(&mut &randomness[..])
+	T::Hash::decode(&mut &randomness[..])
 		.ok()
-		.expect("Bytes can be decoded into T::Hash");
-	LocalVrfOutput::<T>::put(Some(randomness));
-	// Supply randomness result if any requests exist for the VRF output this block
-	let local_vrf_this_block = RequestType::Local(frame_system::Pallet::<T>::block_number());
-	if let Some(mut results) = RandomnessResults::<T>::get(&local_vrf_this_block) {
-		results.randomness = Some(randomness);
-		RandomnessResults::<T>::insert(local_vrf_this_block, results);
-	}
+		.expect("Bytes can be decoded into T::Hash")
 }
