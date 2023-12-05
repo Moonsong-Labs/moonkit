@@ -14,10 +14,6 @@
 // You should have received a copy of the GNU General Public License
 // along with Moonkit.  If not, see <http://www.gnu.org/licenses/>.
 
-//! Pallet that allows block authors to include their identity in a block via an inherent.
-//! Currently the author does not _prove_ their identity, just states it. So it should not be used,
-//! for things like equivocation slashing that require authenticated authorship information.
-
 #![cfg_attr(not(feature = "std"), no_std)]
 
 pub mod consensus_hook;
@@ -54,16 +50,6 @@ impl ParachainSlot for RelaySlot {
 		None
 	}
 }
-
-/*/// Fixed time slot
-struct FixedSlot<GetSlotDuration>(PhantomData<GetSlotDuration>);
-
-impl<GetSlotDuration: Get<u64>> ParachainSlot for FixedSlot<GetSlotDuration> {
-	fn para_slot_from_relay_timestamp(relay_chain_timestamp: u64) -> Slot {
-		let para_slot_duration = SlotDuration::from_millis(GetSlotDuration::get());
-		Slot::from_timestamp(relay_chain_timestamp.into(), para_slot_duration)
-	}
-}*/
 
 #[frame_support::pallet]
 pub mod pallet {
