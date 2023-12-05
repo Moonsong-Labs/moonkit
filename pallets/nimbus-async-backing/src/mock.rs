@@ -14,9 +14,9 @@
 // You should have received a copy of the GNU General Public License
 // along with Moonkit.  If not, see <http://www.gnu.org/licenses/>.
 
-use crate::{self as pallet_testing, AccountLookup, NimbusId};
+use crate::{self as async_backing, RelaySlot};
 use frame_support::parameter_types;
-use frame_support::traits::ConstU32;
+use frame_support::traits::{ConstU32, ConstU64};
 use frame_support::weights::RuntimeDbWeight;
 use frame_system;
 use sp_core::H256;
@@ -30,14 +30,14 @@ type Block = frame_system::mocking::MockBlock<Test>;
 frame_support::construct_runtime!(
 	pub enum Test
 	{
-		System: frame_system::{Pallet, Call, Config<T>, Storage, Event<T>},
-		AuthorInherent: pallet_testing::{Pallet, Call, Storage},
+		System: frame_system,
+		Timestamp: pallet_timestamp,
+		AsyncBacking: async_backing,
 	}
 );
 
 parameter_types! {
 	pub const BlockHashCount: u64 = 250;
-	pub Authors: Vec<u64> = vec![1, 2, 3, 4, 5];
 	pub const TestDbWeight: RuntimeDbWeight = RuntimeDbWeight {
 		read: 1,
 		write: 10,
@@ -70,26 +70,11 @@ impl frame_system::Config for Test {
 	type MaxConsumers = ConstU32<16>;
 }
 
-pub struct DummyBeacon {}
-impl nimbus_primitives::SlotBeacon for DummyBeacon {
-	fn slot() -> u32 {
-		1
-	}
-}
-
-pub const ALICE: u64 = 1;
-pub const ALICE_NIMBUS: [u8; 32] = [1; 32];
-pub struct MockAccountLookup;
-impl AccountLookup<u64> for MockAccountLookup {
-	fn lookup_account(nimbus_id: &NimbusId) -> Option<u64> {
-		let nimbus_id_bytes: &[u8] = nimbus_id.as_ref();
-
-		if nimbus_id_bytes == &ALICE_NIMBUS {
-			Some(ALICE)
-		} else {
-			None
-		}
-	}
+impl pallet_timestamp::Config for Test {
+	type Moment = u64;
+	type OnTimestampSet = ();
+	type MinimumPeriod = ConstU64<1>;
+	type WeightInfo = ();
 }
 
 parameter_types! {
@@ -97,18 +82,15 @@ parameter_types! {
 	pub const SlotDuration: u64 = 12000;
 }
 
-impl pallet_testing::Config for Test {
-	type AuthorId = u64;
-	type AccountLookup = MockAccountLookup;
-	type CanAuthor = ();
-	type SlotBeacon = DummyBeacon;
-	type WeightInfo = ();
+impl async_backing::Config for Test {
+	type AllowMultipleBlocksPerSlot = AllowMultipleBlocksPerSlot;
+	type ParachainSlot = RelaySlot;
 }
 
 /// Build genesis storage according to the mock runtime.
 pub fn new_test_ext() -> sp_io::TestExternalities {
-	frame_system::GenesisConfig::<Test>::default()
+	let t = frame_system::GenesisConfig::<Test>::default()
 		.build_storage()
-		.unwrap()
-		.into()
+		.unwrap();
+	sp_io::TestExternalities::new(t)
 }

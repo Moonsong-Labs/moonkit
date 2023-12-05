@@ -7,6 +7,7 @@ version = "0.9.0"
 
 [dependencies]
 cumulus-pallet-parachain-system = { workspace = true }
+cumulus-primitives-core = { workspace = true }
 frame-support = { workspace = true }
 frame-system = { workspace = true }
 log = { workspace = true }
@@ -20,6 +21,7 @@ sp-runtime = { workspace = true }
 sp-std = { workspace = true }
 
 [dev-dependencies]
+sp-io = { workspace = true }
 
 # Cumulus
 cumulus-pallet-parachain-system = { workspace = true }
@@ -28,6 +30,7 @@ cumulus-pallet-parachain-system = { workspace = true }
 default = [ "std" ]
 std = [
 	"cumulus-pallet-parachain-system/std",
+	"cumulus-primitives-core/std",
 	"frame-support/std",
 	"frame-system/std",
 	"nimbus-primitives/std",

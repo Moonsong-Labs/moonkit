@@ -22,6 +22,11 @@
 
 pub mod consensus_hook;
 
+#[cfg(test)]
+mod mock;
+#[cfg(test)]
+mod tests;
+
 pub use pallet::*;
 
 use frame_support::pallet_prelude::*;
@@ -64,7 +69,11 @@ impl<GetSlotDuration: Get<u64>> ParachainSlot for FixedSlot<GetSlotDuration> {
 pub mod pallet {
 	use super::*;
 
+	/// The current storage version.
+	const STORAGE_VERSION: StorageVersion = StorageVersion::new(1);
+
 	#[pallet::pallet]
+	#[pallet::storage_version(STORAGE_VERSION)]
 	pub struct Pallet<T>(PhantomData<T>);
 
 	/// The configuration trait.

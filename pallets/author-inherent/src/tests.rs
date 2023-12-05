@@ -70,31 +70,3 @@ fn test_author_is_still_available_after_on_finalize() {
 		assert_eq!(Some(ALICE), <Author<Test>>::get());
 	});
 }
-
-#[test]
-fn allows_to_create_more_than_one_block_per_slot() {
-	new_test_ext().execute_with(|| {
-		let block_number = 1;
-		System::initialize(
-			&block_number,
-			&H256::default(),
-			&Digest {
-				logs: vec![DigestItem::PreRuntime(
-					NIMBUS_ENGINE_ID,
-					NimbusId::from_slice(&ALICE_NIMBUS).unwrap().encode(),
-				)],
-			},
-		);
-
-		AuthorInherent::on_initialize(block_number);
-		AuthorInherent::on_finalize(block_number);
-
-		assert!(<Test as crate::Config>::AllowMultipleBlocksPerSlot::get());
-
-		let _ = AuthorInherent::kick_off_authorship_validation(RuntimeOrigin::none());
-		assert_eq!(AuthorInherent::get_highest_slot_info(), Some((1, 1)));
-
-		let _ = AuthorInherent::kick_off_authorship_validation(RuntimeOrigin::none());
-		assert_eq!(AuthorInherent::get_highest_slot_info(), Some((1, 2)));
-	});
-}

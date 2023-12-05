@@ -29,6 +29,9 @@ use frame_support::pallet_prelude::*;
 use sp_consensus_slots::Slot;
 use sp_std::{marker::PhantomData, num::NonZeroU32};
 
+#[cfg(tests)]
+type RelayChainStateProof = crate::mock::FakeRelayChainStateProof;
+
 /// A consensus hook for a fixed block processing velocity and unincluded segment capacity.
 ///
 /// Relay chain slot duration must be provided in milliseconds.
@@ -50,11 +53,28 @@ where
 {
 	// Validates the number of authored blocks within the slot with respect to the `V + 1` limit.
 	fn on_state_proof(state_proof: &RelayChainStateProof) -> (Weight, UnincludedSegmentCapacity) {
-		// Ensure velocity is non-zero.
-		let velocity = V.max(1);
 		let relay_chain_slot = state_proof
 			.read_slot()
 			.expect("failed to read relay chain slot");
+
+		Self::on_state_proof_inner(relay_chain_slot)
+	}
+}
+
+impl<
+		T: pallet::Config,
+		const RELAY_CHAIN_SLOT_DURATION_MILLIS: u32,
+		const V: u32,
+		const C: u32,
+	> FixedVelocityConsensusHook<T, RELAY_CHAIN_SLOT_DURATION_MILLIS, V, C>
+where
+	<T as pallet_timestamp::Config>::Moment: Into<u64>,
+{
+	pub(crate) fn on_state_proof_inner(
+		relay_chain_slot: cumulus_primitives_core::relay_chain::Slot,
+	) -> (Weight, UnincludedSegmentCapacity) {
+		// Ensure velocity is non-zero.
+		let velocity = V.max(1);
 
 		// Convert relay chain timestamp.
 		let relay_chain_timestamp =
@@ -109,6 +129,8 @@ impl<
 		const V: u32,
 		const C: u32,
 	> FixedVelocityConsensusHook<T, RELAY_CHAIN_SLOT_DURATION_MILLIS, V, C>
+where
+	<T as pallet_timestamp::Config>::Moment: Into<u64>,
 {
 	/// Whether it is legal to extend the chain, assuming the given block is the most
 	/// recently included one as-of the relay parent that will be built against, and
