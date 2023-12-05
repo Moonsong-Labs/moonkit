@@ -64,13 +64,9 @@ fn can_not_produce_3_parablock_per_relay_slot() {
 fn can_skip_a_relay_slot() {
 	new_test_ext().execute_with(|| {
 		assert_eq!(AsyncBacking::slot_info(), None);
-		ConsensusHook::on_state_proof_inner(
-			1.into(),
-		);
+		ConsensusHook::on_state_proof_inner(1.into());
 		assert_slot_info_eq(1, 1);
-		ConsensusHook::on_state_proof_inner(
-			3.into(),
-		);
+		ConsensusHook::on_state_proof_inner(3.into());
 		assert_slot_info_eq(3, 1);
 	});
 }
