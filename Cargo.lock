@@ -5722,6 +5722,7 @@ dependencies = [
  "pallet-author-slot-filter",
  "pallet-balances",
  "pallet-insecure-randomness-collective-flip",
+ "pallet-nimbus-async-backing",
  "pallet-sudo",
  "pallet-template",
  "pallet-timestamp",
@@ -6306,6 +6307,7 @@ dependencies = [
 name = "pallet-author-slot-filter"
 version = "0.9.0"
 dependencies = [
+ "cumulus-pallet-parachain-system",
  "frame-benchmarking",
  "frame-support",
  "frame-support-test",
@@ -6815,6 +6817,24 @@ dependencies = [
  "parity-scale-codec",
  "scale-info",
  "sp-io",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
+name = "pallet-nimbus-async-backing"
+version = "0.9.0"
+dependencies = [
+ "cumulus-pallet-parachain-system",
+ "frame-support",
+ "frame-system",
+ "log",
+ "nimbus-primitives",
+ "pallet-timestamp",
+ "parity-scale-codec",
+ "scale-info",
+ "sp-consensus-slots",
+ "sp-core",
  "sp-runtime",
  "sp-std",
 ]

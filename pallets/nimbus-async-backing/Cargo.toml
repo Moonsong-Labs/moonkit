@@ -1,7 +1,7 @@
 [package]
-name = "pallet-author-slot-filter"
+name = "pallet-nimbus-async-backing"
 authors = [ "Moonsong Labs" ]
-description = "Selects a pseudorandom Subset of eligible (probably staked) authors at each slot"
+description = "Nimbus consensus extension pallet for asynchronous backing"
 edition = "2021"
 version = "0.9.0"
 
@@ -11,36 +11,31 @@ frame-support = { workspace = true }
 frame-system = { workspace = true }
 log = { workspace = true }
 nimbus-primitives = { workspace = true }
+pallet-timestamp = { workspace = true }
 parity-scale-codec = { workspace = true }
 scale-info = { workspace = true }
-serde = { workspace = true }
+sp-consensus-slots = { workspace = true }
 sp-core = { workspace = true }
 sp-runtime = { workspace = true }
 sp-std = { workspace = true }
 
-# Benchmarks
-frame-benchmarking = { workspace = true, optional = true }
-
 [dev-dependencies]
-frame-support-test = { workspace = true }
-sp-io = { workspace = true }
+
+# Cumulus
+cumulus-pallet-parachain-system = { workspace = true }
 
 [features]
 default = [ "std" ]
 std = [
-	"frame-benchmarking/std",
+	"cumulus-pallet-parachain-system/std",
 	"frame-support/std",
 	"frame-system/std",
-	"log/std",
 	"nimbus-primitives/std",
+    "pallet-timestamp/std",
 	"parity-scale-codec/std",
 	"scale-info/std",
-	"serde/std",
+	"sp-consensus-slots/std",
 	"sp-core/std",
 	"sp-runtime/std",
 	"sp-std/std",
 ]
-
-runtime-benchmarks = [ "frame-benchmarking", "nimbus-primitives/runtime-benchmarks" ]
-
-try-runtime = [ "frame-support/try-runtime", "nimbus-primitives/try-runtime" ]

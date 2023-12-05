@@ -1,13 +1,7 @@
 [workspace]
 members = [
 	"client/consensus/nimbus-consensus",
-	"pallets/aura-style-filter",
-	"pallets/author-inherent",
-	"pallets/author-mapping",
-	"pallets/author-slot-filter",
-	"pallets/migrations",
-	"pallets/maintenance-mode",
-	"pallets/randomness",
+	"pallets/*",
 	"primitives/nimbus-primitives",
 	"template/node",
 	"template/runtime",
@@ -87,6 +81,7 @@ sp-api = { git = "https://github.com/paritytech/polkadot-sdk", branch = "release
 sp-application-crypto = { git = "https://github.com/paritytech/polkadot-sdk", branch = "release-polkadot-v1.1.0", default-features = false }
 sp-block-builder = { git = "https://github.com/paritytech/polkadot-sdk", branch = "release-polkadot-v1.1.0", default-features = false }
 sp-consensus-babe = { git = "https://github.com/paritytech/polkadot-sdk", branch = "release-polkadot-v1.1.0", default-features = false }
+sp-consensus-slots = { git = "https://github.com/paritytech/polkadot-sdk", branch = "release-polkadot-v1.1.0", default-features = false }
 sp-core = { git = "https://github.com/paritytech/polkadot-sdk", branch = "release-polkadot-v1.1.0", default-features = false }
 sp-debug-derive = { git = "https://github.com/paritytech/polkadot-sdk", branch = "release-polkadot-v1.1.0", default-features = false }
 sp-externalities = { git = "https://github.com/paritytech/polkadot-sdk", branch = "release-polkadot-v1.1.0", default-features = false }
@@ -103,7 +98,6 @@ sp-version = { git = "https://github.com/paritytech/polkadot-sdk", branch = "rel
 substrate-wasm-builder = { git = "https://github.com/paritytech/polkadot-sdk", branch = "release-polkadot-v1.1.0" }
 sp-blockchain = { git = "https://github.com/paritytech/polkadot-sdk", branch = "release-polkadot-v1.1.0", default-features = false  }
 sp-consensus = { git = "https://github.com/paritytech/polkadot-sdk", branch = "release-polkadot-v1.1.0", default-features = false  }
-sp-consensus-slots = { git = "https://github.com/paritytech/polkadot-sdk", branch = "release-polkadot-v1.1.0", default-features = false  }
 sp-storage = { git = "https://github.com/paritytech/polkadot-sdk", branch = "release-polkadot-v1.1.0", default-features = false  }
 sp-timestamp = { git = "https://github.com/paritytech/polkadot-sdk", branch = "release-polkadot-v1.1.0", default-features = false  }
 sp-trie = { git = "https://github.com/paritytech/polkadot-sdk", branch = "release-polkadot-v1.1.0", default-features = false }
@@ -202,6 +196,7 @@ pallet-author-mapping = { path = "pallets/author-mapping", default-features = fa
 pallet-author-slot-filter = { path = "pallets/author-slot-filter", default-features = false }
 pallet-maintenance_mode = { path = "pallets/maintenance_mode", default-features = false }
 pallet-migrations = { path = "pallets/migrations", default-features = false }
+pallet-nimbus-async-backing = { path = "pallets/nimbus-async-backing", default-features = false }
 nimbus-primitives = { path = "primitives/nimbus-primitives", default-features = false }
 session-keys-primitives = { path = "primitives/session-keys", default-features = false }
 xcm-primitives = { path = "primitives/xcm", default-features = false }
