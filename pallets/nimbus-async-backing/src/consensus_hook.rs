@@ -1,18 +1,18 @@
-// Copyright (C) Parity Technologies (UK) Ltd.
-// This file is part of Cumulus.
+// Copyright Moonsong Labs
+// This file is part of Moonkit.
 
-// Cumulus is free software: you can redistribute it and/or modify
+// Moonkit is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
 
-// Cumulus is distributed in the hope that it will be useful,
+// Moonkit is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 // GNU General Public License for more details.
 
 // You should have received a copy of the GNU General Public License
-// along with Cumulus.  If not, see <http://www.gnu.org/licenses/>.
+// along with Moonkit.  If not, see <http://www.gnu.org/licenses/>.
 
 //! The definition of a [`FixedVelocityConsensusHook`] for consensus logic to manage
 //! block velocity.
