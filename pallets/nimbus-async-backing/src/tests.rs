@@ -18,9 +18,7 @@ use crate::consensus_hook::FixedVelocityConsensusHook;
 use crate::mock::*;
 use std::ops::Deref;
 
-const RELAY_CHAIN_SLOT_DURATION_MILLIS: u32 = 6_000;
-
-type ConsensusHook = FixedVelocityConsensusHook<Test, RELAY_CHAIN_SLOT_DURATION_MILLIS, 1, 1>;
+type ConsensusHook = FixedVelocityConsensusHook<Test, 1, 1>;
 
 fn assert_slot_info_eq(slot_number: u64, authored: u32) {
 	assert_eq!(AsyncBacking::slot_info().unwrap().0.deref(), &slot_number);

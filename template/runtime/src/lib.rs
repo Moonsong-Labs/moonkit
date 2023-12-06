@@ -418,7 +418,6 @@ pub const BLOCK_PROCESSING_VELOCITY: u32 = 1;
 
 type ConsensusHook = pallet_nimbus_async_backing::consensus_hook::FixedVelocityConsensusHook<
 	Runtime,
-	RELAY_CHAIN_SLOT_DURATION_MILLIS,
 	BLOCK_PROCESSING_VELOCITY,
 	UNINCLUDED_SEGMENT_CAPACITY,
 >;
@@ -622,7 +621,7 @@ impl pallet_author_slot_filter::Config for Runtime {
 
 impl pallet_nimbus_async_backing::Config for Runtime {
 	type AllowMultipleBlocksPerSlot = ConstBool<false>;
-	type ParachainSlot = pallet_nimbus_async_backing::RelaySlot;
+	type GetAndVerifySlot = pallet_nimbus_async_backing::RelaySlot;
 }
 
 parameter_types! {

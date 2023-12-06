@@ -35,19 +35,10 @@ type RelayChainStateProof = crate::mock::FakeRelayChainStateProof;
 /// A consensus hook for a fixed block processing velocity and unincluded segment capacity.
 ///
 /// Relay chain slot duration must be provided in milliseconds.
-pub struct FixedVelocityConsensusHook<
-	T,
-	const RELAY_CHAIN_SLOT_DURATION_MILLIS: u32,
-	const V: u32,
-	const C: u32,
->(PhantomData<T>);
+pub struct FixedVelocityConsensusHook<T, const V: u32, const C: u32>(PhantomData<T>);
 
-impl<
-		T: pallet::Config,
-		const RELAY_CHAIN_SLOT_DURATION_MILLIS: u32,
-		const V: u32,
-		const C: u32,
-	> ConsensusHook for FixedVelocityConsensusHook<T, RELAY_CHAIN_SLOT_DURATION_MILLIS, V, C>
+impl<T: pallet::Config, const V: u32, const C: u32> ConsensusHook
+	for FixedVelocityConsensusHook<T, V, C>
 where
 	<T as pallet_timestamp::Config>::Moment: Into<u64>,
 {
@@ -61,12 +52,7 @@ where
 	}
 }
 
-impl<
-		T: pallet::Config,
-		const RELAY_CHAIN_SLOT_DURATION_MILLIS: u32,
-		const V: u32,
-		const C: u32,
-	> FixedVelocityConsensusHook<T, RELAY_CHAIN_SLOT_DURATION_MILLIS, V, C>
+impl<T: pallet::Config, const V: u32, const C: u32> FixedVelocityConsensusHook<T, V, C>
 where
 	<T as pallet_timestamp::Config>::Moment: Into<u64>,
 {
@@ -76,11 +62,9 @@ where
 		// Ensure velocity is non-zero.
 		let velocity = V.max(1);
 
-		// Convert relay chain timestamp.
-		let relay_chain_timestamp =
-			u64::from(RELAY_CHAIN_SLOT_DURATION_MILLIS).saturating_mul(*relay_chain_slot);
-
-		let new_slot = T::ParachainSlot::get_current_slot().unwrap_or(relay_chain_slot);
+		// Get and verify the parachain slot
+		let new_slot = T::GetAndVerifySlot::get_and_verify_slot(&relay_chain_slot)
+			.expect("slot number mismatch");
 
 		// Update Slot Info
 		let authored = match SlotInfo::<T>::get() {
@@ -97,12 +81,7 @@ where
 			None => 1,
 		};
 
-		let para_slot_from_relay =
-			T::ParachainSlot::para_slot_from_relay_timestamp(relay_chain_timestamp)
-				.unwrap_or(relay_chain_slot);
-
 		// Perform checks.
-		assert_eq!(new_slot, para_slot_from_relay, "slot number mismatch");
 		if authored > velocity + 1 {
 			panic!("authored blocks limit is reached for the slot")
 		}
@@ -123,12 +102,8 @@ where
 	}
 }
 
-impl<
-		T: pallet::Config + parachain_system::Config,
-		const RELAY_CHAIN_SLOT_DURATION_MILLIS: u32,
-		const V: u32,
-		const C: u32,
-	> FixedVelocityConsensusHook<T, RELAY_CHAIN_SLOT_DURATION_MILLIS, V, C>
+impl<T: pallet::Config + parachain_system::Config, const V: u32, const C: u32>
+	FixedVelocityConsensusHook<T, V, C>
 where
 	<T as pallet_timestamp::Config>::Moment: Into<u64>,
 {

@@ -26,28 +26,51 @@ mod tests;
 pub use pallet::*;
 
 use frame_support::pallet_prelude::*;
-use sp_consensus_slots::Slot;
+use sp_consensus_slots::{Slot, SlotDuration};
 
 /// The InherentIdentifier for nimbus's extension inherent
 pub const INHERENT_IDENTIFIER: InherentIdentifier = *b"nimb-ext";
 
-/// Parachain slot implementation
+/// A way to get the current parachain slot and verify it's validity against the relay slot.
 /// If you don't need to have slots at parachain level, you can use the `RelaySlot` implementation.
-pub trait ParachainSlot {
+pub trait GetAndVerifySlot {
 	/// Get the current slot
-	fn get_current_slot() -> Option<Slot>;
-	/// Compute parachain slot from relay chain timestamp
-	fn para_slot_from_relay_timestamp(relay_chain_timestamp: u64) -> Option<Slot>;
+	fn get_and_verify_slot(relay_chain_slot: &Slot) -> Result<Slot, ()>;
 }
 
 /// Parachain slot implementation that use the relay chain slot directly
 pub struct RelaySlot;
-impl ParachainSlot for RelaySlot {
-	fn get_current_slot() -> Option<Slot> {
-		None
+impl GetAndVerifySlot for RelaySlot {
+	fn get_and_verify_slot(relay_chain_slot: &Slot) -> Result<Slot, ()> {
+		Ok(*relay_chain_slot)
 	}
-	fn para_slot_from_relay_timestamp(_: u64) -> Option<Slot> {
-		None
+}
+
+/// Parachain slot implementation that use a slot provider
+pub struct ParaSlot<const RELAY_CHAIN_SLOT_DURATION_MILLIS: u32, SlotProvider>(
+	PhantomData<SlotProvider>,
+);
+
+impl<const RELAY_CHAIN_SLOT_DURATION_MILLIS: u32, SlotProvider> GetAndVerifySlot
+	for ParaSlot<RELAY_CHAIN_SLOT_DURATION_MILLIS, SlotProvider>
+where
+	SlotProvider: Get<(Slot, SlotDuration)>,
+{
+	fn get_and_verify_slot(relay_chain_slot: &Slot) -> Result<Slot, ()> {
+		// Convert relay chain timestamp.
+		let relay_chain_timestamp =
+			u64::from(RELAY_CHAIN_SLOT_DURATION_MILLIS).saturating_mul((*relay_chain_slot).into());
+
+		let (new_slot, para_slot_duration) = SlotProvider::get();
+
+		let para_slot_from_relay =
+			Slot::from_timestamp(relay_chain_timestamp.into(), para_slot_duration);
+
+		if new_slot == para_slot_from_relay {
+			Ok(new_slot)
+		} else {
+			Err(())
+		}
 	}
 }
 
@@ -69,8 +92,8 @@ pub mod pallet {
 		/// Setting it to 'true' will enable async-backing compatibility.
 		type AllowMultipleBlocksPerSlot: Get<bool>;
 
-		/// Parachain slot implementation
-		type ParachainSlot: ParachainSlot;
+		/// A way to get the current parachain slot and verify it's validity against the relay slot.
+		type GetAndVerifySlot: GetAndVerifySlot;
 	}
 
 	/// First tuple element is the highest slot that has been seen in the history of this chain.
