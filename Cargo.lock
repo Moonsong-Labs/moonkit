@@ -5817,11 +5817,11 @@ dependencies = [
  "hex-literal 0.3.4",
  "log",
  "nimbus-primitives",
+ "pallet-async-backing",
  "pallet-author-inherent",
  "pallet-author-slot-filter",
  "pallet-balances",
  "pallet-insecure-randomness-collective-flip",
- "pallet-nimbus-async-backing",
  "pallet-sudo",
  "pallet-template",
  "pallet-timestamp",
@@ -6363,6 +6363,26 @@ dependencies = [
  "parity-scale-codec",
  "scale-info",
  "sp-core",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
+name = "pallet-async-backing"
+version = "0.9.0"
+dependencies = [
+ "cumulus-pallet-parachain-system",
+ "cumulus-primitives-core",
+ "frame-support",
+ "frame-system",
+ "log",
+ "nimbus-primitives",
+ "pallet-timestamp",
+ "parity-scale-codec",
+ "scale-info",
+ "sp-consensus-slots",
+ "sp-core",
+ "sp-io",
  "sp-runtime",
  "sp-std",
 ]
@@ -6935,26 +6955,6 @@ dependencies = [
  "log",
  "parity-scale-codec",
  "scale-info",
- "sp-io",
- "sp-runtime",
- "sp-std",
-]
-
-[[package]]
-name = "pallet-nimbus-async-backing"
-version = "0.9.0"
-dependencies = [
- "cumulus-pallet-parachain-system",
- "cumulus-primitives-core",
- "frame-support",
- "frame-system",
- "log",
- "nimbus-primitives",
- "pallet-timestamp",
- "parity-scale-codec",
- "scale-info",
- "sp-consensus-slots",
- "sp-core",
  "sp-io",
  "sp-runtime",
  "sp-std",

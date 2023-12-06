@@ -191,7 +191,7 @@ pallet-author-mapping = { path = "pallets/author-mapping", default-features = fa
 pallet-author-slot-filter = { path = "pallets/author-slot-filter", default-features = false }
 pallet-maintenance_mode = { path = "pallets/maintenance_mode", default-features = false }
 pallet-migrations = { path = "pallets/migrations", default-features = false }
-pallet-nimbus-async-backing = { path = "pallets/nimbus-async-backing", default-features = false }
+pallet-async-backing = { path = "pallets/nimbus-async-backing", default-features = false }
 nimbus-primitives = { path = "primitives/nimbus-primitives", default-features = false }
 session-keys-primitives = { path = "primitives/session-keys", default-features = false }
 xcm-primitives = { path = "primitives/xcm", default-features = false }

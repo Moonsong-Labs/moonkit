@@ -1,5 +1,5 @@
 [package]
-name = "pallet-nimbus-async-backing"
+name = "pallet-async-backing"
 authors = [ "Moonsong Labs" ]
 description = "Nimbus consensus extension pallet for asynchronous backing"
 edition = "2021"

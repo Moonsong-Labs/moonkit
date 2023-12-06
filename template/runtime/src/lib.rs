@@ -416,7 +416,7 @@ pub const RELAY_CHAIN_SLOT_DURATION_MILLIS: u32 = 6000;
 pub const UNINCLUDED_SEGMENT_CAPACITY: u32 = 1;
 pub const BLOCK_PROCESSING_VELOCITY: u32 = 1;
 
-type ConsensusHook = pallet_nimbus_async_backing::consensus_hook::FixedVelocityConsensusHook<
+type ConsensusHook = pallet_async_backing::consensus_hook::FixedVelocityConsensusHook<
 	Runtime,
 	BLOCK_PROCESSING_VELOCITY,
 	UNINCLUDED_SEGMENT_CAPACITY,
@@ -619,9 +619,9 @@ impl pallet_author_slot_filter::Config for Runtime {
 	type WeightInfo = ();
 }
 
-impl pallet_nimbus_async_backing::Config for Runtime {
+impl pallet_async_backing::Config for Runtime {
 	type AllowMultipleBlocksPerSlot = ConstBool<false>;
-	type GetAndVerifySlot = pallet_nimbus_async_backing::RelaySlot;
+	type GetAndVerifySlot = pallet_async_backing::RelaySlot;
 }
 
 parameter_types! {
@@ -657,7 +657,7 @@ construct_runtime!(
 		AuthorInherent: pallet_author_inherent::{Pallet, Call, Storage, Inherent} = 20,
 		AuthorFilter: pallet_author_slot_filter::{Pallet, Storage, Event, Config<T>} = 21,
 		PotentialAuthorSet: pallet_account_set::{Pallet, Storage, Config<T>} = 22,
-		NimbusAsyncBacking: pallet_nimbus_async_backing::{Pallet, Storage} = 23,
+		NimbusAsyncBacking: pallet_async_backing::{Pallet, Storage} = 23,
 
 		// XCM helpers.
 		XcmpQueue: cumulus_pallet_xcmp_queue::{Pallet, Call, Storage, Event<T>} = 30,

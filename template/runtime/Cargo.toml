@@ -75,7 +75,7 @@ parachain-info = { workspace = true }
 nimbus-primitives = { workspace = true }
 pallet-author-inherent = {workspace = true }
 pallet-author-slot-filter = { workspace = true }
-pallet-nimbus-async-backing = { workspace = true }
+pallet-async-backing = { workspace = true }
 
 [build-dependencies]
 substrate-wasm-builder = { workspace = true }
