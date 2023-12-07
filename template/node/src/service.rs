@@ -9,7 +9,7 @@ use moonkit_template_runtime::{
 	AccountId, Balance, Nonce, RuntimeApi,
 };
 
-use nimbus_consensus::{NimbusConsensusParams, NimbusManualSealConsensusDataProvider};
+use nimbus_consensus::NimbusManualSealConsensusDataProvider;
 use nimbus_primitives::NimbusApi;
 
 // Cumulus Imports
@@ -434,7 +434,7 @@ where
 		client.clone(),
 	);
 
-	let params = NimbusConsensusParams {
+	let params = nimbus_consensus::collators::basic::Params {
 		para_id,
 		overseer_handle,
 		proposer,
@@ -450,17 +450,9 @@ where
 		//authoring_duration: Duration::from_millis(500),
 	};
 
-	let fut = nimbus_consensus::run_relay_driven_collator::<
-		Block,
-		_,
-		_,
-		ParachainBackend,
-		_,
-		_,
-		_,
-		_,
-		_,
-	>(params);
+	let fut = nimbus_consensus::collators::basic::run::<Block, _, _, ParachainBackend, _, _, _, _, _>(
+		params,
+	);
 	task_manager
 		.spawn_essential_handle()
 		.spawn("aura", None, fut);

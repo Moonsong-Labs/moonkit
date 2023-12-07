@@ -8,6 +8,7 @@ version = "0.9.0"
 sc-client-api = { workspace = true }
 sc-consensus = { workspace = true }
 sc-consensus-manual-seal = { workspace = true }
+sp-consensus-slots = { workspace = true }
 sp-api = { workspace = true }
 sp-application-crypto = { workspace = true }
 sp-block-builder = { workspace = true }
@@ -29,9 +30,11 @@ cumulus-relay-chain-interface = { workspace = true }
 
 # Polkadot dependencies
 polkadot-node-primitives = { workspace = true }
+polkadot-node-subsystem = { workspace = true }
 polkadot-primitives = { workspace = true }
 
 # Nimbus Dependencies
+async-backing-primitives = { workspace = true }
 nimbus-primitives = { workspace = true }
 
 # Other deps
