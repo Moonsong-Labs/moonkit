@@ -44,42 +44,43 @@ use std::{sync::Arc, time::Duration};
 
 /// Parameters for [`run`].
 pub struct Params<BI, CIDP, Client, Backend, RClient, CHP, SO, Proposer, CS, DP = ()> {
+	/// Additional digest provider
+	pub additional_digests_provider: DP,
+	/// The amount of time to spend authoring each block.
+	pub authoring_duration: Duration,
+	/// Used to actually import blocks.
+	pub block_import: BI,
+	/// A validation code hash provider, used to get the current validation code hash.
+	pub code_hash_provider: CHP,
+	/// The collator key used to sign collations before submitting to validators.
+	pub collator_key: CollatorPair,
+	/// The generic collator service used to plug into this consensus engine.
+	pub collator_service: CS,
 	/// Inherent data providers. Only non-consensus inherent data should be provided, i.e.
 	/// the timestamp, slot, and paras inherents should be omitted, as they are set by this
 	/// collator.
 	pub create_inherent_data_providers: CIDP,
-	/// Used to actually import blocks.
-	pub block_import: BI,
-	/// The underlying para client.
-	pub para_client: Arc<Client>,
-	/// The para client's backend, used to access the database.
-	pub para_backend: Arc<Backend>,
-	/// A handle to the relay-chain client.
-	pub relay_client: RClient,
-	/// A validation code hash provider, used to get the current validation code hash.
-	pub code_hash_provider: CHP,
-	/// A chain synchronization oracle.
-	pub sync_oracle: SO,
 	/// The underlying keystore, which should contain Aura consensus keys.
 	pub keystore: KeystorePtr,
-	/// The collator key used to sign collations before submitting to validators.
-	pub collator_key: CollatorPair,
-	/// The para's ID.
-	pub para_id: ParaId,
 	/// A handle to the relay-chain client's "Overseer" or task orchestrator.
 	pub overseer_handle: OverseerHandle,
+	/// The underlying para client.
+	pub para_client: Arc<Client>,
+	/// The para's ID.
+	pub para_id: ParaId,
+	/// The para client's backend, used to access the database.
+	pub para_backend: Arc<Backend>,
+	/// The underlying block proposer this should call into.
+	pub proposer: Proposer,
+	/// A handle to the relay-chain client.
+	pub relay_client: RClient,
+	/// A chain synchronization oracle.
+	pub sync_oracle: SO,
 	/// The length of slots in this parachain.
 	/// If the parachain doesn't have slot and rely only on relay slots, set it to None.
 	pub slot_duration: Option<SlotDuration>,
 	/// The length of slots in the relay chain.
 	pub relay_chain_slot_duration: Duration,
-	/// The underlying block proposer this should call into.
-	pub proposer: Proposer,
-	/// The generic collator service used to plug into this consensus engine.
-	pub collator_service: CS,
-	/// The amount of time to spend authoring each block.
-	pub authoring_duration: Duration,
-	pub additional_digests_provider: DP,
 }
 
 /// Run async-backing-friendly collator.

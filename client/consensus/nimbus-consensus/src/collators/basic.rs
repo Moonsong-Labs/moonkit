@@ -44,9 +44,11 @@ pub struct Params<Proposer, BI, ParaClient, RClient, CIDP, CS, ADP = ()> {
 	pub para_id: ParaId,
 	/// A handle to the relay-chain client's "Overseer" or task orchestrator.
 	pub overseer_handle: OverseerHandle,
+	/// The underlying block proposer this should call into.
 	pub proposer: Proposer,
 	/// The block import handle.
 	pub block_import: BI,
+	/// The underlying para client.
 	pub para_client: Arc<ParaClient>,
 	/// An interface to the relay-chain client.
 	pub relay_client: RClient,
@@ -54,7 +56,8 @@ pub struct Params<Proposer, BI, ParaClient, RClient, CIDP, CS, ADP = ()> {
 	pub keystore: KeystorePtr,
 	/// The collator key used to sign collations before submitting to validators.
 	pub collator_key: CollatorPair,
-	pub skip_prediction: bool,
+	/// Force production of the block even if the collator is not eligible
+	pub force_authoring: bool,
 	/// A builder for inherent data builders.
 	pub create_inherent_data_providers: CIDP,
 	/// The collator service used for bundling proposals into collations and announcing
@@ -102,7 +105,7 @@ where
 			mut proposer,
 			para_client,
 			relay_client,
-			skip_prediction,
+			force_authoring,
 			..
 		} = params;
 
@@ -150,7 +153,7 @@ where
 				&para_client,
 				&parent_header,
 				&relay_parent_header,
-				skip_prediction,
+				force_authoring,
 			)
 			.await
 			{

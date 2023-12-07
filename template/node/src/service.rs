@@ -444,7 +444,7 @@ where
 		para_client: client,
 		keystore,
 		collator_service,
-		skip_prediction: force_authoring,
+		force_authoring,
 		additional_digests_provider: (),
 		collator_key,
 		//authoring_duration: Duration::from_millis(500),
