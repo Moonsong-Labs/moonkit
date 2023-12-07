@@ -19,19 +19,24 @@ use async_backing_primitives::UnincludedSegmentApi;
 use cumulus_client_collator::service::ServiceInterface as CollatorServiceInterface;
 use cumulus_client_consensus_common::{
 	self as consensus_common, load_abridged_host_configuration, ParachainBlockImportMarker,
+	ParentSearchParams,
 };
 use cumulus_client_consensus_proposer::ProposerInterface;
 use cumulus_primitives_core::{relay_chain::Hash as PHash, CollectCollationInfo, ParaId};
 use cumulus_relay_chain_interface::{OverseerHandle, RelayChainInterface};
 use futures::{channel::oneshot, prelude::*};
 use nimbus_primitives::{DigestsProvider, NimbusApi, NimbusId};
-use polkadot_node_subsystem::messages::{RuntimeApiMessage, RuntimeApiRequest};
-use polkadot_primitives::CollatorPair;
+use polkadot_node_primitives::SubmitCollationParams;
+use polkadot_node_subsystem::messages::{
+	CollationGenerationMessage, RuntimeApiMessage, RuntimeApiRequest,
+};
+use polkadot_primitives::{CollatorPair, OccupiedCoreAssumption};
 use sc_client_api::{BlockBackend, BlockOf};
 use sp_api::ProvideRuntimeApi;
 use sp_blockchain::HeaderBackend;
 use sp_consensus::SyncOracle;
 use sp_consensus_slots::{Slot, SlotDuration};
+use sp_core::Encode;
 use sp_inherents::CreateInherentDataProviders;
 use sp_keystore::KeystorePtr;
 use sp_runtime::traits::{Block as BlockT, Header as HeaderT};
@@ -93,7 +98,7 @@ where
 	Client::Api: NimbusApi<Block> + CollectCollationInfo<Block> + UnincludedSegmentApi<Block>,
 	Backend: sc_client_api::Backend<Block> + 'static,
 	RClient: RelayChainInterface + Clone + 'static,
-	CIDP: CreateInherentDataProviders<Block, ()> + 'static,
+	CIDP: CreateInherentDataProviders<Block, (PHash, PersistedValidationData, NimbusId)> + 'static,
 	CIDP::InherentDataProviders: Send,
 	BI: BlockImport<Block> + ParachainBlockImportMarker + Send + Sync + 'static,
 	SO: SyncOracle + Send + Sync + Clone + 'static,
@@ -108,7 +113,7 @@ where
 	// Since we only search for parent blocks which have already been imported,
 	// we can guarantee that all imported blocks respect the unincluded segment
 	// rules specified by the parachain's runtime and thus will never be too deep.
-	//const PARENT_SEARCH_DEPTH: usize = 10;
+	const PARENT_SEARCH_DEPTH: usize = 10;
 
 	async move {
 		cumulus_client_collator::initialize_collator_subsystems(
@@ -118,7 +123,7 @@ where
 		)
 		.await;
 
-		let mut _import_notifications = match params.relay_client.import_notification_stream().await
+		let mut import_notifications = match params.relay_client.import_notification_stream().await
 		{
 			Ok(s) => s,
 			Err(err) => {
@@ -132,14 +137,255 @@ where
 			}
 		};
 
-		// TODO
-		()
+		// React to each new relmy block
+		while let Some(relay_parent_header) = import_notifications.next().await {
+			let relay_parent = relay_parent_header.hash();
+
+			// First, verify if the parachain is active (have a core available on the relay)
+			if !is_para_scheduled(relay_parent, params.para_id, &mut params.overseer_handle).await {
+				tracing::trace!(
+					target: crate::LOG_TARGET,
+					?relay_parent,
+					?params.para_id,
+					"Para is not scheduled on any core, skipping import notification",
+				);
+
+				continue;
+			}
+
+			// Get the PoV size limit dynamically
+			let max_pov_size = match params
+				.relay_client
+				.persisted_validation_data(
+					relay_parent,
+					params.para_id,
+					OccupiedCoreAssumption::Included,
+				)
+				.await
+			{
+				Ok(None) => continue,
+				Ok(Some(pvd)) => pvd.max_pov_size,
+				Err(err) => {
+					tracing::error!(
+						target: crate::LOG_TARGET,
+						?err,
+						"Failed to gather information from relay-client"
+					);
+					continue;
+				}
+			};
+
+			// Determine which is the current slot
+			let slot_now = match consensus_common::relay_slot_and_timestamp(
+				&relay_parent_header,
+				params.relay_chain_slot_duration,
+			) {
+				None => continue,
+				Some((relay_slot, relay_timestamp)) => {
+					let our_slot = if let Some(slot_duration) = params.slot_duration {
+						Slot::from_timestamp(relay_timestamp, slot_duration)
+					} else {
+						// If there is no slot duration, we assume that the parachain use the relay slot directly
+						relay_slot
+					};
+					tracing::debug!(
+						target: crate::LOG_TARGET,
+						?relay_slot,
+						para_slot = ?our_slot,
+						?relay_timestamp,
+						slot_duration = ?params.slot_duration,
+						relay_chain_slot_duration = ?params.relay_chain_slot_duration,
+						"Adjusted relay-chain slot to parachain slot"
+					);
+					our_slot
+				}
+			};
+
+			// Search potential parents to build upon
+			let mut potential_parents =
+				match cumulus_client_consensus_common::find_potential_parents::<Block>(
+					ParentSearchParams {
+						relay_parent,
+						para_id: params.para_id,
+						ancestry_lookback: max_ancestry_lookback(
+							relay_parent,
+							&params.relay_client,
+						)
+						.await,
+						max_depth: PARENT_SEARCH_DEPTH,
+						ignore_alternative_branches: true,
+					},
+					&*params.para_backend,
+					&params.relay_client,
+				)
+				.await
+				{
+					Err(e) => {
+						tracing::error!(
+							target: crate::LOG_TARGET,
+							?relay_parent,
+							err = ?e,
+							"Could not fetch potential parents to build upon"
+						);
+
+						continue;
+					}
+					Ok(potential_parents) => potential_parents,
+				};
+
+			// Search the first potential parent parablock that is already included in the relay
+			let included_block = match potential_parents.iter().find(|x| x.depth == 0) {
+				None => continue, // also serves as an `is_empty` check.
+				Some(b) => b.hash,
+			};
+
+			// At this point, we found a potential parent parablock that is already included in the relay.
+			//
+			// Sort by depth, ascending, to choose the longest chain. If the longest chain has space,
+			// build upon that. Otherwise, don't build at all.
+			potential_parents.sort_by_key(|a| a.depth);
+			let initial_parent = match potential_parents.pop() {
+				None => continue,
+				Some(initial_parent) => initial_parent,
+			};
+
+			// Build in a loop until not allowed. Note that the selected collators can change
+			// at any block, so we need to re-claim our slot every time.
+			// This needs to change to support elastic scaling, but for continuously
+			// scheduled chains this ensures that the backlog will grow steadily.
+			let mut parent_hash = initial_parent.hash;
+			let mut parent_header = initial_parent.header;
+			let overseer_handle = &mut params.overseer_handle;
+			for n_built in 0..2 {
+				// Ask to the runtime if we are authorized to create a new parablock on top of this parent.
+				// (This will claim the slot internally)
+				let para_client = &*params.para_client;
+				let keystore = &params.keystore;
+				let author_id = match can_build_upon::<_, _>(
+					slot_now,
+					&parent_header,
+					&relay_parent_header,
+					included_block,
+					para_client,
+					&keystore,
+				)
+				.await
+				{
+					None => break,
+					Some(author_id) => author_id,
+				};
+
+				tracing::debug!(
+					target: crate::LOG_TARGET,
+					?relay_parent,
+					unincluded_segment_len = initial_parent.depth + n_built,
+					"Slot claimed. Building"
+				);
+
+				//
+				// Build and announce collations recursively until
+				// `can_build_upon` fails or building a collation fails.
+				//
+
+				// Create inherents data for the next parablock
+				let (parachain_inherent_data, other_inherent_data) =
+					match crate::create_inherent_data(
+						&params.create_inherent_data_providers,
+						params.para_id,
+						parent_hash,
+						&PersistedValidationData {
+							parent_head: parent_header.encode().into(),
+							relay_parent_number: *relay_parent_header.number(),
+							relay_parent_storage_root: *relay_parent_header.state_root(),
+							max_pov_size,
+						},
+						&params.relay_client,
+						relay_parent,
+						author_id.clone(),
+					)
+					.await
+					{
+						Err(err) => {
+							tracing::error!(target: crate::LOG_TARGET, ?err);
+							break;
+						}
+						Ok(x) => x,
+					};
+
+				// Compute the hash of the parachain runtime bytecode that we using to build the block.
+				// The hash will be send to relay validators alongside the candidate.
+				let validation_code_hash = match params.code_hash_provider.code_hash_at(parent_hash)
+				{
+					None => {
+						tracing::error!(
+							target: crate::LOG_TARGET,
+							?parent_hash,
+							"Could not fetch validation code hash"
+						);
+						break;
+					}
+					Some(validation_code_hash) => validation_code_hash,
+				};
+
+				match super::collate(
+					&params.additional_digests_provider,
+					author_id,
+					&mut params.block_import,
+					&params.collator_service,
+					keystore,
+					&parent_header,
+					&mut params.proposer,
+					(parachain_inherent_data, other_inherent_data),
+					params.authoring_duration,
+					// Set the block limit to 50% of the maximum PoV size.
+					//
+					// TODO: If we got benchmarking that includes the proof size,
+					// we should be able to use the maximum pov size.
+					(max_pov_size / 2) as usize,
+				)
+				.await
+				{
+					Ok((collation, block_data, new_block_hash)) => {
+						// Here we are assuming that the import logic protects against equivocations
+						// and provides sybil-resistance, as it should.
+						params.collator_service.announce_block(new_block_hash, None);
+
+						// Send a submit-collation message to the collation generation subsystem,
+						// which then distributes this to validators.
+						//
+						// Here we are assuming that the leaf is imported, as we've gotten an
+						// import notification.
+						overseer_handle
+							.send_msg(
+								CollationGenerationMessage::SubmitCollation(
+									SubmitCollationParams {
+										relay_parent,
+										collation,
+										parent_head: parent_header.encode().into(),
+										validation_code_hash,
+										result_sender: None,
+									},
+								),
+								"SubmitCollation",
+							)
+							.await;
+
+						parent_hash = new_block_hash;
+						parent_header = block_data.into_header();
+					}
+					Err(err) => {
+						tracing::error!(target: crate::LOG_TARGET, ?err);
+						break;
+					}
+				}
+			}
+		}
 	}
 }
 
 // Checks if we own the slot at the given block and whether there
 // is space in the unincluded segment.
-async fn _can_build_upon<Block, Client, P>(
+async fn can_build_upon<Block, Client>(
 	slot: Slot,
 	parent: &Block::Header,
 	relay_parent: &PHeader,
@@ -196,7 +442,7 @@ where
 /// Reads allowed ancestry length parameter from the relay chain storage at the given relay parent.
 ///
 /// Falls back to 0 in case of an error.
-async fn _max_ancestry_lookback(
+async fn max_ancestry_lookback(
 	relay_parent: PHash,
 	relay_client: &impl RelayChainInterface,
 ) -> usize {
@@ -224,7 +470,7 @@ async fn _max_ancestry_lookback(
 // Checks if there exists a scheduled core for the para at the provided relay parent.
 //
 // Falls back to `false` in case of an error.
-async fn _is_para_scheduled(
+async fn is_para_scheduled(
 	relay_parent: PHash,
 	para_id: ParaId,
 	overseer_handle: &mut OverseerHandle,

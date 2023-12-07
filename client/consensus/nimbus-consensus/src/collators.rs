@@ -27,6 +27,7 @@ use crate::*;
 use cumulus_client_collator::service::ServiceInterface as CollatorServiceInterface;
 use cumulus_client_consensus_common::{ParachainBlockImportMarker, ParachainCandidate};
 use cumulus_client_consensus_proposer::ProposerInterface;
+use cumulus_primitives_core::ParachainBlockData;
 use cumulus_primitives_parachain_inherent::ParachainInherentData;
 use futures::prelude::*;
 use log::{debug, info};
@@ -56,16 +57,16 @@ use std::time::Duration;
 /// This does not announce the collation to the parachain network or the relay chain.
 pub(crate) async fn collate<ADP, Block, BI, CS, Proposer>(
 	additional_digests_provider: &ADP,
+	author_id: NimbusId,
 	block_import: &mut BI,
 	collator_service: &CS,
 	keystore: &dyn Keystore,
 	parent_header: &Block::Header,
 	proposer: &mut Proposer,
-	nimbus_id: NimbusId,
 	inherent_data: (ParachainInherentData, InherentData),
 	proposal_duration: Duration,
 	max_pov_size: usize,
-) -> Result<(Collation, Block::Hash), Box<dyn Error + Send + 'static>>
+) -> Result<(Collation, ParachainBlockData<Block>, Block::Hash), Box<dyn Error + Send + 'static>>
 where
 	ADP: DigestsProvider<NimbusId, <Block as BlockT>::Hash> + 'static,
 	Block: BlockT,
@@ -73,9 +74,9 @@ where
 	CS: CollatorServiceInterface<Block>,
 	Proposer: ProposerInterface<Block> + Send + Sync + 'static,
 {
-	let mut logs = vec![CompatibleDigestItem::nimbus_pre_digest(nimbus_id.clone())];
+	let mut logs = vec![CompatibleDigestItem::nimbus_pre_digest(author_id.clone())];
 	logs.extend(
-		additional_digests_provider.provide_digests(nimbus_id.clone(), parent_header.hash()),
+		additional_digests_provider.provide_digests(author_id.clone(), parent_header.hash()),
 	);
 
 	let Proposal {
@@ -103,7 +104,7 @@ where
 	let sig_digest = seal_header::<Block>(
 		&header,
 		keystore,
-		&nimbus_id.to_raw_vec(),
+		&author_id.to_raw_vec(),
 		&sr25519::CRYPTO_ID,
 	);
 
@@ -158,7 +159,7 @@ where
 			);
 		}
 
-		Ok((collation, post_hash))
+		Ok((collation, block_data, post_hash))
 	} else {
 		Err(
 			Box::<dyn Error + Send + Sync>::from("Unable to produce collation")

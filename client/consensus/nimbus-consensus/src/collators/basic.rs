@@ -172,15 +172,15 @@ where
 				.await
 			);
 
-			let (collation, post_hash) = try_request!(
+			let (collation, _, post_hash) = try_request!(
 				super::collate::<ADP, Block, BI, CS, Proposer>(
 					&additional_digests_provider,
+					nimbus_id,
 					&mut block_import,
 					&collator_service,
 					&*keystore,
 					&parent_header,
 					&mut proposer,
-					nimbus_id,
 					inherent_data,
 					Duration::from_millis(500), //params.authoring_duration,
 					// Set the block limit to 50% of the maximum PoV size.
