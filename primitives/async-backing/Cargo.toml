@@ -1,0 +1,17 @@
+[package]
+name = "async-backing-primitives"
+authors = [ "Moonsong Labs" ]
+description = "Primitive types and traits used for asynchronous backing pallet"
+edition = "2021"
+version = "0.9.0"
+
+[dependencies]
+sp-api = { workspace = true }
+sp-consensus-slots = { workspace = true }
+
+[features]
+default = [ "std" ]
+std = [
+	"sp-api/std",
+	"sp-consensus-slots/std",
+]

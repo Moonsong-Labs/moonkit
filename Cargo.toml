@@ -2,7 +2,7 @@
 members = [
 	"client/consensus/nimbus-consensus",
 	"pallets/*",
-	"primitives/nimbus-primitives",
+	"primitives/*",
 	"template/node",
 	"template/runtime",
 	"template/pallets/template",
@@ -186,6 +186,7 @@ westend-runtime = { git = "https://github.com/paritytech/polkadot-sdk", branch =
 xcm-simulator = { git = "https://github.com/paritytech/polkadot-sdk", branch = "release-polkadot-v1.3.0" }
 
 # Local (wasm)
+async-backing-primitives = { path = "primitives/async-backing", default-features = false }
 pallet-author-inherent = { path = "pallets/author-inherent", default-features = false }
 pallet-author-mapping = { path = "pallets/author-mapping", default-features = false }
 pallet-author-slot-filter = { path = "pallets/author-slot-filter", default-features = false }

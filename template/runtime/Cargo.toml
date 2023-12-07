@@ -72,6 +72,7 @@ cumulus-primitives-utility = { workspace = true }
 parachain-info = { workspace = true }
 
 # Moonkit Dependencies
+async-backing-primitives = { workspace = true }
 nimbus-primitives = { workspace = true }
 pallet-author-inherent = {workspace = true }
 pallet-author-slot-filter = { workspace = true }
