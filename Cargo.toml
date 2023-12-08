@@ -5,6 +5,7 @@ members = [
 	"pallets/author-inherent",
 	"pallets/author-mapping",
 	"pallets/author-slot-filter",
+	"pallets/foreign-asset-creator",
 	"pallets/migrations",
 	"pallets/maintenance-mode",
 	"pallets/randomness",

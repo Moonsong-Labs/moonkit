@@ -33,6 +33,7 @@ pub mod pallet {
             tokens::fungibles,
         },
     };
+    use sp_runtime::traits::MaybeEquivalence;
     use frame_system::pallet_prelude::*;
 
     #[pallet::pallet]
@@ -230,6 +231,17 @@ pub mod pallet {
                 foreign_asset,
             });
             Ok(())
+        }
+    }
+
+    impl<T: Config> MaybeEquivalence<T::ForeignAsset, AssetId<T>>
+        for Pallet<T>
+    {
+        fn convert(foreign_asset: &T::ForeignAsset) -> Option<AssetId<T>> {
+            Pallet::<T>::asset_id_for_foreign(foreign_asset.clone())
+        }
+        fn convert_back(id: &AssetId<T>) -> Option<T::ForeignAsset> {
+            Pallet::<T>::foreign_asset_for_id(id.clone())
         }
     }
 }
