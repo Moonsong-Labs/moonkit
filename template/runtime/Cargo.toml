@@ -63,7 +63,7 @@ staging-xcm-executor = { workspace = true }
 
 # Cumulus dependencies
 cumulus-pallet-dmp-queue = { workspace = true }
-cumulus-pallet-parachain-system = { workspace = true }
+cumulus-pallet-parachain-system = { workspace = true, features = [ "parameterized-consensus-hook" ] }
 cumulus-pallet-xcm = { workspace = true }
 cumulus-pallet-xcmp-queue = { workspace = true }
 cumulus-primitives-core = { workspace = true }
@@ -72,10 +72,11 @@ cumulus-primitives-utility = { workspace = true }
 parachain-info = { workspace = true }
 
 # Moonkit Dependencies
+async-backing-primitives = { workspace = true }
 nimbus-primitives = { workspace = true }
 pallet-author-inherent = {workspace = true }
 pallet-author-slot-filter = { workspace = true }
-
+pallet-async-backing = { workspace = true }
 
 [build-dependencies]
 substrate-wasm-builder = { workspace = true }

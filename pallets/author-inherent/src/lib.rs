@@ -28,7 +28,6 @@ use parity_scale_codec::{Decode, Encode, FullCodec};
 use sp_inherents::{InherentIdentifier, IsFatalError};
 use sp_runtime::{ConsensusEngineId, RuntimeString};
 
-mod exec;
 pub use crate::weights::WeightInfo;
 pub use exec::BlockExecutor;
 pub use pallet::*;
@@ -37,6 +36,8 @@ pub use pallet::*;
 mod benchmarks;
 
 pub mod weights;
+
+mod exec;
 
 #[cfg(test)]
 mod mock;
@@ -94,11 +95,6 @@ pub mod pallet {
 	#[pallet::storage]
 	pub type Author<T: Config> = StorageValue<_, T::AuthorId, OptionQuery>;
 
-	/// The highest slot that has been seen in the history of this chain.
-	/// This is a strictly-increasing value.
-	#[pallet::storage]
-	pub type HighestSlotSeen<T: Config> = StorageValue<_, u32, ValueQuery>;
-
 	#[pallet::hooks]
 	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {
 		fn on_initialize(_: BlockNumberFor<T>) -> Weight {
@@ -126,20 +122,13 @@ pub mod pallet {
 			ensure_none(origin)?;
 
 			// First check that the slot number is valid (greater than the previous highest)
-			let slot = T::SlotBeacon::slot();
-			assert!(
-				slot > HighestSlotSeen::<T>::get(),
-				"Block invalid; Supplied slot number is not high enough"
-			);
+			let new_slot = T::SlotBeacon::slot();
 
 			// Now check that the author is valid in this slot
 			assert!(
-				T::CanAuthor::can_author(&Self::get(), &slot),
+				T::CanAuthor::can_author(&Self::get(), &new_slot),
 				"Block invalid, supplied author is not eligible."
 			);
-
-			// Once that is validated, update the stored slot number
-			HighestSlotSeen::<T>::put(slot);
 
 			Ok(Pays::No.into())
 		}
