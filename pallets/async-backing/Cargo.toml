@@ -23,9 +23,6 @@ sp-std = { workspace = true }
 [dev-dependencies]
 sp-io = { workspace = true }
 
-# Cumulus
-cumulus-pallet-parachain-system = { workspace = true }
-
 [features]
 default = [ "std" ]
 std = [
