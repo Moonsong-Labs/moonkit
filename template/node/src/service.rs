@@ -455,7 +455,7 @@ where
 	);
 	task_manager
 		.spawn_essential_handle()
-		.spawn("aura", None, fut);
+		.spawn("nimbus", None, fut);
 
 	Ok(())
 }
