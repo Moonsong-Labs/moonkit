@@ -86,7 +86,7 @@ pub struct Params<BI, CIDP, Client, Backend, RClient, CHP, SO, Proposer, CS, DP 
 }
 
 /// Run async-backing-friendly collator.
-pub fn run<Block, P, BI, CIDP, Client, Backend, RClient, CHP, SO, Proposer, CS, DP>(
+pub fn run<Block, BI, CIDP, Client, Backend, RClient, CHP, SO, Proposer, CS, DP>(
 	mut params: Params<BI, CIDP, Client, Backend, RClient, CHP, SO, Proposer, CS, DP>,
 ) -> impl Future<Output = ()> + Send + 'static
 where
