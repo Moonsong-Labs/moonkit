@@ -60,27 +60,29 @@ pub struct Params<BI, CIDP, Client, Backend, RClient, CHP, SO, Proposer, CS, DP 
 	/// the timestamp, slot, and paras inherents should be omitted, as they are set by this
 	/// collator.
 	pub create_inherent_data_providers: CIDP,
+	/// Force production of the block even if the collator is not eligible
+	pub force_authoring: bool,
 	/// The underlying keystore, which should contain Aura consensus keys.
 	pub keystore: KeystorePtr,
 	/// A handle to the relay-chain client's "Overseer" or task orchestrator.
 	pub overseer_handle: OverseerHandle,
+	/// The para client's backend, used to access the database.
+	pub para_backend: Arc<Backend>,
 	/// The underlying para client.
 	pub para_client: Arc<Client>,
 	/// The para's ID.
 	pub para_id: ParaId,
-	/// The para client's backend, used to access the database.
-	pub para_backend: Arc<Backend>,
 	/// The underlying block proposer this should call into.
 	pub proposer: Proposer,
+	/// The length of slots in the relay chain.
+	pub relay_chain_slot_duration: Duration,
 	/// A handle to the relay-chain client.
 	pub relay_client: RClient,
-	/// A chain synchronization oracle.
-	pub sync_oracle: SO,
 	/// The length of slots in this parachain.
 	/// If the parachain doesn't have slot and rely only on relay slots, set it to None.
 	pub slot_duration: Option<SlotDuration>,
-	/// The length of slots in the relay chain.
-	pub relay_chain_slot_duration: Duration,
+	/// A chain synchronization oracle.
+	pub sync_oracle: SO,
 }
 
 /// Run async-backing-friendly collator.
@@ -269,6 +271,7 @@ where
 					included_block,
 					para_client,
 					&keystore,
+					params.force_authoring,
 				)
 				.await
 				{
@@ -393,6 +396,7 @@ async fn can_build_upon<Block, Client>(
 	included_block: Block::Hash,
 	client: &Client,
 	keystore: &KeystorePtr,
+	force_authoring: bool,
 ) -> Option<NimbusId>
 where
 	Block: BlockT,
@@ -400,7 +404,15 @@ where
 	Client::Api: NimbusApi<Block> + UnincludedSegmentApi<Block>,
 {
 	let runtime_api = client.runtime_api();
-	match crate::claim_slot::<Block, Client>(keystore, client, parent, relay_parent, false).await {
+	match crate::claim_slot::<Block, Client>(
+		keystore,
+		client,
+		parent,
+		relay_parent,
+		force_authoring,
+	)
+	.await
+	{
 		Ok(Some(nimbus_id)) => {
 			// Here we lean on the property that building on an empty unincluded segment must always
 			// be legal. Skipping the runtime API query here allows us to seamlessly run this
