@@ -34,8 +34,8 @@ polkadot-node-subsystem = { workspace = true }
 polkadot-primitives = { workspace = true }
 
 # Nimbus Dependencies
-async-backing-primitives = { workspace = true }
-nimbus-primitives = { workspace = true }
+async-backing-primitives = { workspace = true, features = ["std"] }
+nimbus-primitives = { workspace = true, features = ["std"] }
 
 # Other deps
 async-trait = { workspace = true }
