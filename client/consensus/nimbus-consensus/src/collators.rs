@@ -90,11 +90,7 @@ where
 			inherent_data.1,
 			sp_runtime::generic::Digest { logs },
 			proposal_duration,
-			// Set the block limit to 50% of the maximum PoV size.
-			//
-			// TODO: If we got benchmarking that includes that encapsulates the proof size,
-			// we should be able to use the maximum pov size.
-			Some((max_pov_size / 2) as usize),
+			Some(max_pov_size),
 		)
 		.await
 		.map_err(|e| Box::new(e) as Box<dyn Error + Send>)?;
