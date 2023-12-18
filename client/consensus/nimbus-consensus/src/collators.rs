@@ -90,7 +90,7 @@ where
 			inherent_data.1,
 			sp_runtime::generic::Digest { logs },
 			proposal_duration,
-			max_pov_size
+			Some(max_pov_size),
 		)
 		.await
 		.map_err(|e| Box::new(e) as Box<dyn Error + Send>)?;
