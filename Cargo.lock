@@ -594,6 +594,14 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "9b34d609dfbaf33d6889b2b7106d3ca345eacad44200913df5ba02bfd31d2ba9"
 
 [[package]]
+name = "async-backing-primitives"
+version = "0.9.0"
+dependencies = [
+ "sp-api",
+ "sp-consensus-slots",
+]
+
+[[package]]
 name = "async-channel"
 version = "1.9.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1946,6 +1954,21 @@ dependencies = [
  "sp-trie",
  "substrate-prometheus-endpoint",
  "tracing",
+]
+
+[[package]]
+name = "cumulus-client-consensus-proposer"
+version = "0.1.0"
+source = "git+https://github.com/moonbeam-foundation/polkadot-sdk?branch=moonbeam-polkadot-v1.3.0#647bc10a95f792d2bb30414860be91411cb21d43"
+dependencies = [
+ "anyhow",
+ "async-trait",
+ "cumulus-primitives-parachain-inherent",
+ "sp-consensus",
+ "sp-inherents",
+ "sp-runtime",
+ "sp-state-machine",
+ "thiserror",
 ]
 
 [[package]]
@@ -5720,6 +5743,7 @@ dependencies = [
  "cumulus-client-cli",
  "cumulus-client-collator",
  "cumulus-client-consensus-common",
+ "cumulus-client-consensus-proposer",
  "cumulus-client-network",
  "cumulus-client-service",
  "cumulus-primitives-core",
@@ -5785,6 +5809,7 @@ dependencies = [
 name = "moonkit-template-runtime"
 version = "0.9.0"
 dependencies = [
+ "async-backing-primitives",
  "cumulus-pallet-dmp-queue",
  "cumulus-pallet-parachain-system",
  "cumulus-pallet-xcm",
@@ -5801,6 +5826,7 @@ dependencies = [
  "hex-literal 0.3.4",
  "log",
  "nimbus-primitives",
+ "pallet-async-backing",
  "pallet-author-inherent",
  "pallet-author-slot-filter",
  "pallet-balances",
@@ -6031,15 +6057,22 @@ dependencies = [
 name = "nimbus-consensus"
 version = "0.9.0"
 dependencies = [
+ "async-backing-primitives",
  "async-trait",
+ "cumulus-client-collator",
  "cumulus-client-consensus-common",
+ "cumulus-client-consensus-proposer",
  "cumulus-primitives-core",
  "cumulus-primitives-parachain-inherent",
+ "cumulus-relay-chain-interface",
  "futures 0.3.28",
  "log",
  "nimbus-primitives",
  "parity-scale-codec",
  "parking_lot 0.12.1",
+ "polkadot-node-primitives",
+ "polkadot-node-subsystem",
+ "polkadot-primitives",
  "sc-client-api",
  "sc-consensus",
  "sc-consensus-manual-seal",
@@ -6048,6 +6081,7 @@ dependencies = [
  "sp-block-builder",
  "sp-blockchain",
  "sp-consensus",
+ "sp-consensus-slots",
  "sp-core",
  "sp-inherents",
  "sp-keystore",
@@ -6341,6 +6375,26 @@ dependencies = [
  "parity-scale-codec",
  "scale-info",
  "sp-core",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
+name = "pallet-async-backing"
+version = "0.9.0"
+dependencies = [
+ "cumulus-pallet-parachain-system",
+ "cumulus-primitives-core",
+ "frame-support",
+ "frame-system",
+ "log",
+ "nimbus-primitives",
+ "pallet-timestamp",
+ "parity-scale-codec",
+ "scale-info",
+ "sp-consensus-slots",
+ "sp-core",
+ "sp-io",
  "sp-runtime",
  "sp-std",
 ]

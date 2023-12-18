@@ -1,14 +1,8 @@
 [workspace]
 members = [
 	"client/consensus/nimbus-consensus",
-	"pallets/aura-style-filter",
-	"pallets/author-inherent",
-	"pallets/author-mapping",
-	"pallets/author-slot-filter",
-	"pallets/migrations",
-	"pallets/maintenance-mode",
-	"pallets/randomness",
-	"primitives/nimbus-primitives",
+	"pallets/*",
+	"primitives/*",
 	"template/node",
 	"template/runtime",
 	"template/pallets/template",
@@ -103,6 +97,7 @@ sp-version = { git = "https://github.com/moonbeam-foundation/polkadot-sdk", bran
 substrate-wasm-builder = { git = "https://github.com/moonbeam-foundation/polkadot-sdk", branch = "moonbeam-polkadot-v1.3.0" }
 sp-blockchain = { git = "https://github.com/moonbeam-foundation/polkadot-sdk", branch = "moonbeam-polkadot-v1.3.0", default-features = false  }
 sp-consensus = { git = "https://github.com/moonbeam-foundation/polkadot-sdk", branch = "moonbeam-polkadot-v1.3.0", default-features = false  }
+sp-consensus-slots = { git = "https://github.com/moonbeam-foundation/polkadot-sdk", branch = "moonbeam-polkadot-v1.3.0", default-features = false  }
 sp-storage = { git = "https://github.com/moonbeam-foundation/polkadot-sdk", branch = "moonbeam-polkadot-v1.3.0", default-features = false  }
 sp-timestamp = { git = "https://github.com/moonbeam-foundation/polkadot-sdk", branch = "moonbeam-polkadot-v1.3.0", default-features = false  }
 sp-trie = { git = "https://github.com/moonbeam-foundation/polkadot-sdk", branch = "moonbeam-polkadot-v1.3.0", default-features = false }
@@ -159,6 +154,7 @@ parachain-info = { git = "https://github.com/moonbeam-foundation/polkadot-sdk", 
 cumulus-client-cli = { git = "https://github.com/moonbeam-foundation/polkadot-sdk", branch = "moonbeam-polkadot-v1.3.0" }
 cumulus-client-collator = { git = "https://github.com/moonbeam-foundation/polkadot-sdk", branch = "moonbeam-polkadot-v1.3.0" }
 cumulus-client-consensus-common = { git = "https://github.com/moonbeam-foundation/polkadot-sdk", branch = "moonbeam-polkadot-v1.3.0" }
+cumulus-client-consensus-proposer = { git = "https://github.com/moonbeam-foundation/polkadot-sdk", branch = "moonbeam-polkadot-v1.3.0" }
 cumulus-client-consensus-relay-chain = { git = "https://github.com/moonbeam-foundation/polkadot-sdk", branch = "moonbeam-polkadot-v1.3.0" }
 cumulus-client-network = { git = "https://github.com/moonbeam-foundation/polkadot-sdk", branch = "moonbeam-polkadot-v1.3.0" }
 cumulus-client-service = { git = "https://github.com/moonbeam-foundation/polkadot-sdk", branch = "moonbeam-polkadot-v1.3.0" }
@@ -183,15 +179,19 @@ staging-xcm-executor = { git = "https://github.com/moonbeam-foundation/polkadot-
 kusama-runtime = { git = "https://github.com/moonbeam-foundation/polkadot-sdk", branch = "moonbeam-polkadot-v1.3.0" }
 polkadot-cli = { git = "https://github.com/moonbeam-foundation/polkadot-sdk", branch = "moonbeam-polkadot-v1.3.0" }
 polkadot-primitives = { git = "https://github.com/moonbeam-foundation/polkadot-sdk", branch = "moonbeam-polkadot-v1.3.0" }
+polkadot-node-primitives = { git = "https://github.com/moonbeam-foundation/polkadot-sdk", branch = "moonbeam-polkadot-v1.3.0" }
+polkadot-node-subsystem = { git = "https://github.com/moonbeam-foundation/polkadot-sdk", branch = "moonbeam-polkadot-v1.3.0" }
 polkadot-service = { git = "https://github.com/moonbeam-foundation/polkadot-sdk", branch = "moonbeam-polkadot-v1.3.0" }
 rococo-runtime = { git = "https://github.com/moonbeam-foundation/polkadot-sdk", branch = "moonbeam-polkadot-v1.3.0" }
 westend-runtime = { git = "https://github.com/moonbeam-foundation/polkadot-sdk", branch = "moonbeam-polkadot-v1.3.0" }
 xcm-simulator = { git = "https://github.com/moonbeam-foundation/polkadot-sdk", branch = "moonbeam-polkadot-v1.3.0" }
 
 # Local (wasm)
+async-backing-primitives = { path = "primitives/async-backing", default-features = false }
 pallet-author-inherent = { path = "pallets/author-inherent", default-features = false }
 pallet-author-mapping = { path = "pallets/author-mapping", default-features = false }
 pallet-author-slot-filter = { path = "pallets/author-slot-filter", default-features = false }
+pallet-async-backing = { path = "pallets/async-backing", default-features = false }
 pallet-maintenance_mode = { path = "pallets/maintenance_mode", default-features = false }
 pallet-migrations = { path = "pallets/migrations", default-features = false }
 nimbus-primitives = { path = "primitives/nimbus-primitives", default-features = false }

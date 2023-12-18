@@ -8,6 +8,7 @@ version = "0.9.0"
 sc-client-api = { workspace = true }
 sc-consensus = { workspace = true }
 sc-consensus-manual-seal = { workspace = true }
+sp-consensus-slots = { workspace = true }
 sp-api = { workspace = true }
 sp-application-crypto = { workspace = true }
 sp-block-builder = { workspace = true }
@@ -20,12 +21,21 @@ sp-runtime = { workspace = true }
 substrate-prometheus-endpoint = { workspace = true }
 
 # Cumulus dependencies
+cumulus-client-collator = { workspace = true }
 cumulus-client-consensus-common = { workspace = true }
+cumulus-client-consensus-proposer = { workspace = true }
 cumulus-primitives-core = { workspace = true }
 cumulus-primitives-parachain-inherent = { workspace = true }
+cumulus-relay-chain-interface = { workspace = true }
+
+# Polkadot dependencies
+polkadot-node-primitives = { workspace = true }
+polkadot-node-subsystem = { workspace = true }
+polkadot-primitives = { workspace = true }
 
 # Nimbus Dependencies
-nimbus-primitives = { workspace = true }
+async-backing-primitives = { workspace = true, features = ["std"] }
+nimbus-primitives = { workspace = true, features = ["std"] }
 
 # Other deps
 async-trait = { workspace = true }
