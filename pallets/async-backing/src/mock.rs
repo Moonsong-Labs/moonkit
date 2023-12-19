@@ -31,7 +31,6 @@ frame_support::construct_runtime!(
 	pub enum Test
 	{
 		System: frame_system,
-		Timestamp: pallet_timestamp,
 		AsyncBacking: async_backing,
 	}
 );
@@ -68,13 +67,6 @@ impl frame_system::Config for Test {
 	type SS58Prefix = ();
 	type OnSetCode = ();
 	type MaxConsumers = ConstU32<16>;
-}
-
-impl pallet_timestamp::Config for Test {
-	type Moment = u64;
-	type OnTimestampSet = ();
-	type MinimumPeriod = ConstU64<1>;
-	type WeightInfo = ();
 }
 
 parameter_types! {

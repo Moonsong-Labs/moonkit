@@ -104,7 +104,7 @@ pub mod pallet {
 
 	/// The configuration trait.
 	#[pallet::config]
-	pub trait Config: pallet_timestamp::Config + frame_system::Config {
+	pub trait Config: frame_system::Config {
 		/// Whether or not to allow more than one block per slot.
 		/// Setting it to 'true' will enable async-backing compatibility.
 		type AllowMultipleBlocksPerSlot: Get<bool>;

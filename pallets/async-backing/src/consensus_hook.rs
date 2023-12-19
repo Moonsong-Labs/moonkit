@@ -39,8 +39,6 @@ pub struct FixedVelocityConsensusHook<T, const V: u32, const C: u32>(PhantomData
 
 impl<T: pallet::Config, const V: u32, const C: u32> ConsensusHook
 	for FixedVelocityConsensusHook<T, V, C>
-where
-	<T as pallet_timestamp::Config>::Moment: Into<u64>,
 {
 	// Validates the number of authored blocks within the slot with respect to the `V + 1` limit.
 	fn on_state_proof(state_proof: &RelayChainStateProof) -> (Weight, UnincludedSegmentCapacity) {
@@ -52,10 +50,7 @@ where
 	}
 }
 
-impl<T: pallet::Config, const V: u32, const C: u32> FixedVelocityConsensusHook<T, V, C>
-where
-	<T as pallet_timestamp::Config>::Moment: Into<u64>,
-{
+impl<T: pallet::Config, const V: u32, const C: u32> FixedVelocityConsensusHook<T, V, C> {
 	pub(crate) fn on_state_proof_inner(
 		relay_chain_slot: cumulus_primitives_core::relay_chain::Slot,
 	) -> (Weight, UnincludedSegmentCapacity) {
