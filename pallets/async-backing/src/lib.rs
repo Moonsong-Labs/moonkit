@@ -46,6 +46,23 @@ impl GetAndVerifySlot for RelaySlot {
 	}
 }
 
+pub struct TimeFromRelaySlot<const RELAY_CHAIN_SLOT_DURATION_MILLIS: u32, T>(PhantomData<T>);
+
+impl<const RELAY_CHAIN_SLOT_DURATION_MILLIS: u32, T: Config> frame_support::traits::Time
+	for TimeFromRelaySlot<RELAY_CHAIN_SLOT_DURATION_MILLIS, T>
+{
+	type Moment = u64;
+
+	fn now() -> Self::Moment {
+		if let Some((relay_chain_slot, _)) = SlotInfo::<T>::get() {
+			// Convert relay chain timestamp.
+			u64::from(RELAY_CHAIN_SLOT_DURATION_MILLIS).saturating_mul((*relay_chain_slot).into())
+		} else {
+			0
+		}
+	}
+}
+
 /// Parachain slot implementation that use a slot provider
 pub struct ParaSlot<const RELAY_CHAIN_SLOT_DURATION_MILLIS: u32, SlotProvider>(
 	PhantomData<SlotProvider>,
