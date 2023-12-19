@@ -104,8 +104,6 @@ where
 
 impl<T: pallet::Config + parachain_system::Config, const V: u32, const C: u32>
 	FixedVelocityConsensusHook<T, V, C>
-where
-	<T as pallet_timestamp::Config>::Moment: Into<u64>,
 {
 	/// Whether it is legal to extend the chain, assuming the given block is the most
 	/// recently included one as-of the relay parent that will be built against, and
