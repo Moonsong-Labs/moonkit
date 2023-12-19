@@ -46,7 +46,7 @@ impl GetAndVerifySlot for RelaySlot {
 	}
 }
 
-struct TimeFromRelaySlot<const RELAY_CHAIN_SLOT_DURATION_MILLIS: u32, T>(PhantomData<T>);
+pub struct TimeFromRelaySlot<const RELAY_CHAIN_SLOT_DURATION_MILLIS: u32, T>(PhantomData<T>);
 
 impl<const RELAY_CHAIN_SLOT_DURATION_MILLIS: u32, T: Config> frame_support::traits::Time
 	for TimeFromRelaySlot<RELAY_CHAIN_SLOT_DURATION_MILLIS, T>
