@@ -63,6 +63,8 @@ pub struct Params<Proposer, BI, ParaClient, RClient, CIDP, CS, ADP = ()> {
 	/// The collator service used for bundling proposals into collations and announcing
 	/// to the network.
 	pub collator_service: CS,
+	/// Additional relay keys to add in the storage proof
+	pub additional_relay_keys: Vec<Vec<u8>>,
 }
 
 /// Run bare Nimbus consensus as a relay-chain-driven collator.
@@ -171,6 +173,7 @@ where
 					&relay_client,
 					*request.relay_parent(),
 					nimbus_id.clone(),
+					params.additional_relay_keys.clone(),
 				)
 				.await
 			);

@@ -446,6 +446,7 @@ where
 		collator_service,
 		force_authoring,
 		additional_digests_provider: (),
+		additional_relay_keys: vec![],
 		collator_key,
 		//authoring_duration: Duration::from_millis(500),
 	};
@@ -604,6 +605,7 @@ pub fn start_instant_seal_node(config: Configuration) -> Result<TaskManager, sc_
 					//TODO might need to go back and get the block number like how I do in Moonkit
 					let mocked_parachain = MockValidationDataInherentDataProvider {
 						current_para_block: 0,
+						current_para_block_head: None,
 						relay_offset: 0,
 						relay_blocks_per_para_block: 0,
 						para_blocks_per_relay_epoch: 0,

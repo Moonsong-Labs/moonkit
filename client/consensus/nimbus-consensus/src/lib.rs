@@ -121,15 +121,21 @@ pub(crate) async fn create_inherent_data<Block, CIDP, RClient>(
 	relay_client: &RClient,
 	relay_parent: PHash,
 	author_id: NimbusId,
+	additional_relay_keys: Vec<Vec<u8>>,
 ) -> Result<(ParachainInherentData, InherentData), Box<dyn Error + Send + Sync + 'static>>
 where
 	Block: BlockT,
 	CIDP: CreateInherentDataProviders<Block, (PHash, PersistedValidationData, NimbusId)> + 'static,
 	RClient: RelayChainInterface + Send + Clone + 'static,
 {
-	let paras_inherent_data =
-		ParachainInherentData::create_at(relay_parent, relay_client, validation_data, para_id)
-			.await;
+	let paras_inherent_data = ParachainInherentData::create_at(
+		relay_parent,
+		relay_client,
+		validation_data,
+		para_id,
+		additional_relay_keys,
+	)
+	.await;
 
 	let paras_inherent_data = match paras_inherent_data {
 		Some(p) => p,
