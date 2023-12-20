@@ -122,6 +122,7 @@ pub(crate) async fn create_inherent_data<Block, CIDP, RClient>(
 	relay_client: &RClient,
 	relay_parent: PHash,
 	author_id: NimbusId,
+	additional_relay_keys: Vec<Vec<u8>>,
 ) -> Result<(ParachainInherentData, InherentData), Box<dyn Error + Send + Sync + 'static>>
 where
 	Block: BlockT,
@@ -133,6 +134,7 @@ where
 		relay_client,
 		validation_data,
 		para_id,
+		additional_relay_keys,
 	)
 	.await;
 
