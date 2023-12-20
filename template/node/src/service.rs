@@ -389,6 +389,7 @@ fn start_consensus(
 		collator_service,
 		force_authoring,
 		additional_digests_provider: (),
+		additional_relay_keys: vec![],
 		collator_key,
 		//authoring_duration: Duration::from_millis(500),
 	};
@@ -555,6 +556,7 @@ where
 					let mocked_parachain = MockValidationDataInherentDataProvider {
 						additional_key_values: None,
 						current_para_block: 0,
+						current_para_block_head: None,
 						relay_offset: 0,
 						relay_blocks_per_para_block: 0,
 						para_blocks_per_relay_epoch: 0,
