@@ -91,17 +91,6 @@ impl<T: BlockNumberProvider<BlockNumber = u32>> SlotBeacon for T {
 	}
 }
 
-/// PLANNED: A SlotBeacon that starts a new slot based on the timestamp. Behaviorally, this is
-/// similar to what aura, babe and company do. Implementation-wise it is different because it
-/// depends on the timestamp pallet for its notion of time.
-pub struct IntervalBeacon;
-
-impl SlotBeacon for IntervalBeacon {
-	fn slot() -> u32 {
-		todo!()
-	}
-}
-
 /// Trait to determine whether this author is eligible to author in this slot.
 /// This is the primary trait your nimbus filter needs to implement.
 ///

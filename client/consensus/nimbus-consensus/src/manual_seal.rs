@@ -65,7 +65,7 @@ where
 
 		// Fetch first eligible key from keystore
 		let maybe_key = crate::first_eligible_key::<B, C>(
-			self.client.clone(),
+			&self.client,
 			&*self.keystore,
 			parent,
 			// For now we author all blocks in slot zero, which is consistent with  how we are
@@ -121,7 +121,7 @@ where
 		let nimbus_public = NimbusId::from_slice(&claimed_author)
 			.map_err(|_| Error::StringError(String::from("invalid nimbus id (wrong length)")))?;
 
-		let sig_digest = crate::seal_header::<B>(
+		let sig_digest = crate::collators::seal_header::<B>(
 			&params.header,
 			&*self.keystore,
 			&nimbus_public.to_raw_vec(),
