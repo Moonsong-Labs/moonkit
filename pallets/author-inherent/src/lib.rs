@@ -110,10 +110,8 @@ pub mod pallet {
 				<Author<T>>::put(&author);
 			}
 
-			InherentIncluded::<T>::put(false);
-
-			// on_initialize: 2 writes
-			// on_finalize: 1 read
+			// on_initialize: 1 write
+			// on_finalize: 1 read + 1 write
 			T::DbWeight::get().reads_writes(1, 2)
 		}
 		fn on_finalize(_: BlockNumberFor<T>) {
@@ -121,7 +119,7 @@ pub mod pallet {
 			// is by checking on block finalization that the inherent set a particular storage item:
 			// https://github.com/paritytech/polkadot-sdk/issues/2841#issuecomment-1876040854
 			assert!(
-				InherentIncluded::<T>::get() == true,
+				InherentIncluded::<T>::take() == true,
 				"Block invalid, missing inherent `kick_off_authorship_validation`"
 			);
 		}
