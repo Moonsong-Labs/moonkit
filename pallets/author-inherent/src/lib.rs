@@ -95,6 +95,10 @@ pub mod pallet {
 	#[pallet::storage]
 	pub type Author<T: Config> = StorageValue<_, T::AuthorId, OptionQuery>;
 
+	/// Check if the inherent was included
+	#[pallet::storage]
+	pub type InherentIncluded<T: Config> = StorageValue<_, bool, ValueQuery>;
+
 	#[pallet::hooks]
 	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {
 		fn on_initialize(_: BlockNumberFor<T>) -> Weight {
@@ -106,7 +110,17 @@ pub mod pallet {
 				<Author<T>>::put(&author);
 			}
 
-			T::DbWeight::get().writes(1)
+			InherentIncluded::<T>::put(false);
+
+			// on_initialize: 2 writes
+			// on_finalize: 1 read
+			T::DbWeight::get().reads_writes(1, 2)
+		}
+		fn on_finalize(_: BlockNumberFor<T>) {
+			assert!(
+				InherentIncluded::<T>::get() == true,
+				"Block invalid, missing inherent `kick_off_authorship_validation`"
+			);
 		}
 	}
 
@@ -129,6 +143,8 @@ pub mod pallet {
 				T::CanAuthor::can_author(&Self::get(), &new_slot),
 				"Block invalid, supplied author is not eligible."
 			);
+
+			InherentIncluded::<T>::put(true);
 
 			Ok(Pays::No.into())
 		}
