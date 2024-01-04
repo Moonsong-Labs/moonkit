@@ -117,8 +117,8 @@ pub mod pallet {
 			T::DbWeight::get().reads_writes(1, 2)
 		}
 		fn on_finalize(_: BlockNumberFor<T>) {
-			// According to parity, the only wayt to ensure that a mandatory inherent is included
-			// is by checking on block finaliztion that the inherent set a particular storage item:
+			// According to parity, the only way to ensure that a mandatory inherent is included
+			// is by checking on block finalization that the inherent set a particular storage item:
 			// https://github.com/paritytech/polkadot-sdk/issues/2841#issuecomment-1876040854
 			assert!(
 				InherentIncluded::<T>::get() == true,
