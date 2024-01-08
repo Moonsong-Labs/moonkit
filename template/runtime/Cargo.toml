@@ -72,10 +72,11 @@ cumulus-primitives-utility = { workspace = true }
 parachain-info = { workspace = true }
 
 # Moonkit Dependencies
+async-backing-primitives = { workspace = true }
 nimbus-primitives = { workspace = true }
 pallet-author-inherent = {workspace = true }
 pallet-author-slot-filter = { workspace = true }
-
+pallet-async-backing = { workspace = true }
 
 [build-dependencies]
 substrate-wasm-builder = { workspace = true }
@@ -85,6 +86,7 @@ default = [
 	"std",
 ]
 std = [
+	"async-backing-primitives/std",
 	"cumulus-pallet-dmp-queue/std",
 	"cumulus-pallet-parachain-system/std",
 	"cumulus-pallet-xcm/std",
@@ -98,6 +100,7 @@ std = [
 	"frame-system-rpc-runtime-api/std",
 	"log/std",
 	"nimbus-primitives/std",
+	"pallet-async-backing/std",
 	"pallet-author-inherent/std",
 	"pallet-author-slot-filter/std",
 	"pallet-balances/std",

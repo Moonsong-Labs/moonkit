@@ -1,19 +1,12 @@
 [workspace]
 members = [
 	"client/consensus/nimbus-consensus",
-	"pallets/aura-style-filter",
-	"pallets/author-inherent",
-	"pallets/author-mapping",
-	"pallets/author-slot-filter",
-	"pallets/foreign-asset-creator",
-	"pallets/migrations",
-	"pallets/maintenance-mode",
-	"pallets/randomness",
+	"pallets/*",
 	"precompiles/balances-erc20",
 	"precompiles/batch",
 	"precompiles/call-permit",
 	"precompiles/xcm-utils",
-	"primitives/nimbus-primitives",
+	"primitives/*",
 	"template/node",
 	"template/runtime",
 	"template/pallets/template",
@@ -97,6 +90,7 @@ sp-api = { git = "https://github.com/moondance-labs/polkadot-sdk", branch = "tan
 sp-application-crypto = { git = "https://github.com/moondance-labs/polkadot-sdk", branch = "tanssi-polkadot-v1.3.0", default-features = false }
 sp-block-builder = { git = "https://github.com/moondance-labs/polkadot-sdk", branch = "tanssi-polkadot-v1.3.0", default-features = false }
 sp-consensus-babe = { git = "https://github.com/moondance-labs/polkadot-sdk", branch = "tanssi-polkadot-v1.3.0", default-features = false }
+sp-consensus-slots = { git = "https://github.com/moondance-labs/polkadot-sdk", branch = "tanssi-polkadot-v1.3.0", default-features = false }
 sp-core = { git = "https://github.com/moondance-labs/polkadot-sdk", branch = "tanssi-polkadot-v1.3.0", default-features = false }
 sp-debug-derive = { git = "https://github.com/moondance-labs/polkadot-sdk", branch = "tanssi-polkadot-v1.3.0", default-features = false }
 sp-externalities = { git = "https://github.com/moondance-labs/polkadot-sdk", branch = "tanssi-polkadot-v1.3.0", default-features = false }
@@ -170,6 +164,7 @@ parachain-info = { git = "https://github.com/moondance-labs/polkadot-sdk", branc
 cumulus-client-cli = { git = "https://github.com/moondance-labs/polkadot-sdk", branch = "tanssi-polkadot-v1.3.0" }
 cumulus-client-collator = { git = "https://github.com/moondance-labs/polkadot-sdk", branch = "tanssi-polkadot-v1.3.0" }
 cumulus-client-consensus-common = { git = "https://github.com/moondance-labs/polkadot-sdk", branch = "tanssi-polkadot-v1.3.0" }
+cumulus-client-consensus-proposer = { git = "https://github.com/moondance-labs/polkadot-sdk", branch = "tanssi-polkadot-v1.3.0" }
 cumulus-client-consensus-relay-chain = { git = "https://github.com/moondance-labs/polkadot-sdk", branch = "tanssi-polkadot-v1.3.0" }
 cumulus-client-network = { git = "https://github.com/moondance-labs/polkadot-sdk", branch = "tanssi-polkadot-v1.3.0" }
 cumulus-client-service = { git = "https://github.com/moondance-labs/polkadot-sdk", branch = "tanssi-polkadot-v1.3.0" }
@@ -182,6 +177,7 @@ cumulus-relay-chain-rpc-interface = { git = "https://github.com/moondance-labs/p
 pallet-xcm = { git = "https://github.com/moondance-labs/polkadot-sdk", branch = "tanssi-polkadot-v1.3.0", default-features = false }
 pallet-xcm-benchmarks = { git = "https://github.com/moondance-labs/polkadot-sdk", branch = "tanssi-polkadot-v1.3.0", default-features = false }
 polkadot-core-primitives = { git = "https://github.com/moondance-labs/polkadot-sdk", branch = "tanssi-polkadot-v1.3.0", default-features = false }
+polkadot-node-primitives = { git = "https://github.com/moondance-labs/polkadot-sdk", branch = "tanssi-polkadot-v1.3.0", default-features = false }
 polkadot-parachain-primitives = { git = "https://github.com/moondance-labs/polkadot-sdk", branch = "tanssi-polkadot-v1.3.0", default-features = false }
 polkadot-runtime = { git = "https://github.com/moondance-labs/polkadot-sdk", branch = "tanssi-polkadot-v1.3.0", default-features = false }
 polkadot-runtime-common = { git = "https://github.com/moondance-labs/polkadot-sdk", branch = "tanssi-polkadot-v1.3.0", default-features = false }
@@ -196,6 +192,7 @@ xcm-executor = { package = "staging-xcm-executor", git = "https://github.com/moo
 # Polkadot (client)
 kusama-runtime = { git = "https://github.com/moondance-labs/polkadot-sdk", branch = "tanssi-polkadot-v1.3.0" }
 polkadot-cli = { git = "https://github.com/moondance-labs/polkadot-sdk", branch = "tanssi-polkadot-v1.3.0" }
+polkadot-node-subsystem = { git = "https://github.com/moondance-labs/polkadot-sdk", branch = "tanssi-polkadot-v1.3.0" }
 polkadot-primitives = { git = "https://github.com/moondance-labs/polkadot-sdk", branch = "tanssi-polkadot-v1.3.0" }
 polkadot-service = { git = "https://github.com/moondance-labs/polkadot-sdk", branch = "tanssi-polkadot-v1.3.0" }
 rococo-runtime = { git = "https://github.com/moondance-labs/polkadot-sdk", branch = "tanssi-polkadot-v1.3.0" }
@@ -211,13 +208,15 @@ precompile-utils = { git = "https://github.com/moondance-labs/frontier", branch 
 evm = { git = "https://github.com/rust-blockchain/evm", rev = "b7b82c7e1fc57b7449d6dfa6826600de37cc1e65", default-features = false }
 
 # Local (wasm)
+async-backing-primitives = { path = "primitives/async-backing", default-features = false }
+pallet-author-inherent = { path = "pallets/author-inherent", default-features = false }
+pallet-author-mapping = { path = "pallets/author-mapping", default-features = false }
+pallet-author-slot-filter = { path = "pallets/author-slot-filter", default-features = false }
+pallet-async-backing = { path = "pallets/async-backing", default-features = false }
 pallet-evm-precompile-balances-erc20 = { path = "precompiles/balances-erc20", default-features = false }
 pallet-evm-precompile-batch = { path = "precompiles/batch", default-features = false }
 pallet-evm-precompile-call-permit = { path = "precompiles/call-permit", default-features = false }
 pallet-evm-precompile-xcm-utils = { path = "precompiles/xcm-utils", default-features = false }
-pallet-author-inherent = { path = "pallets/author-inherent", default-features = false }
-pallet-author-mapping = { path = "pallets/author-mapping", default-features = false }
-pallet-author-slot-filter = { path = "pallets/author-slot-filter", default-features = false }
 pallet-maintenance_mode = { path = "pallets/maintenance_mode", default-features = false }
 pallet-migrations = { path = "pallets/migrations", default-features = false }
 nimbus-primitives = { path = "primitives/nimbus-primitives", default-features = false }
