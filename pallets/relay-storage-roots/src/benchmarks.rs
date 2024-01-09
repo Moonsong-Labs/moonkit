@@ -33,9 +33,7 @@ fn fill_relay_storage_roots<T: Config>() {
 		Pallet::<T>::set_relay_storage_root();
 	}
 
-	assert!(
-		u32::try_from(RelayStorageRootKeys::<T>::get().len()).unwrap() >= T::MaxStorageRoots::get()
-	);
+	assert!(RelayStorageRoot::<T>::count() >= T::MaxStorageRoots::get());
 }
 
 benchmarks! {
