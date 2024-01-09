@@ -66,6 +66,7 @@ fn test_author_is_still_available_after_on_finalize() {
 		);
 
 		AuthorInherent::on_initialize(block_number);
+		let _ = AuthorInherent::kick_off_authorship_validation(None.into());
 		AuthorInherent::on_finalize(block_number);
 		assert_eq!(Some(ALICE), <Author<Test>>::get());
 	});
