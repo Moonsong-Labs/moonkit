@@ -17,6 +17,9 @@ sp-io = { workspace = true }
 sp-runtime = { workspace = true }
 sp-std = { workspace = true }
 
+# Polkadot
+staging-xcm = { workspace = true, optional = true }
+
 # Benchmarks
 frame-benchmarking = { workspace = true, optional = true }
 
@@ -24,7 +27,6 @@ frame-benchmarking = { workspace = true, optional = true }
 pallet-balances = { workspace = true, features = [ "std" ] }
 pallet-assets = { workspace = true, features = [ "std" ] }
 sp-core = { workspace = true, features = [ "std" ] }
-staging-xcm = { workspace = true, features = [ "std" ] }
 
 [features]
 default = [ "std" ]
@@ -36,8 +38,9 @@ std = [
 	"serde",
 	"sp-io/std",
 	"sp-runtime/std",
-	"sp-std/std"
+	"sp-std/std",
+	"staging-xcm/std"
 ]
 
-runtime-benchmarks = [ "frame-benchmarking" ]
+runtime-benchmarks = [ "frame-benchmarking", "staging-xcm"]
 try-runtime = [ "frame-support/try-runtime" ]

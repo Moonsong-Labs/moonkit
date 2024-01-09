@@ -22,6 +22,8 @@ pub use pallet::*;
 pub mod mock;
 #[cfg(test)]
 pub mod tests;
+#[cfg(any(test, feature = "runtime-benchmarks"))]
+mod benchmarks;
 
 #[pallet]
 pub mod pallet {
