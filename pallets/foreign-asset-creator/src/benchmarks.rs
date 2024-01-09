@@ -18,9 +18,7 @@
 
 use crate::{AssetId, Call, Config, Pallet};
 use frame_benchmarking::{account, benchmarks, impl_benchmark_test_suite};
-use frame_support::traits::{Currency, Get};
 use frame_system::RawOrigin;
-use parity_scale_codec::HasCompact;
 use sp_arithmetic::traits::AtLeast16BitUnsigned;
 use staging_xcm::latest::prelude::*;
 benchmarks! {
