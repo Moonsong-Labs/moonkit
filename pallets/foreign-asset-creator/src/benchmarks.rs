@@ -21,7 +21,7 @@ use frame_benchmarking::{account, benchmarks, impl_benchmark_test_suite};
 use frame_support::traits::{Currency, Get};
 use frame_system::RawOrigin;
 use parity_scale_codec::HasCompact;
-use sp_runtime::traits::AtLeast16BitUnsigned;
+use sp_arithmetic::traits::AtLeast16BitUnsigned;
 use staging_xcm::latest::prelude::*;
 benchmarks! {
 	// This where clause allows us to create ForeignAssetTypes
@@ -31,7 +31,7 @@ benchmarks! {
 		let manager = account("manager",  0, USER_SEED);
 		let foreign_asset = T::ForeignAsset::default();
 		let amount = 1u32.into();
-		let asset_id: AssetId<T> = 1u32.into();
+		let asset_id: AssetId<T> = 1u16.into();
 
 	}: _(RawOrigin::Root, foreign_asset.clone(), asset_id.clone(), manager, true, amount)
 	verify {
@@ -46,7 +46,7 @@ benchmarks! {
 
 		for i in 0..x {
 			let foreign_asset:  T::ForeignAsset = MultiLocation::new(0, X1(GeneralIndex(i as u128))).into();
-			let asset_id: AssetId<T> = (i as u32).into();
+			let asset_id: AssetId<T> = (i as u16).into();
 			let amount = 1u32.into();
 			Pallet::<T>::create_foreign_asset(
 				RawOrigin::Root.into(),
@@ -63,7 +63,7 @@ benchmarks! {
 			0,
 			X1(GeneralIndex((x-1) as u128))
 		).into();
-		let asset_id_to_be_changed: AssetId<T> = ((x-1) as u32).into();
+		let asset_id_to_be_changed: AssetId<T> = ((x-1) as u16).into();
 	}: _(RawOrigin::Root, asset_id_to_be_changed.clone(), new_foreign_asset.clone())
 	verify {
 		assert_eq!(Pallet::<T>::foreign_asset_for_id(asset_id_to_be_changed), Some(new_foreign_asset.clone()));
@@ -77,7 +77,7 @@ benchmarks! {
 
 		for i in 0..x {
 			let foreign_asset:  T::ForeignAsset = MultiLocation::new(0, X1(GeneralIndex(i as u128))).into();
-			let asset_id: AssetId<T> = (i as u32).into();
+			let asset_id: AssetId<T> = (i as u16).into();
 			let amount = 1u32.into();
 			Pallet::<T>::create_foreign_asset(
 				RawOrigin::Root.into(),
@@ -89,7 +89,7 @@ benchmarks! {
 			)?;
 		}
 
-		let asset_id_to_be_removed: AssetId<T> = ((x-1) as u32).into();
+		let asset_id_to_be_removed: AssetId<T> = ((x-1) as u16).into();
 	}: _(RawOrigin::Root, asset_id_to_be_removed.clone())
 	verify {
 		assert!(Pallet::<T>::foreign_asset_for_id(asset_id_to_be_removed).is_none());
@@ -103,7 +103,7 @@ benchmarks! {
 
 		for i in 0..x {
 			let foreign_asset:  T::ForeignAsset = MultiLocation::new(0, X1(GeneralIndex(i as u128))).into();
-			let asset_id: AssetId<T> = (i as u32).into();
+			let asset_id: AssetId<T> = (i as u16).into();
 			let amount = 1u32.into();
 			Pallet::<T>::create_foreign_asset(
 				RawOrigin::Root.into(),
@@ -115,7 +115,7 @@ benchmarks! {
 			)?;
 		}
 
-		let asset_id_to_be_destroyed: AssetId<T> = ((x-1) as u32).into();
+		let asset_id_to_be_destroyed: AssetId<T> = ((x-1) as u16).into();
 	}: _(RawOrigin::Root, asset_id_to_be_destroyed.clone())
 	verify {
 		assert!(Pallet::<T>::foreign_asset_for_id(asset_id_to_be_destroyed).is_none());
