@@ -133,6 +133,7 @@ impl Config for Test {
 	type ForeignAssetModifierOrigin = EnsureRoot<AccountId>;
 	type ForeignAssetDestroyerOrigin = EnsureRoot<AccountId>;
 	type Fungibles = Assets;
+	type WeightInfo = ();
 }
 
 pub(crate) struct ExtBuilder {
