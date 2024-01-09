@@ -14,47 +14,46 @@
 // You should have received a copy of the GNU General Public License
 // along with Moonkit.  If not, see <http://www.gnu.org/licenses/>.
 
-
 #![cfg(feature = "runtime-benchmarks")]
 
-use crate::{Call, Config, Pallet, AssetId};
+use crate::{AssetId, Call, Config, Pallet};
 use frame_benchmarking::{account, benchmarks, impl_benchmark_test_suite};
 use frame_support::traits::{Currency, Get};
 use frame_system::RawOrigin;
-use staging_xcm::latest::prelude::*;
 use parity_scale_codec::HasCompact;
 use sp_runtime::traits::AtLeast32BitUnsigned;
+use staging_xcm::latest::prelude::*;
 benchmarks! {
 	// This where clause allows us to create ForeignAssetTypes
 	where_clause { where T::ForeignAsset: From<MultiLocation>, AssetId<T>: AtLeast32BitUnsigned }
 	create_foreign_asset {
-        const USER_SEED: u32 = 1;
-        let manager = account("manager",  0, USER_SEED);
+		const USER_SEED: u32 = 1;
+		let manager = account("manager",  0, USER_SEED);
 		let foreign_asset = T::ForeignAsset::default();
 		let amount = 1u32.into();
-        let asset_id: AssetId<T> = 1u32.into();
+		let asset_id: AssetId<T> = 1u32.into();
 
 	}: _(RawOrigin::Root, foreign_asset.clone(), asset_id.clone(), manager, true, amount)
 	verify {
 		assert_eq!(Pallet::<T>::foreign_asset_for_id(asset_id), Some(foreign_asset));
 	}
 
-    change_existing_asset_type {
+	change_existing_asset_type {
 		// We make it dependent on the number of existing assets already
 		let x in 5..100;
-        const USER_SEED: u32 = 1;
-        let manager: T::AccountId = account("manager",  0, USER_SEED);
+		const USER_SEED: u32 = 1;
+		let manager: T::AccountId = account("manager",  0, USER_SEED);
 
 		for i in 0..x {
 			let foreign_asset:  T::ForeignAsset = MultiLocation::new(0, X1(GeneralIndex(i as u128))).into();
-            let asset_id: AssetId<T> = (i as u32).into();
+			let asset_id: AssetId<T> = (i as u32).into();
 			let amount = 1u32.into();
 			Pallet::<T>::create_foreign_asset(
 				RawOrigin::Root.into(),
 				foreign_asset.clone(),
-                asset_id.clone(),
+				asset_id.clone(),
 				manager.clone(),
-                true,
+				true,
 				amount,
 			)?;
 		}
@@ -70,22 +69,22 @@ benchmarks! {
 		assert_eq!(Pallet::<T>::foreign_asset_for_id(asset_id_to_be_changed), Some(new_foreign_asset.clone()));
 	}
 
-    remove_existing_asset_type {
+	remove_existing_asset_type {
 		// We make it dependent on the number of existing assets already
 		let x in 5..100;
-        const USER_SEED: u32 = 1;
-        let manager: T::AccountId = account("manager",  0, USER_SEED);
+		const USER_SEED: u32 = 1;
+		let manager: T::AccountId = account("manager",  0, USER_SEED);
 
 		for i in 0..x {
 			let foreign_asset:  T::ForeignAsset = MultiLocation::new(0, X1(GeneralIndex(i as u128))).into();
-            let asset_id: AssetId<T> = (i as u32).into();
+			let asset_id: AssetId<T> = (i as u32).into();
 			let amount = 1u32.into();
 			Pallet::<T>::create_foreign_asset(
 				RawOrigin::Root.into(),
 				foreign_asset.clone(),
-                asset_id.clone(),
+				asset_id.clone(),
 				manager.clone(),
-                true,
+				true,
 				amount,
 			)?;
 		}
@@ -99,19 +98,19 @@ benchmarks! {
 	destroy_foreign_asset {
 		// We make it dependent on the number of existing assets already
 		let x in 5..100;
-        const USER_SEED: u32 = 1;
-        let manager: T::AccountId = account("manager",  0, USER_SEED);
+		const USER_SEED: u32 = 1;
+		let manager: T::AccountId = account("manager",  0, USER_SEED);
 
 		for i in 0..x {
 			let foreign_asset:  T::ForeignAsset = MultiLocation::new(0, X1(GeneralIndex(i as u128))).into();
-            let asset_id: AssetId<T> = (i as u32).into();
+			let asset_id: AssetId<T> = (i as u32).into();
 			let amount = 1u32.into();
 			Pallet::<T>::create_foreign_asset(
 				RawOrigin::Root.into(),
 				foreign_asset.clone(),
-                asset_id.clone(),
+				asset_id.clone(),
 				manager.clone(),
-                true,
+				true,
 				amount,
 			)?;
 		}
