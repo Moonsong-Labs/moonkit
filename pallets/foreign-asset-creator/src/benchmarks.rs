@@ -21,11 +21,11 @@ use frame_benchmarking::{account, benchmarks, impl_benchmark_test_suite};
 use frame_support::traits::{Currency, Get};
 use frame_system::RawOrigin;
 use parity_scale_codec::HasCompact;
-use sp_runtime::traits::AtLeast32BitUnsigned;
+use sp_runtime::traits::AtLeast16BitUnsigned;
 use staging_xcm::latest::prelude::*;
 benchmarks! {
 	// This where clause allows us to create ForeignAssetTypes
-	where_clause { where T::ForeignAsset: From<MultiLocation>, AssetId<T>: AtLeast32BitUnsigned }
+	where_clause { where T::ForeignAsset: From<MultiLocation>, AssetId<T>: AtLeast16BitUnsigned }
 	create_foreign_asset {
 		const USER_SEED: u32 = 1;
 		let manager = account("manager",  0, USER_SEED);
