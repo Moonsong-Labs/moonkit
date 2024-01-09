@@ -18,6 +18,8 @@
 
 use frame_support::pallet;
 pub use pallet::*;
+pub mod weights;
+pub use weights::WeightInfo;
 #[cfg(any(test, feature = "runtime-benchmarks"))]
 mod benchmarks;
 #[cfg(test)]
@@ -61,6 +63,9 @@ pub mod pallet {
 		type Fungibles: fungibles::Create<Self::AccountId>
 			+ fungibles::Destroy<Self::AccountId>
 			+ fungibles::Inspect<Self::AccountId>;
+
+		/// Weight information for extrinsics in this pallet.
+		type WeightInfo: WeightInfo;
 	}
 
 	pub type AssetBalance<T> = <<T as Config>::Fungibles as fungibles::Inspect<
@@ -122,7 +127,7 @@ pub mod pallet {
 	impl<T: Config> Pallet<T> {
 		/// Create new asset with the ForeignAssetCreator
 		#[pallet::call_index(0)]
-		#[pallet::weight(0)]
+		#[pallet::weight(<T as Config>::WeightInfo::create_foreign_asset())]
 		pub fn create_foreign_asset(
 			origin: OriginFor<T>,
 			foreign_asset: T::ForeignAsset,
@@ -158,7 +163,7 @@ pub mod pallet {
 		/// We also change this if the previous units per second where pointing at the old
 		/// assetType
 		#[pallet::call_index(1)]
-		#[pallet::weight(1)]
+		#[pallet::weight(<T as Config>::WeightInfo::change_existing_asset_type())]
 		pub fn change_existing_asset_type(
 			origin: OriginFor<T>,
 			asset_id: AssetId<T>,
@@ -185,7 +190,7 @@ pub mod pallet {
 
 		/// Remove a given assetId -> foreignAsset association
 		#[pallet::call_index(2)]
-		#[pallet::weight(1)]
+		#[pallet::weight(<T as Config>::WeightInfo::remove_existing_asset_type())]
 		pub fn remove_existing_asset_type(
 			origin: OriginFor<T>,
 			asset_id: AssetId<T>,
@@ -212,7 +217,7 @@ pub mod pallet {
 		/// plus the db writes and reads from removing all the associated
 		/// data
 		#[pallet::call_index(3)]
-		#[pallet::weight(1)]
+		#[pallet::weight(<T as Config>::WeightInfo::destroy_foreign_asset())]
 		pub fn destroy_foreign_asset(origin: OriginFor<T>, asset_id: AssetId<T>) -> DispatchResult {
 			T::ForeignAssetDestroyerOrigin::ensure_origin(origin)?;
 
