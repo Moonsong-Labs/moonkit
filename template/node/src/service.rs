@@ -618,6 +618,7 @@ pub fn start_instant_seal_node(config: Configuration) -> Result<TaskManager, sc_
 						),
 						raw_downward_messages: downward_xcm_receiver.drain().collect(),
 						raw_horizontal_messages: hrmp_xcm_receiver.drain().collect(),
+						additional_key_values: None,
 					};
 
 					Ok((time, mocked_parachain))
