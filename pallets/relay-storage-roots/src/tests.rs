@@ -32,7 +32,10 @@ fn can_call_inherent_twice_with_same_relay_block() {
 			Pallet::<Test>::set_relay_storage_root();
 
 			// Only the first item has been inserted
-			assert_eq!(RelayStorageRoot::<Test>::count(), 1);
+			assert_eq!(
+				u32::try_from(RelayStorageRootKeys::<Test>::get().len()).unwrap(),
+				1
+			);
 		});
 }
 
@@ -43,7 +46,7 @@ fn oldest_items_are_removed_first() {
 		.build()
 		.execute_with(|| {
 			fill_relay_storage_roots::<Test>();
-			let keys: Vec<_> = RelayStorageRoot::<Test>::iter_keys().collect();
+			let keys = RelayStorageRootKeys::<Test>::get();
 			assert_eq!(
 				u32::try_from(keys.len()).unwrap(),
 				<Test as Config>::MaxStorageRoots::get()
@@ -59,7 +62,7 @@ fn oldest_items_are_removed_first() {
 			Pallet::<Test>::set_relay_storage_root();
 
 			// Only the first item has been removed
-			let keys: Vec<_> = RelayStorageRoot::<Test>::iter_keys().collect();
+			let keys = RelayStorageRootKeys::<Test>::get();
 			assert_eq!(
 				u32::try_from(keys.len()).unwrap(),
 				<Test as Config>::MaxStorageRoots::get()
