@@ -34,7 +34,8 @@ fn fill_relay_storage_roots<T: Config>() {
 	}
 
 	assert!(
-		u32::try_from(RelayStorageRootKeys::<T>::get().len()).unwrap() >= T::MaxStorageRoots::get()
+		u32::try_from(RelayStorageRootKeys::<T>::get().len()).unwrap_or(u32::MAX)
+			>= T::MaxStorageRoots::get()
 	);
 }
 
@@ -42,6 +43,29 @@ benchmarks! {
 	// Benchmark for inherent included in every block
 	set_relay_storage_root {
 		// Worst case is when `RelayStorageRoot` has len of `MaxStorageRoots`
+		fill_relay_storage_roots::<T>();
+		let relay_state = RelayChainState {
+			number: 1000,
+			state_root: H256::default(),
+		};
+
+		T::RelaychainStateProvider::set_current_relay_chain_state(relay_state.clone());
+	}: {
+		Pallet::<T>::set_relay_storage_root()
+	}
+	verify {
+		assert_eq!(
+			RelayStorageRoot::<T>::get(
+				relay_state.number
+			),
+			Some(relay_state.state_root)
+		);
+	}
+
+	// Benchmark for inherent included in every block
+	write_empty_keys {
+		let raw_key = frame_support::storage::storage_prefix(b"RelayStorageRoots", b"RelayStorageRootKeys");
+		frame_support::storage::unhashed::put_raw(&raw_key, &[]);
 		fill_relay_storage_roots::<T>();
 		let relay_state = RelayChainState {
 			number: 1000,

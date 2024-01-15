@@ -98,3 +98,42 @@ fn little_endian_keys_are_handled_properly() {
 			assert_eq!(keys, vec![256, 257, 258, 259]);
 		});
 }
+
+#[test]
+fn bounded_vec_limit_higher_than_max_storage_roots() {
+	ExtBuilder::default()
+		.with_balances(vec![(ALICE, 15)])
+		.build()
+		.execute_with(|| {
+			// Insert a 0 that will get overwritten by `storage::unhashed::put_raw` below, but this
+			// way we know we got the right key
+			let relay_state = RelayChainState {
+				number: 0,
+				state_root: H256::default(),
+			};
+			set_current_relay_chain_state(relay_state);
+			// Create a bounded vec with a limit higher than `MaxStorageRoots`
+			let vec1: BoundedVec<u8, ConstU32<20>> =
+				BoundedVec::truncate_from((0u8..30).into_iter().collect());
+			let bytes = vec1.encode();
+			let raw_key = frame_support::storage::storage_prefix(
+				b"RelayStorageRoots",
+				b"RelayStorageRootKeys",
+			);
+			frame_support::storage::unhashed::put_raw(&raw_key, bytes.as_slice());
+
+			// Now insert a new relay storage root
+			let relay_state = RelayChainState {
+				number: 31,
+				state_root: H256::default(),
+			};
+			set_current_relay_chain_state(relay_state);
+			Pallet::<Test>::set_relay_storage_root();
+
+			// The storage is considered corrupted, so only the new relay number will be stored.
+			// The storage map will still contain some of the old values, need to be manually
+			// cleaned up.
+			let keys = RelayStorageRootKeys::<Test>::get();
+			assert_eq!(keys, vec![31]);
+		});
+}

@@ -82,6 +82,10 @@ pub mod pallet {
 	#[pallet::config]
 	pub trait Config: frame_system::Config {
 		type RelaychainStateProvider: RelaychainStateProvider;
+		/// Limit the number of relay storage roots that will be stored.
+		/// This limit applies to the number of items, not to their age. Decreasing the value of
+		/// `MaxStorageRoots` is a breaking change and needs a migration to clean the
+		/// `RelayStorageRoots` mapping.
 		#[pallet::constant]
 		type MaxStorageRoots: Get<u32>;
 		/// Weight info
@@ -111,6 +115,10 @@ pub mod pallet {
 
 			<RelayStorageRoot<T>>::insert(relay_state.number, relay_state.state_root);
 			let mut keys: VecDeque<_> = <RelayStorageRootKeys<T>>::get().into_inner().into();
+			if keys.is_empty() && <RelayStorageRootKeys<T>>::exists() {
+				// If it is empty but it exists in storage, it most likely is corrupted.
+				log::error!("Corrupted storage `RelayStorageRootKeys`. Need to manually cleanup entries from `RelayStorageRoot` map.");
+			}
 			keys.push_back(relay_state.number);
 			// Delete the oldest stored root if the total number is greater than MaxStorageRoots
 			if u32::try_from(keys.len()).unwrap_or(u32::MAX) > T::MaxStorageRoots::get() {
