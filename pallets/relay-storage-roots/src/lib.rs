@@ -113,9 +113,10 @@ pub mod pallet {
 			let mut keys: VecDeque<_> = <RelayStorageRootKeys<T>>::get().into_inner().into();
 			keys.push_back(relay_state.number);
 			// Delete the oldest stored root if the total number is greater than MaxStorageRoots
-			if u32::try_from(keys.len()).unwrap() > T::MaxStorageRoots::get() {
-				let first_key = keys.pop_front().unwrap();
-				<RelayStorageRoot<T>>::remove(first_key);
+			if u32::try_from(keys.len()).unwrap_or(u32::MAX) > T::MaxStorageRoots::get() {
+				if let Some(first_key) = keys.pop_front() {
+					<RelayStorageRoot<T>>::remove(first_key);
+				}
 			}
 
 			let keys = BoundedVec::truncate_from(keys.into());
