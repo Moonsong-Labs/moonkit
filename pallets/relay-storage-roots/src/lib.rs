@@ -46,7 +46,8 @@
 //! roots are removed first, there is an additional `RelayStorageRootKeys` storage item that stores
 //! a sorted list of all the keys. This is needed because it is not possible to iterate over a
 //! mapping in order (unless if using an `Identity` hash). The `MaxStorageRoots` limit applies to
-//! the number of items, not to their age.
+//! the number of items, not to their age. Decreasing the value of `MaxStorageRoots` is a breaking
+//! change and needs a migration to clean the `RelayStorageRoots` mapping.
 
 #![cfg_attr(not(feature = "std"), no_std)]
 
@@ -117,9 +118,6 @@ pub mod pallet {
 				<RelayStorageRoot<T>>::remove(first_key);
 			}
 
-			// If `MaxStorageRoots` has decreased, we need to delete more than one storage root.
-			// But that would make this function have an unbounded amount of writes. So instead, we
-			// will only delete the first one, and leak the rest.
 			let keys = BoundedVec::truncate_from(keys.into());
 			<RelayStorageRootKeys<T>>::put(keys);
 		}
