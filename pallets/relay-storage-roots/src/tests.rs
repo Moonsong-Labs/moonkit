@@ -71,3 +71,30 @@ fn oldest_items_are_removed_first() {
 			assert!(RelayStorageRoot::<Test>::get(0).is_none());
 		});
 }
+
+#[test]
+fn little_endian_keys_are_handled_properly() {
+	ExtBuilder::default()
+		.with_balances(vec![(ALICE, 15)])
+		.build()
+		.execute_with(|| {
+			// If the keys were stored in little endian, 256 would be removed right after being
+			// inserted
+			for i in 250..260 {
+				let relay_state = RelayChainState {
+					number: i,
+					state_root: H256::default(),
+				};
+				set_current_relay_chain_state(relay_state);
+				Pallet::<Test>::set_relay_storage_root();
+			}
+
+			// Only the first item has been removed
+			let keys = RelayStorageRootKeys::<Test>::get();
+			assert_eq!(
+				u32::try_from(keys.len()).unwrap(),
+				<Test as Config>::MaxStorageRoots::get()
+			);
+			assert_eq!(keys, vec![256, 257, 258, 259]);
+		});
+}
