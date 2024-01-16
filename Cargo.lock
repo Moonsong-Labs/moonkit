@@ -7190,6 +7190,31 @@ dependencies = [
 ]
 
 [[package]]
+name = "pallet-relay-storage-roots"
+version = "0.1.0"
+dependencies = [
+ "cumulus-pallet-parachain-system",
+ "cumulus-primitives-core",
+ "derive_more",
+ "environmental",
+ "frame-benchmarking",
+ "frame-support",
+ "frame-system",
+ "hex",
+ "log",
+ "nimbus-primitives",
+ "pallet-author-mapping",
+ "pallet-balances",
+ "parity-scale-codec",
+ "scale-info",
+ "serde",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
 name = "pallet-scheduler"
 version = "4.0.0-dev"
 source = "git+https://github.com/moonbeam-foundation/polkadot-sdk?branch=moonbeam-polkadot-v1.3.0#1e6ebacc7a4bd7cd1f3ca16b284625d0a0ae5b5b"
