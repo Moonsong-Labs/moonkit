@@ -6861,6 +6861,26 @@ dependencies = [
 ]
 
 [[package]]
+name = "pallet-emergency-para-xcm"
+version = "0.1.0"
+dependencies = [
+ "cumulus-pallet-parachain-system",
+ "cumulus-primitives-core",
+ "frame-support",
+ "frame-system",
+ "log",
+ "pallet-message-queue",
+ "parity-scale-codec",
+ "polkadot-parachain-primitives",
+ "scale-info",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std 8.0.0",
+ "xcm-primitives",
+]
+
+[[package]]
 name = "pallet-evm"
 version = "6.0.0-dev"
 source = "git+https://github.com/paritytech/frontier?branch=polkadot-v1.6.0#511768e89fe41611f877286204f145b1af6cd491"
