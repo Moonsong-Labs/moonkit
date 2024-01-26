@@ -17,14 +17,14 @@
 //! VRF pre digest object and conversion to DigestItem
 use crate::vrf::{VrfSignature, VRF_ENGINE_ID};
 use parity_scale_codec::{Decode, Encode};
-use sp_core::sr25519::vrf::{VrfOutput, VrfProof};
+use sp_core::sr25519::vrf::{VrfPreOutput, VrfProof};
 use sp_runtime::{generic::DigestItem, RuntimeDebug};
 
 /// Raw VRF pre-digest.
 #[derive(Clone, RuntimeDebug, Encode, Decode)]
 pub struct PreDigest {
 	/// VRF output
-	pub vrf_output: VrfOutput,
+	pub vrf_output: VrfPreOutput,
 	/// VRF proof
 	pub vrf_proof: VrfProof,
 }

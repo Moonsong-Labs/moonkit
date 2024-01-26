@@ -14,7 +14,7 @@ use frame_support::pallet;
 pub use pallet::*;
 
 #[pallet]
-pub mod pallet {
+mod pallet {
 
 	use frame_support::pallet_prelude::*;
 	use nimbus_primitives::{AccountLookup, CanAuthor, NimbusId};

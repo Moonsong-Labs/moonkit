@@ -175,7 +175,7 @@ where
 				.await
 			);
 
-			let (collation, _, post_hash) = try_request!(
+			let maybe_collation = try_request!(
 				super::collate::<ADP, Block, BI, CS, Proposer>(
 					&additional_digests_provider,
 					nimbus_id,
@@ -195,11 +195,16 @@ where
 				.await
 			);
 
-			let result_sender = Some(collator_service.announce_with_barrier(post_hash));
-			request.complete(Some(CollationResult {
-				collation,
-				result_sender,
-			}));
+			if let Some((collation, _, post_hash)) = maybe_collation {
+				let result_sender = Some(collator_service.announce_with_barrier(post_hash));
+				request.complete(Some(CollationResult {
+					collation,
+					result_sender,
+				}));
+			} else {
+				request.complete(None);
+				tracing::debug!(target: crate::LOG_TARGET, "No block proposal");
+			}
 		}
 	}
 }

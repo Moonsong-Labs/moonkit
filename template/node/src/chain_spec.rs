@@ -58,46 +58,40 @@ pub fn development_config() -> ChainSpec {
 	properties.insert("tokenDecimals".into(), 12.into());
 	properties.insert("ss58Format".into(), 42.into());
 
-	ChainSpec::from_genesis(
-		// Name
-		"Development",
-		// ID
-		"dev",
-		ChainType::Development,
-		move || {
-			testnet_genesis(
-				// initial collators.
-				vec![(
-					get_account_id_from_seed::<sr25519::Public>("Alice"),
-					get_collator_keys_from_seed("Alice"),
-				)],
-				vec![
-					get_account_id_from_seed::<sr25519::Public>("Alice"),
-					get_account_id_from_seed::<sr25519::Public>("Bob"),
-					get_account_id_from_seed::<sr25519::Public>("Charlie"),
-					get_account_id_from_seed::<sr25519::Public>("Dave"),
-					get_account_id_from_seed::<sr25519::Public>("Eve"),
-					get_account_id_from_seed::<sr25519::Public>("Ferdie"),
-					get_account_id_from_seed::<sr25519::Public>("Alice//stash"),
-					get_account_id_from_seed::<sr25519::Public>("Bob//stash"),
-					get_account_id_from_seed::<sr25519::Public>("Charlie//stash"),
-					get_account_id_from_seed::<sr25519::Public>("Dave//stash"),
-					get_account_id_from_seed::<sr25519::Public>("Eve//stash"),
-					get_account_id_from_seed::<sr25519::Public>("Ferdie//stash"),
-				],
-				1000.into(),
-			)
-		},
-		vec![],
-		None,
-		None,
-		None,
-		None,
+	ChainSpec::builder(
+		moonkit_template_runtime::WASM_BINARY.expect("WASM binary was not built, please build it!"),
 		Extensions {
-			relay_chain: "rococo-local".into(), // You MUST set this to the correct network!
+			relay_chain: "rococo-local".into(),
+			// You MUST set this to the correct network!
 			para_id: 1000,
 		},
 	)
+	.with_name("Development")
+	.with_id("dev")
+	.with_chain_type(ChainType::Development)
+	.with_genesis_config_patch(testnet_genesis(
+		// initial collators.
+		vec![(
+			get_account_id_from_seed::<sr25519::Public>("Alice"),
+			get_collator_keys_from_seed("Alice"),
+		)],
+		vec![
+			get_account_id_from_seed::<sr25519::Public>("Alice"),
+			get_account_id_from_seed::<sr25519::Public>("Bob"),
+			get_account_id_from_seed::<sr25519::Public>("Charlie"),
+			get_account_id_from_seed::<sr25519::Public>("Dave"),
+			get_account_id_from_seed::<sr25519::Public>("Eve"),
+			get_account_id_from_seed::<sr25519::Public>("Ferdie"),
+			get_account_id_from_seed::<sr25519::Public>("Alice//stash"),
+			get_account_id_from_seed::<sr25519::Public>("Bob//stash"),
+			get_account_id_from_seed::<sr25519::Public>("Charlie//stash"),
+			get_account_id_from_seed::<sr25519::Public>("Dave//stash"),
+			get_account_id_from_seed::<sr25519::Public>("Eve//stash"),
+			get_account_id_from_seed::<sr25519::Public>("Ferdie//stash"),
+		],
+		1000.into(),
+	))
+	.build()
 }
 
 pub fn local_testnet_config() -> ChainSpec {
@@ -107,90 +101,117 @@ pub fn local_testnet_config() -> ChainSpec {
 	properties.insert("tokenDecimals".into(), 12.into());
 	properties.insert("ss58Format".into(), 42.into());
 
-	ChainSpec::from_genesis(
-		// Name
-		"Local Testnet",
-		// ID
-		"local_testnet",
-		ChainType::Local,
-		move || {
-			testnet_genesis(
-				// initial collators.
-				vec![
-					(
-						get_account_id_from_seed::<sr25519::Public>("Alice"),
-						get_collator_keys_from_seed("Alice"),
-					),
-					(
-						get_account_id_from_seed::<sr25519::Public>("Bob"),
-						get_collator_keys_from_seed("Bob"),
-					),
-				],
-				vec![
-					get_account_id_from_seed::<sr25519::Public>("Alice"),
-					get_account_id_from_seed::<sr25519::Public>("Bob"),
-					get_account_id_from_seed::<sr25519::Public>("Charlie"),
-					get_account_id_from_seed::<sr25519::Public>("Dave"),
-					get_account_id_from_seed::<sr25519::Public>("Eve"),
-					get_account_id_from_seed::<sr25519::Public>("Ferdie"),
-					get_account_id_from_seed::<sr25519::Public>("Alice//stash"),
-					get_account_id_from_seed::<sr25519::Public>("Bob//stash"),
-					get_account_id_from_seed::<sr25519::Public>("Charlie//stash"),
-					get_account_id_from_seed::<sr25519::Public>("Dave//stash"),
-					get_account_id_from_seed::<sr25519::Public>("Eve//stash"),
-					get_account_id_from_seed::<sr25519::Public>("Ferdie//stash"),
-				],
-				1000.into(),
-			)
-		},
-		// Bootnodes
-		vec![],
-		// Telemetry
-		None,
-		// Protocol ID
-		Some("template-local"),
-		// Fork ID
-		None,
-		// Properties
-		Some(properties),
-		// Extensions
+	// ChainSpec::from_genesis(
+	// 	// Name
+	// 	"Local Testnet",
+	// 	// ID
+	// 	"local_testnet",
+	// 	ChainType::Local,
+	// 	move || {
+	// 		testnet_genesis(
+	// 			// initial collators.
+	// 			vec![
+	// 				(
+	// 					get_account_id_from_seed::<sr25519::Public>("Alice"),
+	// 					get_collator_keys_from_seed("Alice"),
+	// 				),
+	// 				(
+	// 					get_account_id_from_seed::<sr25519::Public>("Bob"),
+	// 					get_collator_keys_from_seed("Bob"),
+	// 				),
+	// 			],
+	// 			vec![
+	// 				get_account_id_from_seed::<sr25519::Public>("Alice"),
+	// 				get_account_id_from_seed::<sr25519::Public>("Bob"),
+	// 				get_account_id_from_seed::<sr25519::Public>("Charlie"),
+	// 				get_account_id_from_seed::<sr25519::Public>("Dave"),
+	// 				get_account_id_from_seed::<sr25519::Public>("Eve"),
+	// 				get_account_id_from_seed::<sr25519::Public>("Ferdie"),
+	// 				get_account_id_from_seed::<sr25519::Public>("Alice//stash"),
+	// 				get_account_id_from_seed::<sr25519::Public>("Bob//stash"),
+	// 				get_account_id_from_seed::<sr25519::Public>("Charlie//stash"),
+	// 				get_account_id_from_seed::<sr25519::Public>("Dave//stash"),
+	// 				get_account_id_from_seed::<sr25519::Public>("Eve//stash"),
+	// 				get_account_id_from_seed::<sr25519::Public>("Ferdie//stash"),
+	// 			],
+	// 			1000.into(),
+	// 		)
+	// 	},
+	// 	// Bootnodes
+	// 	vec![],
+	// 	// Telemetry
+	// 	None,
+	// 	// Protocol ID
+	// 	Some("template-local"),
+	// 	// Fork ID
+	// 	None,
+	// 	// Properties
+	// 	Some(properties),
+	// 	// Extensions
+	// 	Extensions {
+	// 		relay_chain: "rococo-local".into(), // You MUST set this to the correct network!
+	// 		para_id: 1000,
+	// 	},
+	// )
+
+	ChainSpec::builder(
+		moonkit_template_runtime::WASM_BINARY.expect("WASM binary was not built, please build it!"),
 		Extensions {
-			relay_chain: "rococo-local".into(), // You MUST set this to the correct network!
+			relay_chain: "rococo-local".into(),
+			// You MUST set this to the correct network!
 			para_id: 1000,
 		},
 	)
+	.with_name("Local Testnet")
+	.with_id("local_testnet")
+	.with_properties(properties)
+	.with_protocol_id("template-local")
+	.with_chain_type(ChainType::Local)
+	.with_genesis_config_patch(testnet_genesis(
+		// initial collators.
+		vec![
+			(
+				get_account_id_from_seed::<sr25519::Public>("Alice"),
+				get_collator_keys_from_seed("Alice"),
+			),
+			(
+				get_account_id_from_seed::<sr25519::Public>("Bob"),
+				get_collator_keys_from_seed("Bob"),
+			),
+		],
+		vec![
+			get_account_id_from_seed::<sr25519::Public>("Alice"),
+			get_account_id_from_seed::<sr25519::Public>("Bob"),
+			get_account_id_from_seed::<sr25519::Public>("Charlie"),
+			get_account_id_from_seed::<sr25519::Public>("Dave"),
+			get_account_id_from_seed::<sr25519::Public>("Eve"),
+			get_account_id_from_seed::<sr25519::Public>("Ferdie"),
+			get_account_id_from_seed::<sr25519::Public>("Alice//stash"),
+			get_account_id_from_seed::<sr25519::Public>("Bob//stash"),
+			get_account_id_from_seed::<sr25519::Public>("Charlie//stash"),
+			get_account_id_from_seed::<sr25519::Public>("Dave//stash"),
+			get_account_id_from_seed::<sr25519::Public>("Eve//stash"),
+			get_account_id_from_seed::<sr25519::Public>("Ferdie//stash"),
+		],
+		1000.into(),
+	))
+	.build()
 }
 
 fn testnet_genesis(
 	authorities: Vec<(AccountId, NimbusId)>,
 	endowed_accounts: Vec<AccountId>,
 	id: ParaId,
-) -> moonkit_template_runtime::RuntimeGenesisConfig {
-	moonkit_template_runtime::RuntimeGenesisConfig {
-		system: moonkit_template_runtime::SystemConfig {
-			code: moonkit_template_runtime::WASM_BINARY
-				.expect("WASM binary was not build, please build it!")
-				.to_vec(),
-			..Default::default()
+) -> serde_json::Value {
+	serde_json::json!({
+		"balances": {
+			"balances": endowed_accounts.iter().cloned().map(|k| (k, 1u64 << 60)).collect::<Vec<_>>(),
 		},
-		balances: moonkit_template_runtime::BalancesConfig {
-			balances: endowed_accounts
-				.iter()
-				.cloned()
-				.map(|k| (k, 1 << 60))
-				.collect(),
+		"parachainInfo": {
+			"parachainId": id,
 		},
-		parachain_info: moonkit_template_runtime::ParachainInfoConfig {
-			parachain_id: id,
-			..Default::default()
+		"potentialAuthorSet": {
+			"mapping": authorities,
 		},
-		author_filter: moonkit_template_runtime::AuthorFilterConfig {
-			eligible_count: moonkit_template_runtime::EligibilityValue::default(),
-			..Default::default()
-		},
-		potential_author_set: moonkit_template_runtime::PotentialAuthorSetConfig {
-			mapping: authorities,
-		},
-		parachain_system: Default::default(),
-	}
+	})
 }
