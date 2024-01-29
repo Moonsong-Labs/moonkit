@@ -61,8 +61,7 @@ pub fn development_config() -> ChainSpec {
 	ChainSpec::builder(
 		moonkit_template_runtime::WASM_BINARY.expect("WASM binary was not built, please build it!"),
 		Extensions {
-			relay_chain: "rococo-local".into(),
-			// You MUST set this to the correct network!
+			relay_chain: "rococo-local".into(), // You MUST set this to the correct network!
 			para_id: 1000,
 		},
 	)
@@ -104,8 +103,7 @@ pub fn local_testnet_config() -> ChainSpec {
 	ChainSpec::builder(
 		moonkit_template_runtime::WASM_BINARY.expect("WASM binary was not built, please build it!"),
 		Extensions {
-			relay_chain: "rococo-local".into(),
-			// You MUST set this to the correct network!
+			relay_chain: "rococo-local".into(), // You MUST set this to the correct network!
 			para_id: 1000,
 		},
 	)
