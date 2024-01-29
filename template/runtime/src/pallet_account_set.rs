@@ -13,6 +13,7 @@ use frame_support::pallet;
 
 pub use pallet::*;
 
+#[allow(unused_imports)]
 #[pallet]
 pub mod pallet {
 
