@@ -13,6 +13,7 @@ use frame_support::pallet;
 
 pub use pallet::*;
 
+// Remove after https://github.com/paritytech/polkadot-sdk/issues/3138 is solved
 #[allow(unused_imports)]
 #[pallet]
 pub mod pallet {
