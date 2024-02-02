@@ -142,9 +142,17 @@ where
 			}
 		};
 
-		// React to each new relmy block
+		// React to each new relay block
 		while let Some(relay_parent_header) = import_notifications.next().await {
 			let relay_parent = relay_parent_header.hash();
+
+			tracing::trace!(
+				target: crate::LOG_TARGET,
+				?relay_parent,
+				relay_parent_number = ?relay_parent_header.number(),
+				?params.para_id,
+				"Notified of a new relay block",
+			);
 
 			// First, verify if the parachain is active (have a core available on the relay)
 			if !is_para_scheduled(relay_parent, params.para_id, &mut params.overseer_handle).await {
@@ -185,7 +193,15 @@ where
 				&relay_parent_header,
 				params.relay_chain_slot_duration,
 			) {
-				None => continue,
+				None => {
+					tracing::trace!(
+						target: crate::LOG_TARGET,
+						relay_parent = ?relay_parent_header,
+						relay_chain_slot_duration = ?params.relay_chain_slot_duration,
+						"Fail to get the relay slot for this relay block!"
+					);
+					continue;
+				}
 				Some((relay_slot, relay_timestamp)) => {
 					let our_slot = if let Some(slot_duration) = params.slot_duration {
 						Slot::from_timestamp(relay_timestamp, slot_duration)
@@ -283,6 +299,7 @@ where
 
 				tracing::debug!(
 					target: crate::LOG_TARGET,
+					?slot_now,
 					?relay_parent,
 					unincluded_segment_len = initial_parent.depth + n_built,
 					"Slot claimed. Building"
@@ -422,10 +439,34 @@ where
 			// collator against chains which have not yet upgraded their runtime.
 			if parent.hash() != included_block {
 				match runtime_api.can_build_upon(parent.hash(), included_block, slot) {
-					Ok(true) => Some(nimbus_id),
-					Ok(false) => None,
+					Ok(true) => {
+						tracing::trace!(
+							target: crate::LOG_TARGET,
+							parent_number = ?parent.number(),
+							parent_hash = ?parent.hash(),
+							relay_parent_number = ?relay_parent.number(),
+							relay_parent_hash = ?relay_parent.hash(),
+							?included_block,
+							?slot,
+							"Runtime api UnincludedSegmentApi::can_build_upon return TRUE",
+						);
+						Some(nimbus_id)
+					}
+					Ok(false) => {
+						tracing::debug!(
+							target: crate::LOG_TARGET,
+							parent_number = ?parent.number(),
+							parent_hash = ?parent.hash(),
+							relay_parent_number = ?relay_parent.number(),
+							relay_parent_hash = ?relay_parent.hash(),
+							?included_block,
+							?slot,
+							"Runtime api UnincludedSegmentApi::can_build_upon return FALSE",
+						);
+						None
+					}
 					Err(err) => {
-						tracing::error!(
+						tracing::warn!(
 							target: crate::LOG_TARGET,
 							?err,
 							?parent,
