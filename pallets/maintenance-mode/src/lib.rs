@@ -60,8 +60,8 @@ pub mod pallet {
 	};
 	use frame_support::pallet_prelude::*;
 	use frame_support::traits::{
-		BuildGenesisConfig, Contains, EnsureOrigin, OffchainWorker, OnFinalize, OnIdle,
-		OnInitialize, OnRuntimeUpgrade,
+		BeforeAllRuntimeMigrations, BuildGenesisConfig, Contains, EnsureOrigin, OffchainWorker,
+		OnFinalize, OnIdle, OnInitialize, OnRuntimeUpgrade,
 	};
 	use frame_system::pallet_prelude::*;
 	#[cfg(feature = "xcm-support")]
@@ -106,6 +106,7 @@ pub mod pallet {
 		/// Important: Use AllPalletsWithSystem here if you dont want to modify the
 		/// hooks behaviour
 		type NormalExecutiveHooks: OnRuntimeUpgrade
+			+ BeforeAllRuntimeMigrations
 			+ OnInitialize<BlockNumberFor<Self>>
 			+ OnIdle<BlockNumberFor<Self>>
 			+ OnFinalize<BlockNumberFor<Self>>
@@ -114,6 +115,7 @@ pub mod pallet {
 		/// Important: Use AllPalletsWithSystem here if you dont want to modify the
 		/// hooks behaviour
 		type MaintenanceExecutiveHooks: OnRuntimeUpgrade
+			+ BeforeAllRuntimeMigrations
 			+ OnInitialize<BlockNumberFor<Self>>
 			+ OnIdle<BlockNumberFor<Self>>
 			+ OnFinalize<BlockNumberFor<Self>>

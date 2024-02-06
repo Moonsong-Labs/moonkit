@@ -19,7 +19,10 @@
 // hooks in each of the normal and maintenance modes.
 use super::*;
 use frame_support::{
-	traits::{OffchainWorker, OnFinalize, OnIdle, OnInitialize, OnRuntimeUpgrade},
+	traits::{
+		BeforeAllRuntimeMigrations, OffchainWorker, OnFinalize, OnIdle, OnInitialize,
+		OnRuntimeUpgrade,
+	},
 	weights::Weight,
 };
 use frame_system::pallet_prelude::BlockNumberFor as BlockNumberOf;
@@ -28,6 +31,19 @@ use sp_std::marker::PhantomData;
 use sp_std::vec::Vec;
 
 pub struct ExecutiveHooks<T>(PhantomData<T>);
+
+impl<T> BeforeAllRuntimeMigrations for ExecutiveHooks<T>
+where
+	T: Config,
+{
+	fn before_all_runtime_migrations() -> Weight {
+		if Pallet::<T>::maintenance_mode() {
+			T::MaintenanceExecutiveHooks::before_all_runtime_migrations()
+		} else {
+			T::NormalExecutiveHooks::before_all_runtime_migrations()
+		}
+	}
+}
 
 impl<T> OnIdle<BlockNumberOf<T>> for ExecutiveHooks<T>
 where
