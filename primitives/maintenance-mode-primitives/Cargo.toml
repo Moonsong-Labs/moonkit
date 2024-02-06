@@ -1,0 +1,29 @@
+[package]
+name = "maintenance-mode-primitives"
+authors = { workspace = true }
+description = "Primitives for Maintenance Mode pallet"
+edition = "2021"
+version = "0.1.0"
+
+[dependencies]
+cumulus-primitives-core = { workspace = true }
+frame-support = { workspace = true }
+frame-system = { workspace = true }
+pallet-migrations = { workspace = true }
+sp-runtime = { workspace = true }
+
+[features]
+default = [ "std" ]
+std = [
+    "cumulus-primitives-core/std",
+    "frame-support/std",
+    "frame-system/std",
+    "pallet-migrations/std",
+	"sp-runtime/std",
+]
+runtime-benchmarks = []
+
+try-runtime = [
+    "frame-support/try-runtime",
+    "sp-runtime/try-runtime"
+]
