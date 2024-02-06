@@ -55,17 +55,12 @@ pub use types::*;
 #[pallet]
 pub mod pallet {
 	#[cfg(feature = "xcm-support")]
-	use cumulus_primitives_core::{
-		relay_chain::BlockNumber as RelayBlockNumber, DmpMessageHandler,
-	};
 	use frame_support::pallet_prelude::*;
 	use frame_support::traits::{
 		BeforeAllRuntimeMigrations, BuildGenesisConfig, Contains, EnsureOrigin, OffchainWorker,
-		OnFinalize, OnIdle, OnInitialize, OnRuntimeUpgrade,
+		OnFinalize, OnIdle, OnInitialize, OnRuntimeUpgrade, QueuePausedQuery,
 	};
 	use frame_system::pallet_prelude::*;
-	#[cfg(feature = "xcm-support")]
-	use sp_std::vec::Vec;
 	#[cfg(feature = "xcm-support")]
 	use xcm_primitives::PauseXcmExecution;
 
@@ -94,14 +89,6 @@ pub mod pallet {
 		/// Handler to suspend and resume XCM execution
 		#[cfg(feature = "xcm-support")]
 		type XcmExecutionManager: PauseXcmExecution;
-		/// The DMP handler to be used in normal operating mode
-		/// TODO: remove once https://github.com/paritytech/polkadot/pull/5035 is merged
-		#[cfg(feature = "xcm-support")]
-		type NormalDmpHandler: DmpMessageHandler;
-		/// The DMP handler to be used in maintenance mode
-		/// TODO: remove once https://github.com/paritytech/polkadot/pull/5035 is merged
-		#[cfg(feature = "xcm-support")]
-		type MaintenanceDmpHandler: DmpMessageHandler;
 		/// The executive hooks that will be used in normal operating mode
 		/// Important: Use AllPalletsWithSystem here if you dont want to modify the
 		/// hooks behaviour
@@ -246,17 +233,11 @@ pub mod pallet {
 			}
 		}
 	}
+
 	#[cfg(feature = "xcm-support")]
-	impl<T: Config> DmpMessageHandler for Pallet<T> {
-		fn handle_dmp_messages(
-			iter: impl Iterator<Item = (RelayBlockNumber, Vec<u8>)>,
-			limit: Weight,
-		) -> Weight {
-			if MaintenanceMode::<T>::get() {
-				T::MaintenanceDmpHandler::handle_dmp_messages(iter, limit)
-			} else {
-				T::NormalDmpHandler::handle_dmp_messages(iter, limit)
-			}
+	impl<T: Config, Origin> QueuePausedQuery<Origin> for Pallet<T> {
+		fn is_paused(_origin: &Origin) -> bool {
+			MaintenanceMode::<T>::get()
 		}
 	}
 }
