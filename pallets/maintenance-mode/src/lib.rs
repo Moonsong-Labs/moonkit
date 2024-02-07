@@ -45,21 +45,15 @@ mod mock;
 #[cfg(test)]
 mod tests;
 
-mod types;
-
 use frame_support::pallet;
 
 pub use pallet::*;
-pub use types::*;
 
 #[pallet]
 pub mod pallet {
 	#[cfg(feature = "xcm-support")]
 	use frame_support::pallet_prelude::*;
-	use frame_support::traits::{
-		BeforeAllRuntimeMigrations, BuildGenesisConfig, Contains, EnsureOrigin, OffchainWorker,
-		OnFinalize, OnIdle, OnInitialize, OnRuntimeUpgrade, QueuePausedQuery,
-	};
+	use frame_support::traits::{BuildGenesisConfig, Contains, EnsureOrigin, QueuePausedQuery};
 	use frame_system::pallet_prelude::*;
 	#[cfg(feature = "xcm-support")]
 	use xcm_primitives::PauseXcmExecution;
@@ -89,24 +83,6 @@ pub mod pallet {
 		/// Handler to suspend and resume XCM execution
 		#[cfg(feature = "xcm-support")]
 		type XcmExecutionManager: PauseXcmExecution;
-		/// The executive hooks that will be used in normal operating mode
-		/// Important: Use AllPalletsWithSystem here if you dont want to modify the
-		/// hooks behaviour
-		type NormalExecutiveHooks: OnRuntimeUpgrade
-			+ BeforeAllRuntimeMigrations
-			+ OnInitialize<BlockNumberFor<Self>>
-			+ OnIdle<BlockNumberFor<Self>>
-			+ OnFinalize<BlockNumberFor<Self>>
-			+ OffchainWorker<BlockNumberFor<Self>>;
-		/// The executive hooks that will be used in maintenance mode
-		/// Important: Use AllPalletsWithSystem here if you dont want to modify the
-		/// hooks behaviour
-		type MaintenanceExecutiveHooks: OnRuntimeUpgrade
-			+ BeforeAllRuntimeMigrations
-			+ OnInitialize<BlockNumberFor<Self>>
-			+ OnIdle<BlockNumberFor<Self>>
-			+ OnFinalize<BlockNumberFor<Self>>
-			+ OffchainWorker<BlockNumberFor<Self>>;
 	}
 
 	#[pallet::event]

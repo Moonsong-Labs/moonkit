@@ -17,12 +17,9 @@
 //! A minimal runtime including the maintenance-mode pallet
 use super::*;
 use crate as pallet_maintenance_mode;
-use cumulus_primitives_core::{relay_chain::BlockNumber as RelayBlockNumber, DmpMessageHandler};
 use frame_support::{
 	construct_runtime, parameter_types,
-	traits::{
-		Contains, Everything, OffchainWorker, OnFinalize, OnIdle, OnInitialize, OnRuntimeUpgrade,
-	},
+	traits::{Contains, Everything},
 	weights::Weight,
 };
 use frame_system::EnsureRoot;
@@ -34,7 +31,6 @@ use sp_runtime::{
 
 //TODO use TestAccount once it is in a common place (currently it lives with democracy precompiles)
 pub type AccountId = u64;
-pub type BlockNumber = u64;
 
 type Block = frame_system::mocking::MockBlock<Test>;
 
@@ -44,7 +40,6 @@ construct_runtime!(
 	{
 		System: frame_system::{Pallet, Call, Config<T>, Storage, Event<T>},
 		MaintenanceMode: pallet_maintenance_mode::{Pallet, Call, Storage, Event, Config<T>},
-		MockPalletMaintenanceHooks: mock_pallet_maintenance_hooks::{Pallet, Call, Event},
 	}
 );
 
@@ -90,158 +85,6 @@ impl Contains<RuntimeCall> for MaintenanceCallFilter {
 	}
 }
 
-pub struct MaintenanceDmpHandler;
-#[cfg(feature = "xcm-support")]
-impl DmpMessageHandler for MaintenanceDmpHandler {
-	// This implementation makes messages be queued
-	// Since the limit is 0, messages are queued for next iteration
-	fn handle_dmp_messages(
-		_iter: impl Iterator<Item = (RelayBlockNumber, Vec<u8>)>,
-		_limit: Weight,
-	) -> Weight {
-		return Weight::from_parts(1, 0);
-	}
-}
-
-pub struct NormalDmpHandler;
-#[cfg(feature = "xcm-support")]
-impl DmpMessageHandler for NormalDmpHandler {
-	// This implementation makes messages be queued
-	// Since the limit is 0, messages are queued for next iteration
-	fn handle_dmp_messages(
-		_iter: impl Iterator<Item = (RelayBlockNumber, Vec<u8>)>,
-		_limit: Weight,
-	) -> Weight {
-		Weight::zero()
-	}
-}
-
-impl mock_pallet_maintenance_hooks::Config for Test {
-	type RuntimeEvent = RuntimeEvent;
-}
-
-// Pallet to throw events, used to test maintenance mode hooks
-#[frame_support::pallet]
-pub mod mock_pallet_maintenance_hooks {
-	use frame_support::pallet_prelude::*;
-
-	#[pallet::config]
-	pub trait Config: frame_system::Config {
-		type RuntimeEvent: From<Event> + IsType<<Self as frame_system::Config>::RuntimeEvent>;
-	}
-
-	#[pallet::pallet]
-	pub struct Pallet<T>(_);
-
-	#[pallet::call]
-	impl<T: Config> Pallet<T> {}
-
-	#[pallet::event]
-	#[pallet::generate_deposit(pub(super) fn deposit_event)]
-	pub enum Event {
-		MaintenanceOnIdle,
-		MaintenanceOnInitialize,
-		MaintenanceOffchainWorker,
-		MaintenanceOnFinalize,
-		MaintenanceOnRuntimeUpgrade,
-		NormalOnIdle,
-		NormalOnInitialize,
-		NormalOffchainWorker,
-		NormalOnFinalize,
-		NormalOnRuntimeUpgrade,
-	}
-}
-
-pub struct MaintenanceHooks;
-
-impl OnInitialize<BlockNumber> for MaintenanceHooks {
-	fn on_initialize(_n: BlockNumber) -> Weight {
-		MockPalletMaintenanceHooks::deposit_event(
-			mock_pallet_maintenance_hooks::Event::MaintenanceOnInitialize,
-		);
-		Weight::from_parts(1, 0)
-	}
-}
-
-impl OnIdle<BlockNumber> for MaintenanceHooks {
-	fn on_idle(_n: BlockNumber, _max_weight: Weight) -> Weight {
-		MockPalletMaintenanceHooks::deposit_event(
-			mock_pallet_maintenance_hooks::Event::MaintenanceOnIdle,
-		);
-		Weight::from_parts(1, 0)
-	}
-}
-
-impl OnRuntimeUpgrade for MaintenanceHooks {
-	fn on_runtime_upgrade() -> Weight {
-		MockPalletMaintenanceHooks::deposit_event(
-			mock_pallet_maintenance_hooks::Event::MaintenanceOnRuntimeUpgrade,
-		);
-		Weight::from_parts(1, 0)
-	}
-}
-
-impl OnFinalize<BlockNumber> for MaintenanceHooks {
-	fn on_finalize(_n: BlockNumber) {
-		MockPalletMaintenanceHooks::deposit_event(
-			mock_pallet_maintenance_hooks::Event::MaintenanceOnFinalize,
-		);
-	}
-}
-
-impl OffchainWorker<BlockNumber> for MaintenanceHooks {
-	fn offchain_worker(_n: BlockNumber) {
-		MockPalletMaintenanceHooks::deposit_event(
-			mock_pallet_maintenance_hooks::Event::MaintenanceOffchainWorker,
-		);
-	}
-}
-
-pub struct NormalHooks;
-
-impl OnInitialize<BlockNumber> for NormalHooks {
-	fn on_initialize(_n: BlockNumber) -> Weight {
-		MockPalletMaintenanceHooks::deposit_event(
-			mock_pallet_maintenance_hooks::Event::NormalOnInitialize,
-		);
-		Weight::zero()
-	}
-}
-
-impl OnIdle<BlockNumber> for NormalHooks {
-	fn on_idle(_n: BlockNumber, _max_weight: Weight) -> Weight {
-		MockPalletMaintenanceHooks::deposit_event(
-			mock_pallet_maintenance_hooks::Event::NormalOnIdle,
-		);
-		Weight::zero()
-	}
-}
-
-impl OnRuntimeUpgrade for NormalHooks {
-	fn on_runtime_upgrade() -> Weight {
-		MockPalletMaintenanceHooks::deposit_event(
-			mock_pallet_maintenance_hooks::Event::NormalOnRuntimeUpgrade,
-		);
-		Weight::zero()
-	}
-}
-
-impl OnFinalize<BlockNumber> for NormalHooks {
-	fn on_finalize(_n: BlockNumber) {
-		MockPalletMaintenanceHooks::deposit_event(
-			mock_pallet_maintenance_hooks::Event::NormalOnFinalize,
-		);
-	}
-}
-
-impl OffchainWorker<BlockNumber> for NormalHooks {
-	fn offchain_worker(_n: BlockNumber) {
-		MockPalletMaintenanceHooks::deposit_event(
-			mock_pallet_maintenance_hooks::Event::NormalOffchainWorker,
-		);
-	}
-}
-
 impl Config for Test {
 	type RuntimeEvent = RuntimeEvent;
 	type NormalCallFilter = Everything;
@@ -249,12 +92,6 @@ impl Config for Test {
 	type MaintenanceOrigin = EnsureRoot<AccountId>;
 	#[cfg(feature = "xcm-support")]
 	type XcmExecutionManager = ();
-	#[cfg(feature = "xcm-support")]
-	type NormalDmpHandler = NormalDmpHandler;
-	#[cfg(feature = "xcm-support")]
-	type MaintenanceDmpHandler = MaintenanceDmpHandler;
-	type NormalExecutiveHooks = NormalHooks;
-	type MaintenanceExecutiveHooks = MaintenanceHooks;
 }
 
 /// Externality builder for pallet maintenance mode's mock runtime
@@ -302,20 +139,6 @@ pub(crate) fn events() -> Vec<pallet_maintenance_mode::Event> {
 		.map(|r| r.event)
 		.filter_map(|e| {
 			if let RuntimeEvent::MaintenanceMode(inner) = e {
-				Some(inner)
-			} else {
-				None
-			}
-		})
-		.collect::<Vec<_>>()
-}
-
-pub(crate) fn mock_events() -> Vec<mock_pallet_maintenance_hooks::Event> {
-	System::events()
-		.into_iter()
-		.map(|r| r.event)
-		.filter_map(|e| {
-			if let RuntimeEvent::MockPalletMaintenanceHooks(inner) = e {
 				Some(inner)
 			} else {
 				None
