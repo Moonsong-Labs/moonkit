@@ -68,7 +68,7 @@ pub fn development_config() -> ChainSpec {
 	.with_name("Development")
 	.with_id("dev")
 	.with_chain_type(ChainType::Development)
-	.with_genesis_config_patch(testnet_genesis(
+	.with_genesis_config(testnet_genesis(
 		// initial collators.
 		vec![(
 			get_account_id_from_seed::<sr25519::Public>("Alice"),
@@ -112,7 +112,7 @@ pub fn local_testnet_config() -> ChainSpec {
 	.with_properties(properties)
 	.with_protocol_id("template-local")
 	.with_chain_type(ChainType::Local)
-	.with_genesis_config_patch(testnet_genesis(
+	.with_genesis_config(testnet_genesis(
 		// initial collators.
 		vec![
 			(
