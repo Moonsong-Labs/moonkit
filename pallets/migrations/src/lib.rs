@@ -387,4 +387,36 @@ pub mod pallet {
 
 		weight
 	}
+
+	#[pallet::call]
+	impl<T: Config> Pallet<T> {
+		/// TODO(rodrigo): This extrinsic should be removed once LocalAssets pallet storage is removed
+		#[pallet::call_index(0)]
+		#[pallet::weight(<T as frame_system::Config>::DbWeight::get().reads_writes((*limit + 1).into(), (*limit).into()))]
+		pub fn clear_local_assets_storage(
+			origin: OriginFor<T>,
+			limit: u32,
+		) -> DispatchResultWithPostInfo {
+			ensure_signed(origin)?;
+
+			let hashed_prefix = sp_io::hashing::twox_128("LocalAssets".as_bytes());
+
+			let keys_removed = match sp_io::storage::clear_prefix(&hashed_prefix, Some(limit)) {
+				sp_io::KillStorageResult::AllRemoved(value) => value,
+				sp_io::KillStorageResult::SomeRemaining(value) => value,
+			} as u64;
+
+			if keys_removed == 0 {
+				return Err("All storage keys have been removed.".into());
+			}
+
+			log::info!("Removed {} keys 🧹", keys_removed);
+
+			Ok(Some(
+				<T as frame_system::Config>::DbWeight::get()
+					.reads_writes(keys_removed + 1, keys_removed),
+			)
+			.into())
+		}
+	}
 }
