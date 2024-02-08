@@ -23,6 +23,7 @@ use cumulus_primitives_core::AggregateMessageOrigin;
 use frame_support::traits::QueuePausedQuery;
 use frame_support::{assert_noop, assert_ok};
 use sp_runtime::traits::Dispatchable;
+
 #[test]
 fn can_remark_during_normal_operation() {
 	ExtBuilder::default().build().execute_with(|| {
