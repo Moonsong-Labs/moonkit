@@ -148,15 +148,35 @@ fn testnet_genesis(
 	endowed_accounts: Vec<AccountId>,
 	id: ParaId,
 ) -> serde_json::Value {
-	serde_json::json!({
-		"balances": {
-			"balances": endowed_accounts.iter().cloned().map(|k| (k, 1u64 << 60)).collect::<Vec<_>>(),
+	let g = moonkit_template_runtime::RuntimeGenesisConfig {
+		balances: moonkit_template_runtime::BalancesConfig {
+			balances: endowed_accounts
+				.iter()
+				.cloned()
+				.map(|k| (k, 1 << 60))
+				.collect(),
 		},
-		"parachainInfo": {
-			"parachainId": id,
+		parachain_info: moonkit_template_runtime::ParachainInfoConfig {
+			parachain_id: id,
+			..Default::default()
 		},
-		"potentialAuthorSet": {
-			"mapping": authorities,
+		author_filter: moonkit_template_runtime::AuthorFilterConfig {
+			eligible_count: moonkit_template_runtime::EligibilityValue::default(),
+			..Default::default()
 		},
-	})
+		potential_author_set: moonkit_template_runtime::PotentialAuthorSetConfig {
+			mapping: authorities,
+		},
+		parachain_system: Default::default(),
+		system: Default::default(),
+	};
+
+	serde_json::to_value(&g).unwrap()
+}
+
+#[test]
+fn chain_spec_as_json_raw_works() {
+	let x = local_testnet_config();
+	let raw = true;
+	assert!(x.as_json(raw).is_ok());
 }

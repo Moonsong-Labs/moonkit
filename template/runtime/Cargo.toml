@@ -28,6 +28,7 @@ pallet-template = { path = "../pallets/template", default-features = false }
 sp-api = { workspace = true }
 sp-block-builder = { workspace = true }
 sp-core = { workspace = true }
+sp-genesis-builder = { workspace = true }
 sp-inherents = { workspace = true }
 sp-io = { workspace = true }
 sp-offchain = { workspace = true }
