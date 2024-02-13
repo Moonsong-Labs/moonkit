@@ -1,12 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-only
 pragma solidity >=0.8.3;
 
-/// @dev The XcmUtils contract's address.
-address constant XCM_UTILS_ADDRESS = 0x000000000000000000000000000000000000080C;
-
-/// @dev The XcmUtils contract's instance.
-XcmUtils constant XCM_UTILS_CONTRACT = XcmUtils(XCM_UTILS_ADDRESS);
-
 /// @author The Moonbeam Team
 /// @title Xcm Utils Interface
 /// The interface through which solidity contracts will interact with xcm utils pallet
