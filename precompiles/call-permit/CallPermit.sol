@@ -5,7 +5,6 @@ pragma solidity >=0.8.3;
 /// @title Call Permit Interface
 /// @dev The interface aims to be a general-purpose tool to perform gas-less transactions. It uses the EIP-712 standard,
 /// and signed messages can be dispatched by another network participant with a transaction
-/// @custom:address 0x000000000000000000000000000000000000080a
 interface CallPermit {
     /// @dev Dispatch a call on the behalf of an other user with a EIP712 permit.
     /// Will revert if the permit is not valid or if the dispatched call reverts or errors (such as

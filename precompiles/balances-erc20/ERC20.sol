@@ -4,7 +4,6 @@ pragma solidity >=0.8.3;
 /// @title ERC20 interface
 /// @dev see https://github.com/ethereum/EIPs/issues/20
 /// @dev copied from https://github.com/OpenZeppelin/openzeppelin-contracts
-/// @custom:address 0x0000000000000000000000000000000000000802
 interface IERC20 {
     /// @dev Returns the name of the token.
     /// @custom:selector 06fdde03

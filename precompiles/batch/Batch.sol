@@ -5,7 +5,6 @@ pragma solidity >=0.8.3;
 /// @title Batch precompile
 /// @dev Allows to perform multiple calls throught one call to the precompile.
 /// Can be used by EOA to do multiple calls in a single transaction.
-/// @custom:address 0x0000000000000000000000000000000000000808
 interface Batch {
     /// @dev Batch multiple calls into a single transaction.
     /// All calls are performed from the address calling this precompile.
