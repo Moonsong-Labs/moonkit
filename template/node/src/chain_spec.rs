@@ -67,6 +67,7 @@ pub fn development_config() -> ChainSpec {
 	)
 	.with_name("Development")
 	.with_id("dev")
+	.with_properties(properties)
 	.with_chain_type(ChainType::Development)
 	.with_genesis_config(testnet_genesis(
 		// initial collators.
