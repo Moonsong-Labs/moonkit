@@ -1,6 +1,7 @@
 [workspace]
 members = [
 	"client/consensus/nimbus-consensus",
+	"precompiles/*",
 	"pallets/*",
 	"primitives/*",
 	"template/node",
@@ -38,6 +39,11 @@ serde_json = { version = "1.0.111", default-features = false }
 
 smallvec = "1.6.1"
 tracing = "0.1.22"
+num_enum = { version = "0.7.2", default-features = false }
+paste = "1.0.14"
+slices = "0.2.0"
+libsecp256k1 = { version = "0.7.1", default-features = false }
+sha3 = { version = "0.10.8", default-features = false }
 
 # Crates.io (template only)
 clap = { version = "4.0.9" }
@@ -99,6 +105,7 @@ sp-session = { git = "https://github.com/paritytech/polkadot-sdk", branch = "rel
 sp-std = { git = "https://github.com/paritytech/polkadot-sdk", branch = "release-polkadot-v1.6.0", default-features = false }
 sp-transaction-pool = { git = "https://github.com/paritytech/polkadot-sdk", branch = "release-polkadot-v1.6.0", default-features = false }
 sp-version = { git = "https://github.com/paritytech/polkadot-sdk", branch = "release-polkadot-v1.6.0", default-features = false }
+sp-weights = { git = "https://github.com/paritytech/polkadot-sdk", branch = "release-polkadot-v1.6.0", default-features = false }
 substrate-wasm-builder = { git = "https://github.com/paritytech/polkadot-sdk", branch = "release-polkadot-v1.6.0" }
 sp-blockchain = { git = "https://github.com/paritytech/polkadot-sdk", branch = "release-polkadot-v1.6.0", default-features = false  }
 sp-consensus = { git = "https://github.com/paritytech/polkadot-sdk", branch = "release-polkadot-v1.6.0", default-features = false  }
@@ -181,6 +188,9 @@ polkadot-runtime-parachains = { git = "https://github.com/paritytech/polkadot-sd
 staging-xcm = { git = "https://github.com/paritytech/polkadot-sdk", branch = "release-polkadot-v1.6.0", default-features = false }
 staging-xcm-builder = { git = "https://github.com/paritytech/polkadot-sdk", branch = "release-polkadot-v1.6.0", default-features = false }
 staging-xcm-executor = { git = "https://github.com/paritytech/polkadot-sdk", branch = "release-polkadot-v1.6.0", default-features = false }
+xcm = { package = "staging-xcm", git = "https://github.com/paritytech/polkadot-sdk", branch = "release-polkadot-v1.6.0", default-features = false }
+xcm-builder = { package = "staging-xcm-builder", git = "https://github.com/paritytech/polkadot-sdk", branch = "release-polkadot-v1.6.0", default-features = false }
+xcm-executor = { package = "staging-xcm-executor", git = "https://github.com/paritytech/polkadot-sdk", branch = "release-polkadot-v1.6.0", default-features = false }
 
 # Polkadot (client)
 kusama-runtime = { git = "https://github.com/paritytech/polkadot-sdk", branch = "release-polkadot-v1.6.0" }
@@ -192,7 +202,19 @@ rococo-runtime = { git = "https://github.com/paritytech/polkadot-sdk", branch = 
 westend-runtime = { git = "https://github.com/paritytech/polkadot-sdk", branch = "release-polkadot-v1.6.0" }
 xcm-simulator = { git = "https://github.com/paritytech/polkadot-sdk", branch = "release-polkadot-v1.6.0" }
 
+# Frontier (wasm)
+fp-evm = { git = "https://github.com/paritytech/frontier", branch = "polkadot-v1.6.0", default-features = false }
+pallet-evm = { git = "https://github.com/paritytech/frontier", branch = "polkadot-v1.6.0", default-features = false }
+precompile-utils = { git = "https://github.com/paritytech/frontier", branch = "polkadot-v1.6.0", default-features = false }
+
+# EVM
+evm = { version = "0.41.1", default-features = false }
+
 # Local (wasm)
+pallet-evm-precompile-balances-erc20 = { path = "precompiles/balances-erc20", default-features = false }
+pallet-evm-precompile-batch = { path = "precompiles/batch", default-features = false }
+pallet-evm-precompile-call-permit = { path = "precompiles/call-permit", default-features = false }
+pallet-evm-precompile-xcm-utils = { path = "precompiles/xcm-utils", default-features = false }
 async-backing-primitives = { path = "primitives/async-backing", default-features = false }
 pallet-author-inherent = { path = "pallets/author-inherent", default-features = false }
 pallet-author-mapping = { path = "pallets/author-mapping", default-features = false }
