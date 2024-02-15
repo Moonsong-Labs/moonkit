@@ -604,7 +604,6 @@ impl cumulus_pallet_xcmp_queue::Config for Runtime {
 }
 
 parameter_types! {
-	// TODO verify 35%
 	pub MessageQueueServiceWeight: Weight = Perbill::from_percent(35) * RuntimeBlockWeights::get().max_block;
 }
 
