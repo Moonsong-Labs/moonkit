@@ -30,6 +30,7 @@ flume =  { workspace = true }
 hex-literal =  { workspace = true }
 log = { workspace = true }
 serde = { workspace = true, features = [ "derive" ] }
+serde_json = { workspace = true }
 jsonrpsee = { workspace = true, features = [ "macros", "server" ] }
 futures = { workspace = true }
 
@@ -81,8 +82,8 @@ cumulus-client-consensus-common = { workspace = true }
 cumulus-client-consensus-proposer = { workspace = true }
 cumulus-client-network = { workspace = true }
 cumulus-client-service = { workspace = true }
+cumulus-client-parachain-inherent = { workspace = true }
 cumulus-primitives-core = { workspace = true }
-cumulus-primitives-parachain-inherent = { workspace = true }
 cumulus-relay-chain-inprocess-interface = { workspace = true }
 cumulus-relay-chain-interface = { workspace = true }
 cumulus-relay-chain-rpc-interface = { workspace = true }
