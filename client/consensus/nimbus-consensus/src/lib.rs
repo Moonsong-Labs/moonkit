@@ -94,11 +94,11 @@ where
 	};
 
 	let maybe_key = if skip_prediction || runtime_upgraded {
-		first_available_key(&*keystore)
+		first_available_key(keystore)
 	} else {
 		first_eligible_key::<Block, Client>(
 			para_client,
-			&*keystore,
+			keystore,
 			parent,
 			*relay_parent_header.number(),
 		)

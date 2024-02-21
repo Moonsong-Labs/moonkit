@@ -28,7 +28,7 @@ type Randomness = sp_consensus_babe::Randomness;
 environmental::environmental!(FAKE_VRF: ());
 
 /// TODO doc
-pub fn using_fake_vrf<'a, R, F: FnOnce() -> R>(mutator: F) -> R {
+pub fn using_fake_vrf<R, F: FnOnce() -> R>(mutator: F) -> R {
 	FAKE_VRF::using(&mut (), mutator)
 }
 
