@@ -24,7 +24,7 @@ fn creating_foreign_works() {
 	ExtBuilder::default().build().execute_with(|| {
 		assert_ok!(ForeignAssetCreator::create_foreign_asset(
 			RuntimeOrigin::root(),
-			MultiLocation::parent(),
+			Location::parent(),
 			1u32.into(),
 			1u32.into(),
 			true,
@@ -33,15 +33,15 @@ fn creating_foreign_works() {
 
 		assert_eq!(
 			ForeignAssetCreator::foreign_asset_for_id(1).unwrap(),
-			MultiLocation::parent()
+			Location::parent()
 		);
 		assert_eq!(
-			ForeignAssetCreator::asset_id_for_foreign(MultiLocation::parent()).unwrap(),
+			ForeignAssetCreator::asset_id_for_foreign(Location::parent()).unwrap(),
 			1
 		);
 		expect_events(vec![crate::Event::ForeignAssetCreated {
 			asset_id: 1,
-			foreign_asset: MultiLocation::parent(),
+			foreign_asset: Location::parent(),
 		}])
 	});
 }
@@ -51,7 +51,7 @@ fn test_asset_exists_error() {
 	ExtBuilder::default().build().execute_with(|| {
 		assert_ok!(ForeignAssetCreator::create_foreign_asset(
 			RuntimeOrigin::root(),
-			MultiLocation::parent(),
+			Location::parent(),
 			1u32.into(),
 			1u32.into(),
 			true,
@@ -59,12 +59,12 @@ fn test_asset_exists_error() {
 		));
 		assert_eq!(
 			ForeignAssetCreator::foreign_asset_for_id(1).unwrap(),
-			MultiLocation::parent()
+			Location::parent()
 		);
 		assert_noop!(
 			ForeignAssetCreator::create_foreign_asset(
 				RuntimeOrigin::root(),
-				MultiLocation::parent(),
+				Location::parent(),
 				1u32.into(),
 				1u32.into(),
 				true,
@@ -81,7 +81,7 @@ fn test_regular_user_cannot_call_extrinsics() {
 		assert_noop!(
 			ForeignAssetCreator::create_foreign_asset(
 				RuntimeOrigin::signed(1),
-				MultiLocation::parent(),
+				Location::parent(),
 				1u32.into(),
 				1u32.into(),
 				true,
@@ -94,7 +94,7 @@ fn test_regular_user_cannot_call_extrinsics() {
 			ForeignAssetCreator::change_existing_asset_type(
 				RuntimeOrigin::signed(1),
 				1,
-				MultiLocation::parent()
+				Location::parent()
 			),
 			sp_runtime::DispatchError::BadOrigin
 		);
@@ -106,7 +106,7 @@ fn test_root_can_change_foreign_asset_for_asset_id() {
 	ExtBuilder::default().build().execute_with(|| {
 		assert_ok!(ForeignAssetCreator::create_foreign_asset(
 			RuntimeOrigin::root(),
-			MultiLocation::parent(),
+			Location::parent(),
 			1u32.into(),
 			1u32.into(),
 			true,
@@ -116,30 +116,30 @@ fn test_root_can_change_foreign_asset_for_asset_id() {
 		assert_ok!(ForeignAssetCreator::change_existing_asset_type(
 			RuntimeOrigin::root(),
 			1,
-			MultiLocation::here()
+			Location::here()
 		));
 
 		// New associations are stablished
 		assert_eq!(
 			ForeignAssetCreator::foreign_asset_for_id(1).unwrap(),
-			MultiLocation::here()
+			Location::here()
 		);
 		assert_eq!(
-			ForeignAssetCreator::asset_id_for_foreign(MultiLocation::here()).unwrap(),
+			ForeignAssetCreator::asset_id_for_foreign(Location::here()).unwrap(),
 			1
 		);
 
 		// Old ones are deleted
-		assert!(ForeignAssetCreator::asset_id_for_foreign(MultiLocation::parent()).is_none());
+		assert!(ForeignAssetCreator::asset_id_for_foreign(Location::parent()).is_none());
 
 		expect_events(vec![
 			crate::Event::ForeignAssetCreated {
 				asset_id: 1,
-				foreign_asset: MultiLocation::parent(),
+				foreign_asset: Location::parent(),
 			},
 			crate::Event::ForeignAssetTypeChanged {
 				asset_id: 1,
-				new_foreign_asset: MultiLocation::here(),
+				new_foreign_asset: Location::here(),
 			},
 		])
 	});
@@ -152,7 +152,7 @@ fn test_asset_id_non_existent_error() {
 			ForeignAssetCreator::change_existing_asset_type(
 				RuntimeOrigin::root(),
 				1,
-				MultiLocation::parent()
+				Location::parent()
 			),
 			Error::<Test>::AssetDoesNotExist
 		);
@@ -164,7 +164,7 @@ fn test_root_can_remove_asset_association() {
 	ExtBuilder::default().build().execute_with(|| {
 		assert_ok!(ForeignAssetCreator::create_foreign_asset(
 			RuntimeOrigin::root(),
-			MultiLocation::parent(),
+			Location::parent(),
 			1u32.into(),
 			1u32.into(),
 			true,
@@ -178,16 +178,16 @@ fn test_root_can_remove_asset_association() {
 
 		// Mappings are deleted
 		assert!(ForeignAssetCreator::foreign_asset_for_id(1).is_none());
-		assert!(ForeignAssetCreator::asset_id_for_foreign(MultiLocation::parent()).is_none());
+		assert!(ForeignAssetCreator::asset_id_for_foreign(Location::parent()).is_none());
 
 		expect_events(vec![
 			crate::Event::ForeignAssetCreated {
 				asset_id: 1,
-				foreign_asset: MultiLocation::parent(),
+				foreign_asset: Location::parent(),
 			},
 			crate::Event::ForeignAssetRemoved {
 				asset_id: 1,
-				foreign_asset: MultiLocation::parent(),
+				foreign_asset: Location::parent(),
 			},
 		])
 	});
@@ -198,7 +198,7 @@ fn test_destroy_foreign_asset_also_removes_everything() {
 	ExtBuilder::default().build().execute_with(|| {
 		assert_ok!(ForeignAssetCreator::create_foreign_asset(
 			RuntimeOrigin::root(),
-			MultiLocation::parent(),
+			Location::parent(),
 			1u32.into(),
 			1u32.into(),
 			true,
@@ -211,17 +211,17 @@ fn test_destroy_foreign_asset_also_removes_everything() {
 		));
 
 		// Mappings are deleted
-		assert!(ForeignAssetCreator::asset_id_for_foreign(MultiLocation::parent()).is_none());
+		assert!(ForeignAssetCreator::asset_id_for_foreign(Location::parent()).is_none());
 		assert!(ForeignAssetCreator::foreign_asset_for_id(1).is_none());
 
 		expect_events(vec![
 			crate::Event::ForeignAssetCreated {
 				asset_id: 1,
-				foreign_asset: MultiLocation::parent(),
+				foreign_asset: Location::parent(),
 			},
 			crate::Event::ForeignAssetDestroyed {
 				asset_id: 1,
-				foreign_asset: MultiLocation::parent(),
+				foreign_asset: Location::parent(),
 			},
 		])
 	});

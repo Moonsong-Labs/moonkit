@@ -28,8 +28,8 @@ use frame_support::{
 	construct_runtime,
 	dispatch::DispatchClass,
 	genesis_builder_helper::{build_config, create_default_config},
-	match_types, parameter_types,
-	traits::{ConstBool, Everything, Nothing, OnInitialize, TransformOrigin},
+	parameter_types,
+	traits::{ConstBool, Contains, Everything, Nothing, OnInitialize, TransformOrigin},
 	weights::{
 		constants::{
 			BlockExecutionWeight, ExtrinsicBaseWeight, RocksDbWeight, WEIGHT_REF_TIME_PER_SECOND,
@@ -57,10 +57,10 @@ use polkadot_runtime_common::{BlockHashCount, SlowAdjustingFeeUpdate};
 use staging_xcm::latest::prelude::*;
 use staging_xcm_builder::{
 	AccountId32Aliases, AllowTopLevelPaidExecutionFrom, AllowUnpaidExecutionFrom, EnsureXcmOrigin,
-	FixedWeightBounds, FungibleAdapter, IsConcrete, NativeAsset, ParentAsSuperuser, ParentIsPreset,
-	RelayChainAsNative, SiblingParachainAsNative, SiblingParachainConvertsVia,
-	SignedAccountId32AsNative, SignedToAccountId32, SovereignSignedViaLocation, TakeWeightCredit,
-	UsingComponents,
+	FixedWeightBounds, FrameTransactionalProcessor, FungibleAdapter, IsConcrete, NativeAsset,
+	ParentAsSuperuser, ParentIsPreset, RelayChainAsNative, SiblingParachainAsNative,
+	SiblingParachainConvertsVia, SignedAccountId32AsNative, SignedToAccountId32,
+	SovereignSignedViaLocation, TakeWeightCredit, UsingComponents,
 };
 use staging_xcm_executor::{Config, XcmExecutor};
 
@@ -377,7 +377,6 @@ impl pallet_balances::Config for Runtime {
 	type RuntimeHoldReason = ();
 	type RuntimeFreezeReason = ();
 	type FreezeIdentifier = ();
-	type MaxHolds = ConstU32<0>;
 	type MaxFreezes = ConstU32<0>;
 }
 
@@ -432,13 +431,13 @@ impl pallet_insecure_randomness_collective_flip::Config for Runtime {}
 impl staging_parachain_info::Config for Runtime {}
 
 parameter_types! {
-	pub const RocLocation: MultiLocation = MultiLocation::parent();
+	pub const RocLocation: Location = Location::parent();
 	pub const RelayNetwork: Option<NetworkId> = None;
 	pub RelayChainOrigin: RuntimeOrigin = cumulus_pallet_xcm::Origin::Relay.into();
-	pub UniversalLocation: InteriorMultiLocation = Parachain(ParachainInfo::parachain_id().into()).into();
+	pub UniversalLocation: InteriorLocation = Parachain(ParachainInfo::parachain_id().into()).into();
 }
 
-/// Type for specifying how a `MultiLocation` can be converted into an `AccountId`. This is used
+/// Type for specifying how a `Location` can be converted into an `AccountId`. This is used
 /// when determining ownership of accounts for asset transacting and when attempting to use XCM
 /// `Transact` in order to determine the dispatch Origin.
 pub type LocationToAccountId = (
@@ -456,7 +455,7 @@ pub type LocalAssetTransactor = FungibleAdapter<
 	Balances,
 	// Use this currency when it is a fungible asset matching the given location or name:
 	IsConcrete<RocLocation>,
-	// Do a simple punn to convert an AccountId32 MultiLocation into a native chain account ID:
+	// Do a simple punn to convert an AccountId32 Location into a native chain account ID:
 	LocationToAccountId,
 	// Our chain's account ID type (we can't get away without mentioning it explicitly):
 	AccountId,
@@ -495,11 +494,21 @@ parameter_types! {
 	pub const MaxAssetsIntoHolding: u32 = 64;
 }
 
-match_types! {
-	pub type ParentOrParentsExecutivePlurality: impl Contains<MultiLocation> = {
-		MultiLocation { parents: 1, interior: Here } |
-		MultiLocation { parents: 1, interior: X1(Plurality { id: BodyId::Executive, .. }) }
-	};
+pub struct ParentOrParentsExecutivePlurality;
+impl Contains<Location> for ParentOrParentsExecutivePlurality {
+	fn contains(location: &Location) -> bool {
+		matches!(
+			location.unpack(),
+			(1, [] /* Here */)
+				| (
+					1,
+					[Plurality {
+						id: BodyId::Executive,
+						..
+					}]
+				)
+		)
+	}
 }
 
 pub type Barrier = (
@@ -536,6 +545,7 @@ impl Config for XcmConfig {
 	type CallDispatcher = RuntimeCall;
 	type SafeCallFilter = Everything;
 	type Aliasers = Nothing;
+	type TransactionalProcessor = FrameTransactionalProcessor;
 }
 
 /// No local origins on this chain are allowed to dispatch XCM sends/executions.
