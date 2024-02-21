@@ -198,11 +198,6 @@ impl pallet_balances::Config for Runtime {
 	type RuntimeFreezeReason = ();
 }
 
-#[cfg(feature = "runtime-benchmarks")]
-parameter_types! {
-	pub ReachableDest: Option<MultiLocation> = Some(Parent.into());
-}
-
 parameter_types! {
 	pub MatcherLocation: MultiLocation = MultiLocation::here();
 }
@@ -233,8 +228,6 @@ impl pallet_xcm::Config for Runtime {
 	type MaxRemoteLockConsumers = ConstU32<0>;
 	type RemoteLockConsumerIdentifier = ();
 	type AdminOrigin = frame_system::EnsureRoot<AccountId>;
-	#[cfg(feature = "runtime-benchmarks")]
-	type ReachableDest = ReachableDest;
 }
 pub type Precompiles<R> = PrecompileSetBuilder<
 	R,

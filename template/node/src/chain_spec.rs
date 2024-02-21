@@ -172,7 +172,7 @@ fn testnet_genesis(
 		system: Default::default(),
 	};
 
-	serde_json::to_value(&g).unwrap()
+	serde_json::to_value(&g).expect("Could not generate JSON for testnet genesis.")
 }
 
 #[test]
