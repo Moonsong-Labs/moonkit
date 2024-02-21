@@ -107,24 +107,21 @@ where
 	#[precompile::view]
 	fn multilocation_to_address(
 		handle: &mut impl PrecompileHandle,
-		multilocation: MultiLocation,
+		location: Location,
 	) -> EvmResult<Address> {
 		// storage item: AssetTypeUnitsPerSecond
-		// max encoded len: hash (16) + Multilocation + u128 (16)
-		handle.record_db_read::<Runtime>(32 + MultiLocation::max_encoded_len())?;
+		// max encoded len: hash (16) + Location + u128 (16)
+		handle.record_db_read::<Runtime>(32 + Location::max_encoded_len())?;
 
 		let origin =
-			XcmConfig::OriginConverter::convert_origin(multilocation, OriginKind::SovereignAccount)
+			XcmConfig::OriginConverter::convert_origin(location, OriginKind::SovereignAccount)
 				.map_err(|_| {
-					RevertReason::custom("Failed multilocation conversion")
-						.in_field("multilocation")
+					RevertReason::custom("Failed location conversion").in_field("location")
 				})?;
 
 		let account: H160 = origin
 			.into_signer()
-			.ok_or(
-				RevertReason::custom("Failed multilocation conversion").in_field("multilocation"),
-			)?
+			.ok_or(RevertReason::custom("Failed location conversion").in_field("location"))?
 			.into();
 		Ok(Address(account))
 	}
@@ -133,21 +130,21 @@ where
 	#[precompile::view]
 	fn get_units_per_second(
 		handle: &mut impl PrecompileHandle,
-		multilocation: MultiLocation,
+		location: Location,
 	) -> EvmResult<U256> {
 		// storage item: AssetTypeUnitsPerSecond
-		// max encoded len: hash (16) + Multilocation + u128 (16)
-		handle.record_db_read::<Runtime>(32 + MultiLocation::max_encoded_len())?;
+		// max encoded len: hash (16) + Location + u128 (16)
+		handle.record_db_read::<Runtime>(32 + Location::max_encoded_len())?;
 
 		// We will construct an asset with the max amount, and check how much we
 		// get in return to substract
-		let multiasset: xcm::latest::MultiAsset = (multilocation.clone(), u128::MAX).into();
+		let multiasset: Asset = (location.clone(), u128::MAX).into();
 		let weight_per_second = 1_000_000_000_000u64;
 
 		let mut trader = <XcmConfig as xcm_executor::Config>::Trader::new();
 
 		let ctx = XcmContext {
-			origin: Some(multilocation),
+			origin: Some(location),
 			message_id: XcmHash::default(),
 			topic: None,
 		};
@@ -159,7 +156,7 @@ where
 				&ctx,
 			)
 			.map_err(|_| {
-				RevertReason::custom("Asset not supported as fee payment").in_field("multilocation")
+				RevertReason::custom("Asset not supported as fee payment").in_field("location")
 			})?;
 
 		// we just need to substract from u128::MAX the unused assets
@@ -233,7 +230,7 @@ where
 	#[precompile::public("xcmSend((uint8,bytes[]),bytes)")]
 	fn xcm_send(
 		handle: &mut impl PrecompileHandle,
-		dest: MultiLocation,
+		dest: Location,
 		message: BoundedBytes<GetXcmSizeLimit>,
 	) -> EvmResult {
 		let message: Vec<u8> = message.into();

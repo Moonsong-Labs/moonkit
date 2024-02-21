@@ -89,7 +89,6 @@ impl pallet_balances::Config for Test {
 	type RuntimeHoldReason = ();
 	type RuntimeFreezeReason = ();
 	type FreezeIdentifier = ();
-	type MaxHolds = ();
 	type MaxFreezes = ();
 }
 
@@ -129,7 +128,7 @@ impl pallet_assets::Config for Test {
 
 impl Config for Test {
 	type RuntimeEvent = RuntimeEvent;
-	type ForeignAsset = MultiLocation;
+	type ForeignAsset = Location;
 	type ForeignAssetCreatorOrigin = EnsureRoot<AccountId>;
 	type ForeignAssetModifierOrigin = EnsureRoot<AccountId>;
 	type ForeignAssetDestroyerOrigin = EnsureRoot<AccountId>;

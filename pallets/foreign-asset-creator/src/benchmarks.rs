@@ -23,7 +23,7 @@ use sp_arithmetic::traits::AtLeast16BitUnsigned;
 use staging_xcm::latest::prelude::*;
 benchmarks! {
 	// This where clause allows us to create ForeignAssetTypes
-	where_clause { where T::ForeignAsset: From<MultiLocation>, AssetId<T>: AtLeast16BitUnsigned }
+	where_clause { where T::ForeignAsset: From<Location>, AssetId<T>: AtLeast16BitUnsigned }
 	create_foreign_asset {
 		const USER_SEED: u32 = 1;
 		let manager = account("manager",  0, USER_SEED);
@@ -43,7 +43,7 @@ benchmarks! {
 		let manager: T::AccountId = account("manager",  0, USER_SEED);
 
 		for i in 0..x {
-			let foreign_asset:  T::ForeignAsset = MultiLocation::new(0, X1(GeneralIndex(i as u128))).into();
+			let foreign_asset:  T::ForeignAsset = Location::new(0, [GeneralIndex(i as u128)]).into();
 			let asset_id: AssetId<T> = (i as u16).into();
 			let amount = 1u32.into();
 			Pallet::<T>::create_foreign_asset(
@@ -57,9 +57,9 @@ benchmarks! {
 		}
 
 		let new_foreign_asset = T::ForeignAsset::default();
-		let asset_type_to_be_changed: T::ForeignAsset = MultiLocation::new(
+		let asset_type_to_be_changed: T::ForeignAsset = Location::new(
 			0,
-			X1(GeneralIndex((x-1) as u128))
+			[GeneralIndex((x-1) as u128)]
 		).into();
 		let asset_id_to_be_changed: AssetId<T> = ((x-1) as u16).into();
 	}: _(RawOrigin::Root, asset_id_to_be_changed.clone(), new_foreign_asset.clone())
@@ -74,7 +74,7 @@ benchmarks! {
 		let manager: T::AccountId = account("manager",  0, USER_SEED);
 
 		for i in 0..x {
-			let foreign_asset:  T::ForeignAsset = MultiLocation::new(0, X1(GeneralIndex(i as u128))).into();
+			let foreign_asset:  T::ForeignAsset = Location::new(0, [GeneralIndex(i as u128)]).into();
 			let asset_id: AssetId<T> = (i as u16).into();
 			let amount = 1u32.into();
 			Pallet::<T>::create_foreign_asset(
@@ -100,7 +100,7 @@ benchmarks! {
 		let manager: T::AccountId = account("manager",  0, USER_SEED);
 
 		for i in 0..x {
-			let foreign_asset:  T::ForeignAsset = MultiLocation::new(0, X1(GeneralIndex(i as u128))).into();
+			let foreign_asset:  T::ForeignAsset = Location::new(0, [GeneralIndex(i as u128)]).into();
 			let asset_id: AssetId<T> = (i as u16).into();
 			let amount = 1u32.into();
 			Pallet::<T>::create_foreign_asset(
