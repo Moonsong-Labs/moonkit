@@ -28,6 +28,7 @@ mod manual_seal;
 pub use import_queue::import_queue;
 pub use manual_seal::NimbusManualSealConsensusDataProvider;
 
+use cumulus_client_parachain_inherent::ParachainInherentDataProvider;
 use cumulus_primitives_core::{
 	relay_chain::{Hash as PHash, Header as PHeader},
 	ParaId, PersistedValidationData,
@@ -78,11 +79,11 @@ where
 	// Determine if runtime change
 	let runtime_upgraded = if *parent.number() > sp_runtime::traits::Zero::zero() {
 		use sp_api::Core as _;
-		let previous_runtime_version: sp_api::RuntimeVersion = para_client
+		let previous_runtime_version: sp_version::RuntimeVersion = para_client
 			.runtime_api()
 			.version(parent.hash())
 			.map_err(Box::new)?;
-		let runtime_version: sp_api::RuntimeVersion = para_client
+		let runtime_version: sp_version::RuntimeVersion = para_client
 			.runtime_api()
 			.version(parent.hash())
 			.map_err(Box::new)?;
@@ -93,11 +94,11 @@ where
 	};
 
 	let maybe_key = if skip_prediction || runtime_upgraded {
-		first_available_key(&*keystore)
+		first_available_key(keystore)
 	} else {
 		first_eligible_key::<Block, Client>(
-			para_client.clone(),
-			&*keystore,
+			para_client,
+			keystore,
 			parent,
 			*relay_parent_header.number(),
 		)
@@ -127,9 +128,13 @@ where
 	CIDP: CreateInherentDataProviders<Block, (PHash, PersistedValidationData, NimbusId)> + 'static,
 	RClient: RelayChainInterface + Send + Clone + 'static,
 {
-	let paras_inherent_data =
-		ParachainInherentData::create_at(relay_parent, relay_client, validation_data, para_id)
-			.await;
+	let paras_inherent_data = ParachainInherentDataProvider::create_at(
+		relay_parent,
+		relay_client,
+		validation_data,
+		para_id,
+	)
+	.await;
 
 	let paras_inherent_data = match paras_inherent_data {
 		Some(p) => p,

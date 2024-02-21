@@ -16,16 +16,14 @@
 
 //! Unit testing
 use crate::mock::{
-	events, mock_events, ExtBuilder, MaintenanceMode, RuntimeCall as OuterCall, RuntimeOrigin, Test,
+	events, ExtBuilder, MaintenanceMode, RuntimeCall as OuterCall, RuntimeOrigin, Test,
 };
-use crate::{Call, Error, Event, ExecutiveHooks};
-use cumulus_primitives_core::DmpMessageHandler;
-use frame_support::{
-	assert_noop, assert_ok,
-	traits::{OffchainWorker, OnFinalize, OnIdle, OnInitialize, OnRuntimeUpgrade},
-	weights::Weight,
-};
+use crate::{Call, Error, Event};
+use cumulus_primitives_core::AggregateMessageOrigin;
+use frame_support::traits::QueuePausedQuery;
+use frame_support::{assert_noop, assert_ok};
 use sp_runtime::traits::Dispatchable;
+
 #[test]
 fn can_remark_during_normal_operation() {
 	ExtBuilder::default().build().execute_with(|| {
@@ -126,90 +124,25 @@ fn cannot_resume_normal_operation_while_already_operating_normally() {
 
 #[cfg(feature = "xcm-support")]
 #[test]
-fn normal_dmp_in_non_maintenance() {
+fn queue_pause_in_non_maintenance() {
 	ExtBuilder::default()
 		.with_maintenance_mode(false)
 		.build()
 		.execute_with(|| {
 			assert_eq!(
-				MaintenanceMode::handle_dmp_messages(vec![].into_iter(), Weight::from_parts(1, 0)),
-				Weight::zero()
+				MaintenanceMode::is_paused(&AggregateMessageOrigin::Here),
+				false
 			);
 		})
 }
 
 #[cfg(feature = "xcm-support")]
 #[test]
-fn maintenance_dmp_in_maintenance() {
+fn queue_pause_in_maintenance() {
 	ExtBuilder::default()
 		.with_maintenance_mode(true)
 		.build()
 		.execute_with(|| {
-			assert_eq!(
-				MaintenanceMode::handle_dmp_messages(vec![].into_iter(), Weight::from_parts(1, 0)),
-				Weight::from_parts(1, 0)
-			);
-		})
-}
-
-#[test]
-fn normal_hooks_in_non_maintenance() {
-	ExtBuilder::default()
-		.with_maintenance_mode(false)
-		.build()
-		.execute_with(|| {
-			assert_eq!(
-				ExecutiveHooks::<Test>::on_idle(0, Weight::zero()),
-				Weight::zero()
-			);
-			assert_eq!(ExecutiveHooks::<Test>::on_initialize(0), Weight::zero());
-			assert_eq!(ExecutiveHooks::<Test>::on_runtime_upgrade(), Weight::zero());
-			ExecutiveHooks::<Test>::on_finalize(0);
-			ExecutiveHooks::<Test>::offchain_worker(0);
-
-			assert_eq!(
-				mock_events(),
-				[
-					crate::mock::mock_pallet_maintenance_hooks::Event::NormalOnIdle,
-					crate::mock::mock_pallet_maintenance_hooks::Event::NormalOnInitialize,
-					crate::mock::mock_pallet_maintenance_hooks::Event::NormalOnRuntimeUpgrade,
-					crate::mock::mock_pallet_maintenance_hooks::Event::NormalOnFinalize,
-					crate::mock::mock_pallet_maintenance_hooks::Event::NormalOffchainWorker
-				]
-			);
-		})
-}
-
-#[test]
-fn maintenance_hooks_in_maintenance() {
-	ExtBuilder::default()
-		.with_maintenance_mode(true)
-		.build()
-		.execute_with(|| {
-			assert_eq!(
-				ExecutiveHooks::<Test>::on_idle(0, Weight::zero()),
-				Weight::from_parts(1, 0)
-			);
-			assert_eq!(
-				ExecutiveHooks::<Test>::on_initialize(0),
-				Weight::from_parts(1, 0)
-			);
-			assert_eq!(
-				ExecutiveHooks::<Test>::on_runtime_upgrade(),
-				Weight::from_parts(1, 0)
-			);
-
-			ExecutiveHooks::<Test>::on_finalize(0);
-			ExecutiveHooks::<Test>::offchain_worker(0);
-			assert_eq!(
-				mock_events(),
-				[
-					crate::mock::mock_pallet_maintenance_hooks::Event::MaintenanceOnIdle,
-					crate::mock::mock_pallet_maintenance_hooks::Event::MaintenanceOnInitialize,
-					crate::mock::mock_pallet_maintenance_hooks::Event::MaintenanceOnRuntimeUpgrade,
-					crate::mock::mock_pallet_maintenance_hooks::Event::MaintenanceOnFinalize,
-					crate::mock::mock_pallet_maintenance_hooks::Event::MaintenanceOffchainWorker
-				]
-			);
+			assert!(MaintenanceMode::is_paused(&AggregateMessageOrigin::Here),);
 		})
 }

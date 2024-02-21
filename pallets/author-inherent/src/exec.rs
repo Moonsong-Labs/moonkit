@@ -18,12 +18,15 @@
 //! with the nimubs consensus family.
 
 use frame_support::traits::ExecuteBlock;
-use sp_api::{BlockT, HeaderT};
 // For some reason I can't get these logs to actually print
 use log::debug;
 use nimbus_primitives::{digests::CompatibleDigestItem, NimbusId, NIMBUS_ENGINE_ID};
 use sp_application_crypto::ByteArray;
-use sp_runtime::{generic::DigestItem, RuntimeAppPublic};
+use sp_runtime::{
+	generic::DigestItem,
+	traits::{Block as BlockT, Header},
+	RuntimeAppPublic,
+};
 
 /// Block executive to be used by relay chain validators when validating parachain blocks built
 /// with the nimubs consensus family.

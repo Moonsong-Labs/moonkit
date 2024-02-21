@@ -119,7 +119,7 @@ pub mod pallet {
 			// is by checking on block finalization that the inherent set a particular storage item:
 			// https://github.com/paritytech/polkadot-sdk/issues/2841#issuecomment-1876040854
 			assert!(
-				InherentIncluded::<T>::take() == true,
+				InherentIncluded::<T>::take(),
 				"Block invalid, missing inherent `kick_off_authorship_validation`"
 			);
 		}

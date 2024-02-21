@@ -66,7 +66,10 @@ pub(crate) async fn collate<ADP, Block, BI, CS, Proposer>(
 	inherent_data: (ParachainInherentData, InherentData),
 	proposal_duration: Duration,
 	max_pov_size: usize,
-) -> Result<(Collation, ParachainBlockData<Block>, Block::Hash), Box<dyn Error + Send + 'static>>
+) -> Result<
+	Option<(Collation, ParachainBlockData<Block>, Block::Hash)>,
+	Box<dyn Error + Send + 'static>,
+>
 where
 	ADP: DigestsProvider<NimbusId, <Block as BlockT>::Hash> + 'static,
 	Block: BlockT,
@@ -79,11 +82,7 @@ where
 		additional_digests_provider.provide_digests(author_id.clone(), parent_header.hash()),
 	);
 
-	let Proposal {
-		block,
-		storage_changes,
-		proof,
-	} = proposer
+	let maybe_proposal = proposer
 		.propose(
 			&parent_header,
 			&inherent_data.0,
@@ -94,6 +93,15 @@ where
 		)
 		.await
 		.map_err(|e| Box::new(e) as Box<dyn Error + Send>)?;
+
+	let Proposal {
+		block,
+		storage_changes,
+		proof,
+	} = match maybe_proposal {
+		None => return Ok(None),
+		Some(p) => p,
+	};
 
 	let (header, extrinsics) = block.clone().deconstruct();
 
@@ -155,7 +163,7 @@ where
 			);
 		}
 
-		Ok((collation, block_data, post_hash))
+		Ok(Some((collation, block_data, post_hash)))
 	} else {
 		Err(
 			Box::<dyn Error + Send + Sync>::from("Unable to produce collation")

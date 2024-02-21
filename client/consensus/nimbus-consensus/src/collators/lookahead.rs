@@ -349,7 +349,7 @@ where
 				)
 				.await
 				{
-					Ok((collation, block_data, new_block_hash)) => {
+					Ok(Some((collation, block_data, new_block_hash))) => {
 						// Here we are assuming that the import logic protects against equivocations
 						// and provides sybil-resistance, as it should.
 						params.collator_service.announce_block(new_block_hash, None);
@@ -376,6 +376,10 @@ where
 
 						parent_hash = new_block_hash;
 						parent_header = block_data.into_header();
+					}
+					Ok(None) => {
+						tracing::debug!(target: crate::LOG_TARGET, "No block proposal");
+						break;
 					}
 					Err(err) => {
 						tracing::error!(target: crate::LOG_TARGET, ?err);

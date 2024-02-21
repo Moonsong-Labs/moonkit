@@ -18,12 +18,14 @@ sp-core = { workspace = true }
 sp-inherents = { workspace = true }
 sp-keystore = { workspace = true }
 sp-runtime = { workspace = true }
+sp-version = { workspace = true }
 substrate-prometheus-endpoint = { workspace = true }
 
 # Cumulus dependencies
 cumulus-client-collator = { workspace = true }
 cumulus-client-consensus-common = { workspace = true }
 cumulus-client-consensus-proposer = { workspace = true }
+cumulus-client-parachain-inherent = { workspace = true }
 cumulus-primitives-core = { workspace = true }
 cumulus-primitives-parachain-inherent = { workspace = true }
 cumulus-relay-chain-interface = { workspace = true }

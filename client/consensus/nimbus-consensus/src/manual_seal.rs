@@ -22,12 +22,15 @@ use nimbus_primitives::{
 };
 use sc_consensus::BlockImportParams;
 use sc_consensus_manual_seal::{ConsensusDataProvider, Error};
-use sp_api::{BlockT, HeaderT, ProvideRuntimeApi};
+use sp_api::ProvideRuntimeApi;
 use sp_application_crypto::ByteArray;
 use sp_core::sr25519;
 use sp_inherents::InherentData;
 use sp_keystore::KeystorePtr;
-use sp_runtime::{Digest, DigestItem};
+use sp_runtime::{
+	traits::{Block as BlockT, Header as HeaderT},
+	Digest, DigestItem,
+};
 use std::{marker::PhantomData, sync::Arc};
 
 /// Provides nimbus-compatible pre-runtime digests for use with manual seal consensus

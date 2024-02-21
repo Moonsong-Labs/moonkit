@@ -31,7 +31,6 @@ use sp_core::{H256, U256};
 use sp_io;
 use sp_runtime::traits::{BlakeTwo256, IdentityLookup, TryConvert};
 use sp_runtime::BuildStorage;
-use sp_std::borrow::Borrow;
 use xcm::latest::Error as XcmError;
 use xcm_builder::AllowUnpaidExecutionFrom;
 use xcm_builder::FixedWeightBounds;
@@ -109,7 +108,7 @@ impl ConvertLocation<AccountId> for MockParentMultilocationToAccountConverter {
 pub struct MockParachainMultilocationToAccountConverter;
 impl ConvertLocation<AccountId> for MockParachainMultilocationToAccountConverter {
 	fn convert_location(location: &MultiLocation) -> Option<AccountId> {
-		match location.borrow() {
+		match location {
 			MultiLocation {
 				parents: 1,
 				interior: Junctions::X1(Parachain(id)),
@@ -177,6 +176,7 @@ impl frame_system::Config for Runtime {
 	type SS58Prefix = SS58Prefix;
 	type OnSetCode = ();
 	type MaxConsumers = frame_support::traits::ConstU32<16>;
+	type RuntimeTask = ();
 }
 parameter_types! {
 	pub const ExistentialDeposit: u128 = 0;
@@ -196,11 +196,6 @@ impl pallet_balances::Config for Runtime {
 	type MaxHolds = ();
 	type MaxFreezes = ();
 	type RuntimeFreezeReason = ();
-}
-
-#[cfg(feature = "runtime-benchmarks")]
-parameter_types! {
-	pub ReachableDest: Option<MultiLocation> = Some(Parent.into());
 }
 
 parameter_types! {
@@ -233,8 +228,6 @@ impl pallet_xcm::Config for Runtime {
 	type MaxRemoteLockConsumers = ConstU32<0>;
 	type RemoteLockConsumerIdentifier = ();
 	type AdminOrigin = frame_system::EnsureRoot<AccountId>;
-	#[cfg(feature = "runtime-benchmarks")]
-	type ReachableDest = ReachableDest;
 }
 pub type Precompiles<R> = PrecompileSetBuilder<
 	R,
