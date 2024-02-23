@@ -15,7 +15,6 @@ precompile-utils = { workspace = true }
 frame-support = { workspace = true }
 frame-system = { workspace = true }
 pallet-assets = { workspace = true }
-pallet-balances = { workspace = true, features = [ "insecure_zero_ed" ] }
 pallet-timestamp = { workspace = true }
 parity-scale-codec = { workspace = true, features = [ "max-encoded-len" ] }
 scale-info = { workspace = true, features = [ "derive" ] }
@@ -36,6 +35,7 @@ sha3 = { workspace = true }
 # Moonbeam
 precompile-utils = { workspace = true, features = [ "std", "testing" ] }
 
+pallet-balances = { workspace = true, features = [ "insecure_zero_ed" ] }
 pallet-timestamp = { workspace = true, features = [ "std" ] }
 parity-scale-codec = { workspace = true, features = [ "max-encoded-len", "std" ] }
 scale-info = { workspace = true, features = [ "derive" ] }
