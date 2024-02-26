@@ -22,6 +22,7 @@ use fp_evm::PrecompileHandle;
 use frame_support::traits::ConstU32;
 use frame_support::{
 	dispatch::{GetDispatchInfo, PostDispatchInfo},
+	pallet_prelude::Get,
 	traits::OriginTrait,
 };
 use pallet_evm::AddressMapping;
@@ -58,14 +59,18 @@ mod mock;
 mod tests;
 
 #[derive(Debug)]
-pub struct AllExceptXcmExecute<Runtime, XcmConfig>(PhantomData<(Runtime, XcmConfig)>);
+pub struct AllExceptXcmExecute<Runtime, XcmConfig, StorageGrowth>(
+	PhantomData<(Runtime, XcmConfig, StorageGrowth)>,
+);
 
-impl<Runtime, XcmConfig> SelectorFilter for AllExceptXcmExecute<Runtime, XcmConfig>
+impl<Runtime, XcmConfig, StorageGrowth> SelectorFilter
+	for AllExceptXcmExecute<Runtime, XcmConfig, StorageGrowth>
 where
 	Runtime: pallet_evm::Config + frame_system::Config + pallet_xcm::Config,
 	XcmOriginOf<XcmConfig>: OriginTrait,
 	XcmAccountIdOf<XcmConfig>: Into<H160>,
 	XcmConfig: xcm_executor::Config,
+	StorageGrowth: Get<u64>,
 	<Runtime as frame_system::Config>::RuntimeCall:
 		Dispatchable<PostInfo = PostDispatchInfo> + Decode + GetDispatchInfo,
 	<<Runtime as frame_system::Config>::RuntimeCall as Dispatchable>::RuntimeOrigin:
@@ -77,8 +82,9 @@ where
 		match selector {
 			None => true,
 			Some(selector) => {
-				!XcmUtilsPrecompileCall::<Runtime, XcmConfig>::xcm_execute_selectors()
-					.contains(&selector)
+				!XcmUtilsPrecompileCall::<Runtime, XcmConfig, StorageGrowth>::xcm_execute_selectors(
+				)
+				.contains(&selector)
 			}
 		}
 	}
@@ -89,15 +95,18 @@ where
 }
 
 /// A precompile to wrap the functionality from xcm-utils
-pub struct XcmUtilsPrecompile<Runtime, XcmConfig>(PhantomData<(Runtime, XcmConfig)>);
+pub struct XcmUtilsPrecompile<Runtime, XcmConfig, StorageGrowth>(
+	PhantomData<(Runtime, XcmConfig, StorageGrowth)>,
+);
 
 #[precompile_utils::precompile]
-impl<Runtime, XcmConfig> XcmUtilsPrecompile<Runtime, XcmConfig>
+impl<Runtime, XcmConfig, StorageGrowth> XcmUtilsPrecompile<Runtime, XcmConfig, StorageGrowth>
 where
 	Runtime: pallet_evm::Config + frame_system::Config + pallet_xcm::Config,
 	XcmOriginOf<XcmConfig>: OriginTrait,
 	XcmAccountIdOf<XcmConfig>: Into<H160>,
 	XcmConfig: xcm_executor::Config,
+	StorageGrowth: Get<u64>,
 	<Runtime as frame_system::Config>::RuntimeCall:
 		Dispatchable<PostInfo = PostDispatchInfo> + Decode + GetDispatchInfo,
 	<<Runtime as frame_system::Config>::RuntimeCall as Dispatchable>::RuntimeOrigin:
@@ -224,7 +233,12 @@ where
 			max_weight: Weight::from_parts(weight, DEFAULT_PROOF_SIZE),
 		};
 
-		RuntimeHelper::<Runtime>::try_dispatch(handle, Some(origin).into(), call)?;
+		RuntimeHelper::<Runtime>::try_dispatch(
+			handle,
+			Some(origin).into(),
+			call,
+			StorageGrowth::get(),
+		)?;
 
 		Ok(())
 	}
@@ -251,7 +265,12 @@ where
 			message: Box::new(xcm),
 		};
 
-		RuntimeHelper::<Runtime>::try_dispatch(handle, Some(origin).into(), call)?;
+		RuntimeHelper::<Runtime>::try_dispatch(
+			handle,
+			Some(origin).into(),
+			call,
+			StorageGrowth::get(),
+		)?;
 
 		Ok(())
 	}
