@@ -21,6 +21,7 @@
 use fp_evm::PrecompileHandle;
 use frame_support::{
 	dispatch::{GetDispatchInfo, PostDispatchInfo},
+	pallet_prelude::Get,
 	sp_runtime::traits::{Bounded, CheckedSub, Dispatchable, StaticLookup},
 	storage::types::{StorageDoubleMap, StorageMap, ValueQuery},
 	traits::StorageInstance,
@@ -173,12 +174,16 @@ pub trait Erc20Metadata {
 /// Precompile exposing a pallet_balance as an ERC20.
 /// Multiple precompiles can support instances of pallet_balance.
 /// The precompile uses an additional storage to store approvals.
-pub struct Erc20BalancesPrecompile<Runtime, Metadata: Erc20Metadata, Instance: 'static = ()>(
-	PhantomData<(Runtime, Metadata, Instance)>,
-);
+pub struct Erc20BalancesPrecompile<
+	Runtime,
+	Metadata: Erc20Metadata,
+	StorageGrowth,
+	Instance: 'static = (),
+>(PhantomData<(Runtime, Metadata, StorageGrowth, Instance)>);
 
 #[precompile_utils::precompile]
-impl<Runtime, Metadata, Instance> Erc20BalancesPrecompile<Runtime, Metadata, Instance>
+impl<Runtime, Metadata, StorageGrowth, Instance>
+	Erc20BalancesPrecompile<Runtime, Metadata, StorageGrowth, Instance>
 where
 	Runtime: pallet_balances::Config<Instance> + pallet_evm::Config,
 	Runtime::RuntimeCall: Dispatchable<PostInfo = PostDispatchInfo> + GetDispatchInfo,
@@ -188,6 +193,7 @@ where
 	Metadata: Erc20Metadata,
 	Instance: InstanceToPrefix + 'static,
 	<Runtime as pallet_evm::Config>::AddressMapping: AddressMapping<Runtime::AccountId>,
+	StorageGrowth: Get<u64>,
 {
 	#[precompile::public("totalSupply()")]
 	#[precompile::view]
@@ -288,6 +294,7 @@ where
 					dest: Runtime::Lookup::unlookup(to),
 					value: value,
 				},
+				StorageGrowth::get(),
 			)?;
 		}
 
@@ -353,6 +360,7 @@ where
 					dest: Runtime::Lookup::unlookup(to),
 					value: value,
 				},
+				StorageGrowth::get(),
 			)?;
 		}
 
@@ -414,6 +422,7 @@ where
 				dest: Runtime::Lookup::unlookup(caller),
 				value: amount,
 			},
+			StorageGrowth::get(),
 		)?;
 
 		log2(
@@ -468,7 +477,7 @@ where
 		r: H256,
 		s: H256,
 	) -> EvmResult {
-		<Eip2612<Runtime, Metadata, Instance>>::permit(
+		<Eip2612<Runtime, Metadata, StorageGrowth, Instance>>::permit(
 			handle, owner, spender, value, deadline, v, r, s,
 		)
 	}
@@ -476,13 +485,13 @@ where
 	#[precompile::public("nonces(address)")]
 	#[precompile::view]
 	fn eip2612_nonces(handle: &mut impl PrecompileHandle, owner: Address) -> EvmResult<U256> {
-		<Eip2612<Runtime, Metadata, Instance>>::nonces(handle, owner)
+		<Eip2612<Runtime, Metadata, StorageGrowth, Instance>>::nonces(handle, owner)
 	}
 
 	#[precompile::public("DOMAIN_SEPARATOR()")]
 	#[precompile::view]
 	fn eip2612_domain_separator(handle: &mut impl PrecompileHandle) -> EvmResult<H256> {
-		<Eip2612<Runtime, Metadata, Instance>>::domain_separator(handle)
+		<Eip2612<Runtime, Metadata, StorageGrowth, Instance>>::domain_separator(handle)
 	}
 
 	fn u256_to_amount(value: U256) -> MayRevert<BalanceOf<Runtime, Instance>> {
