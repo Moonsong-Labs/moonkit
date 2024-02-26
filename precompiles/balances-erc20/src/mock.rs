@@ -101,10 +101,10 @@ impl pallet_balances::Config for Runtime {
 
 pub type Precompiles<R> = PrecompileSetBuilder<
 	R,
-	(PrecompileAt<AddressU64<1>, Erc20BalancesPrecompile<R, NativeErc20Metadata>>,),
+	(PrecompileAt<AddressU64<1>, Erc20BalancesPrecompile<R, NativeErc20Metadata, ()>>,),
 >;
 
-pub type PCall = Erc20BalancesPrecompileCall<Runtime, NativeErc20Metadata, ()>;
+pub type PCall = Erc20BalancesPrecompileCall<Runtime, NativeErc20Metadata, (), ()>;
 
 const MAX_POV_SIZE: u64 = 5 * 1024 * 1024;
 

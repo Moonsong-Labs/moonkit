@@ -34,9 +34,11 @@ const PERMIT_DOMAIN: [u8; 32] = keccak256!(
 	"EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)"
 );
 
-pub struct Eip2612<Runtime, Metadata, Instance = ()>(PhantomData<(Runtime, Metadata, Instance)>);
+pub struct Eip2612<Runtime, Metadata, StorageGrowth, Instance = ()>(
+	PhantomData<(Runtime, Metadata, StorageGrowth, Instance)>,
+);
 
-impl<Runtime, Metadata, Instance> Eip2612<Runtime, Metadata, Instance>
+impl<Runtime, Metadata, StorageGrowth, Instance> Eip2612<Runtime, Metadata, StorageGrowth, Instance>
 where
 	Runtime: pallet_balances::Config<Instance> + pallet_evm::Config,
 	Runtime::RuntimeCall: Dispatchable<PostInfo = PostDispatchInfo> + GetDispatchInfo,
@@ -46,6 +48,7 @@ where
 	Metadata: Erc20Metadata,
 	Instance: InstanceToPrefix + 'static,
 	<Runtime as pallet_evm::Config>::AddressMapping: AddressMapping<Runtime::AccountId>,
+	StorageGrowth: Get<u64>,
 {
 	pub fn compute_domain_separator(address: H160) -> [u8; 32] {
 		let name: H256 = keccak_256(Metadata::name().as_bytes()).into();
@@ -144,7 +147,7 @@ where
 
 		{
 			let amount =
-				Erc20BalancesPrecompile::<Runtime, Metadata, Instance>::u256_to_amount(value)
+				Erc20BalancesPrecompile::<Runtime, Metadata, StorageGrowth, Instance>::u256_to_amount(value)
 					.unwrap_or_else(|_| Bounded::max_value());
 
 			let owner: Runtime::AccountId = Runtime::AddressMapping::into_account_id(owner);
