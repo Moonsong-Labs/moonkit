@@ -3309,7 +3309,7 @@ dependencies = [
 [[package]]
 name = "fp-account"
 version = "1.0.0-dev"
-source = "git+https://github.com/koushiro-contrib/frontier?branch=update-polkadot-v1.7.0#3b5f26cb3a8f06d957841b81ea70549474b49d8c"
+source = "git+https://github.com/paritytech/frontier?branch=polkadot-v1.7.0#c5d6daa9ffd46c0a85915526aa26d200fd635e30"
 dependencies = [
  "hex",
  "impl-serde",
@@ -3328,7 +3328,7 @@ dependencies = [
 [[package]]
 name = "fp-evm"
 version = "3.0.0-dev"
-source = "git+https://github.com/koushiro-contrib/frontier?branch=update-polkadot-v1.7.0#3b5f26cb3a8f06d957841b81ea70549474b49d8c"
+source = "git+https://github.com/paritytech/frontier?branch=polkadot-v1.7.0#c5d6daa9ffd46c0a85915526aa26d200fd635e30"
 dependencies = [
  "evm",
  "frame-support",
@@ -6872,7 +6872,7 @@ dependencies = [
 [[package]]
 name = "pallet-evm"
 version = "6.0.0-dev"
-source = "git+https://github.com/koushiro-contrib/frontier?branch=update-polkadot-v1.7.0#3b5f26cb3a8f06d957841b81ea70549474b49d8c"
+source = "git+https://github.com/paritytech/frontier?branch=polkadot-v1.7.0#c5d6daa9ffd46c0a85915526aa26d200fd635e30"
 dependencies = [
  "environmental",
  "evm",
@@ -9374,7 +9374,7 @@ checksum = "5b40af805b3121feab8a3c29f04d8ad262fa8e0561883e7653e024ae4479e6de"
 [[package]]
 name = "precompile-utils"
 version = "0.1.0"
-source = "git+https://github.com/koushiro-contrib/frontier?branch=update-polkadot-v1.7.0#3b5f26cb3a8f06d957841b81ea70549474b49d8c"
+source = "git+https://github.com/paritytech/frontier?branch=polkadot-v1.7.0#c5d6daa9ffd46c0a85915526aa26d200fd635e30"
 dependencies = [
  "derive_more",
  "environmental",
@@ -9404,7 +9404,7 @@ dependencies = [
 [[package]]
 name = "precompile-utils-macro"
 version = "0.1.0"
-source = "git+https://github.com/koushiro-contrib/frontier?branch=update-polkadot-v1.7.0#3b5f26cb3a8f06d957841b81ea70549474b49d8c"
+source = "git+https://github.com/paritytech/frontier?branch=polkadot-v1.7.0#c5d6daa9ffd46c0a85915526aa26d200fd635e30"
 dependencies = [
  "case",
  "num_enum",
