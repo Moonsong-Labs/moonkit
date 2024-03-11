@@ -35,7 +35,6 @@ use polkadot_parachain_primitives::primitives::{Id, RelayChainBlockNumber, XcmpM
 pub enum XcmMode {
 	#[default]
 	Normal,
-	Limited,
 	Paused,
 }
 
@@ -68,57 +67,35 @@ pub mod pallet {
 		/// The HRMP handler to be used in normal operating mode
 		type HrmpMessageHandler: XcmpMessageHandler;
 
-		/// Allow to apply a lower Weight Limit for DMP messages where block production seem's stall
-		type LimitedModeDmpWeightLimit: Get<Weight>;
-
-		/// Allow to apply a lower Weight Limit for HRMP messages where block production seem's stall
-		type LimitedModeHrmpWeightLimit: Get<Weight>;
-
-		/// Maximum number of relay block to skip before trigering the Limited mode.
-		/// Note that if both Limited and Paused threshold are reach, the Paused mode will be apply.
-		type LimitedThreshold: Get<RelayChainBlockNumber>;
-
 		/// Maximum number of relay block to skip before trigering the Paused mode.
 		type PausedThreshold: Get<RelayChainBlockNumber>;
 
 		/// Origin allowed to perform a fast authorize upgrade when XcmMode is not normal
 		type FastAuthorizeUpgradeOrigin: EnsureOrigin<Self::RuntimeOrigin>;
 
-		/// Origin allowed to resume from limited mode
-		type LimitedToNormalOrigin: EnsureOrigin<Self::RuntimeOrigin>;
-
 		/// origin allowed to resume to normal operations from paused mode
 		type PausedToNormalOrigin: EnsureOrigin<Self::RuntimeOrigin>;
-
-		/// origin alllowed to change Paused mode to Limited
-		type PausedToLimitedOrigin: EnsureOrigin<Self::RuntimeOrigin>;
 	}
 
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(crate) fn deposit_event)]
 	pub enum Event {
-		/// The xcm mode was put into Limited Mode
-		EnteredLimitedXcmMode,
-		// The xcm incoming execution was Paused
+		/// The XCM incoming execution was Paused
 		EnteredPausedXcmMode,
-		/// The XCm incoming execution returned to normal operations
+		/// The XCM incoming execution returned to normal operations
 		NormalXcmOperationResumed,
 	}
 
 	/// An error that can occur while executing this pallet's extrinsics.
 	#[pallet::error]
 	pub enum Error<T> {
-		/// Fast authorize upgrade is forbiden in normal mode
-		NotInLimitedOrPausedMode,
-		/// The current XCM Mode is not Limited
-		NotInLimitedMode,
 		/// The current XCM Mode is not Paused
 		NotInPausedMode,
 	}
 
 	#[pallet::storage]
 	#[pallet::getter(fn mode)]
-	/// Whether incoming XCM is enabled, limited or paused
+	/// Whether incoming XCM is enabled or paused
 	pub type Mode<T: Config> = StorageValue<_, XcmMode, ValueQuery>;
 
 	#[pallet::hooks]
@@ -132,22 +109,6 @@ pub mod pallet {
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
 		#[pallet::call_index(0)]
-		#[pallet::weight((0, DispatchClass::Operational))]
-		pub fn limited_to_normal(origin: OriginFor<T>) -> DispatchResultWithPostInfo {
-			T::LimitedToNormalOrigin::ensure_origin(origin)?;
-
-			ensure!(
-				Mode::<T>::get() == XcmMode::Limited,
-				Error::<T>::NotInLimitedMode
-			);
-
-			Mode::<T>::set(XcmMode::Normal);
-			<Pallet<T>>::deposit_event(Event::NormalXcmOperationResumed);
-
-			Ok(().into())
-		}
-
-		#[pallet::call_index(1)]
 		#[pallet::weight((0, DispatchClass::Operational))]
 		pub fn paused_to_normal(origin: OriginFor<T>) -> DispatchResultWithPostInfo {
 			T::PausedToNormalOrigin::ensure_origin(origin)?;
@@ -163,32 +124,13 @@ pub mod pallet {
 			Ok(().into())
 		}
 
-		#[pallet::call_index(2)]
-		#[pallet::weight((0, DispatchClass::Operational))]
-		pub fn paused_to_limited(origin: OriginFor<T>) -> DispatchResultWithPostInfo {
-			T::PausedToLimitedOrigin::ensure_origin(origin)?;
-
+		#[pallet::call_index(1)]
+		#[pallet::weight((1_000_000, DispatchClass::Operational))]
+		pub fn fast_authorize_upgrade(origin: OriginFor<T>, code_hash: T::Hash) -> DispatchResult {
+			T::FastAuthorizeUpgradeOrigin::ensure_origin(origin)?;
 			ensure!(
 				Mode::<T>::get() == XcmMode::Paused,
 				Error::<T>::NotInPausedMode
-			);
-
-			Mode::<T>::set(XcmMode::Limited);
-			<Pallet<T>>::deposit_event(Event::EnteredLimitedXcmMode);
-
-			Ok(().into())
-		}
-
-		#[pallet::call_index(3)]
-		#[pallet::weight((1_000_000, DispatchClass::Operational))]
-		pub fn fast_authorize_upgrade(
-			origin: OriginFor<T>,
-			code_hash: T::Hash,
-		) -> DispatchResult {
-			T::FastAuthorizeUpgradeOrigin::ensure_origin(origin)?;
-			ensure!(
-				Mode::<T>::get() != XcmMode::Normal,
-				Error::<T>::NotInLimitedOrPausedMode
 			);
 
 			frame_system::Pallet::<T>::authorize_upgrade(RawOrigin::Root.into(), code_hash)
@@ -206,9 +148,6 @@ impl<T: Config> CheckAssociatedRelayNumber for Pallet<T> {
 		if current > previous + T::PausedThreshold::get() {
 			Mode::<T>::set(XcmMode::Paused);
 			<Pallet<T>>::deposit_event(Event::EnteredPausedXcmMode);
-		} else if current > previous + T::LimitedThreshold::get() {
-			Mode::<T>::set(XcmMode::Limited);
-			<Pallet<T>>::deposit_event(Event::EnteredLimitedXcmMode);
 		}
 	}
 }
@@ -220,10 +159,6 @@ impl<T: Config> XcmpMessageHandler for Pallet<T> {
 	) -> Weight {
 		match Mode::<T>::get() {
 			XcmMode::Normal => T::HrmpMessageHandler::handle_xcmp_messages(iter, limit),
-			XcmMode::Limited => T::HrmpMessageHandler::handle_xcmp_messages(
-				iter,
-				T::LimitedModeHrmpWeightLimit::get(),
-			),
 			XcmMode::Paused => T::HrmpMessageHandler::handle_xcmp_messages(iter, Weight::zero()),
 		}
 	}
