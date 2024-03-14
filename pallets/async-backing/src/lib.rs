@@ -94,6 +94,9 @@ pub mod pallet {
 
 		/// A way to get the current parachain slot and verify it's validity against the relay slot.
 		type GetAndVerifySlot: GetAndVerifySlot;
+
+		#[pallet::constant]
+		type ExpectedBlockTime: Get<Self::Moment>;
 	}
 
 	/// First tuple element is the highest slot that has been seen in the history of this chain.
