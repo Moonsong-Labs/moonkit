@@ -81,12 +81,12 @@ impl pallet_timestamp::Config for Test {
 parameter_types! {
 	pub const AllowMultipleBlocksPerSlot: bool = true;
 	pub const SlotDuration: u64 = 12000;
-	type ExpectedBlockTime = ConstU64<1>;
 }
 
 impl async_backing::Config for Test {
 	type AllowMultipleBlocksPerSlot = AllowMultipleBlocksPerSlot;
 	type GetAndVerifySlot = RelaySlot;
+	type ExpectedBlockTime = ConstU64<1>;
 }
 
 /// Build genesis storage according to the mock runtime.
