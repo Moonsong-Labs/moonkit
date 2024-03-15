@@ -36,9 +36,24 @@ pub trait ForeignAssetCreatedHook<ForeignAsset, AssetId, AssetBalance> {
 	);
 }
 
+impl<ForeignAsset, AssetId, AssetBalance>
+	ForeignAssetCreatedHook<ForeignAsset, AssetId, AssetBalance> for ()
+{
+	fn on_asset_created(
+		_foreign_asset: &ForeignAsset,
+		_asset_id: &AssetId,
+		_min_balance: &AssetBalance,
+	) {
+	}
+}
+
 /// Trait for the OnForeignAssetDeregistered hook
 pub trait ForeignAssetDestroyedHook<ForeignAsset, AssetId> {
 	fn on_asset_destroyed(foreign_asset: &ForeignAsset, asset_id: &AssetId);
+}
+
+impl<ForeignAsset, AssetId> ForeignAssetDestroyedHook<ForeignAsset, AssetId> for () {
+	fn on_asset_destroyed(_foreign_asset: &ForeignAsset, _asset_id: &AssetId) {}
 }
 
 #[pallet]
