@@ -37,9 +37,12 @@ sp-io = { workspace = true, features = [ "std" ] }
 default = [ "std" ]
 std = [
 	"cumulus-primitives-core/std",
+	"cumulus-pallet-parachain-system/std",
 	"frame-support/std",
 	"frame-system/std",
+	"log/std",
 	"pallet-message-queue/std",
+	"parity-scale-codec/std",
 	"scale-info/std",
 	"sp-runtime/std",
 	"sp-std/std",

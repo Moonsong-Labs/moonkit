@@ -19,6 +19,11 @@
 #![allow(non_camel_case_types)]
 #![cfg_attr(not(feature = "std"), no_std)]
 
+#[cfg(test)]
+mod mock;
+#[cfg(test)]
+mod tests;
+
 pub use pallet::*;
 
 use cumulus_pallet_parachain_system::CheckAssociatedRelayNumber;
@@ -58,10 +63,12 @@ pub mod pallet {
 		/// Overarching event type
 		type RuntimeEvent: From<Event> + IsType<<Self as frame_system::Config>::RuntimeEvent>;
 
-		/// TODO doc
+		/// Used before check associated relay block number. It should be what would be passed to
+		/// `cumulus_pallet_parachain_system` if this pallet was not being used.
 		type CheckAssociatedRelayNumber: CheckAssociatedRelayNumber;
 
-		/// TODO doc
+		/// Used to check wether message queue is paused when `XcmMode` is `Normal`. It should be
+		/// what would be passed to `pallet_message_queue` if this pallet was not being used.
 		type QueuePausedQuery: QueuePausedQuery<<Self::MessageProcessor as ProcessMessage>::Origin>;
 
 		/// The HRMP handler to be used in normal operating mode
