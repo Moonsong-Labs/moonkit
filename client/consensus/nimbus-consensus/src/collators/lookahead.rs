@@ -83,6 +83,8 @@ pub struct Params<BI, CIDP, Client, Backend, RClient, CHP, SO, Proposer, CS, DP 
 	pub slot_duration: Option<SlotDuration>,
 	/// A chain synchronization oracle.
 	pub sync_oracle: SO,
+	/// Whether we should reinitialize the collator config.
+	pub reinitialize: bool,
 }
 
 /// Run async-backing-friendly collator.
@@ -123,6 +125,7 @@ where
 			&mut params.overseer_handle,
 			params.collator_key,
 			params.para_id,
+			params.reinitialize,
 		)
 		.await;
 
