@@ -207,8 +207,8 @@ impl Config for Test {
 	type ForeignAssetDestroyerOrigin = EnsureRoot<AccountId>;
 	type Fungibles = Assets;
 	type WeightInfo = ();
-	type OnForeignAssetCreated = NoteDownHook<MultiLocation, AssetId, Balance>;
-	type OnForeignAssetDestroyed = NoteDownHook<MultiLocation, AssetId, Balance>;
+	type OnForeignAssetCreated = NoteDownHook<Location, AssetId, Balance>;
+	type OnForeignAssetDestroyed = NoteDownHook<Location, AssetId, Balance>;
 }
 
 pub(crate) struct ExtBuilder {
