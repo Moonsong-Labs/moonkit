@@ -16,12 +16,14 @@
 
 use super::*;
 use crate as pallet_foreign_asset_creator;
+use std::marker::PhantomData;
 
 use frame_support::{
-	construct_runtime, parameter_types,
+	construct_runtime, parameter_types, storage,
 	traits::{ConstU32, Everything},
 };
 use frame_system::EnsureRoot;
+use parity_scale_codec::{Decode, Encode};
 use sp_core::H256;
 use sp_runtime::traits::{BlakeTwo256, IdentityLookup};
 use sp_runtime::BuildStorage;
@@ -126,6 +128,77 @@ impl pallet_assets::Config for Test {
 	}
 }
 
+/// Gets parameters of last `ForeignAssetCreatedHook::on_asset_created` hook invocation
+pub fn get_asset_created_hook_invocation<
+	ForeignAsset: Decode,
+	AssetId: Decode,
+	AssetBalance: Decode,
+>() -> Option<(ForeignAsset, AssetId, AssetBalance)> {
+	storage::unhashed::get_raw(b"____on_foreign_asset_created")
+		.map(|output| Decode::decode(&mut output.as_slice()).expect("Decoding should work"))
+}
+
+/// Notes down parameters of current `ForeignAssetCreatedHook::on_asset_created` hook invocation
+fn note_on_asset_created_hook_invocation<
+	ForeignAsset: Encode,
+	AssetId: Encode,
+	AssetBalance: Encode,
+>(
+	foreign_asset: &ForeignAsset,
+	asset_id: &AssetId,
+	min_balance: &AssetBalance,
+) {
+	storage::unhashed::put_raw(
+		b"____on_foreign_asset_created",
+		(foreign_asset, asset_id, min_balance).encode().as_slice(),
+	);
+}
+
+/// Gets parameters of last `ForeignAssetDestroyedHook::on_asset_destroyed` hook invocation
+pub fn get_asset_destroyed_hook_invocation<ForeignAsset: Decode, AssetId: Decode>(
+) -> Option<(ForeignAsset, AssetId)> {
+	storage::unhashed::get_raw(b"____on_foreign_asset_destroyed")
+		.map(|output| Decode::decode(&mut output.as_slice()).expect("Decoding should work"))
+}
+
+/// Notes down parameters of current `ForeignAssetDestroyedHook::on_asset_destroyed` hook invocation
+fn note_on_asset_destroyed_hook_invocation<ForeignAsset: Encode, AssetId: Encode>(
+	foreign_asset: &ForeignAsset,
+	asset_id: &AssetId,
+) {
+	storage::unhashed::put_raw(
+		b"____on_foreign_asset_destroyed",
+		(foreign_asset, asset_id).encode().as_slice(),
+	);
+}
+
+/// Test hook that records the hook invocation with exact params
+pub struct NoteDownHook<ForeignAsset, AssetId, AssetBalance>(
+	PhantomData<(ForeignAsset, AssetId, AssetBalance)>,
+);
+
+impl<ForeignAsset: Encode, AssetId: Encode, AssetBalance: Encode>
+	ForeignAssetCreatedHook<ForeignAsset, AssetId, AssetBalance>
+	for NoteDownHook<ForeignAsset, AssetId, AssetBalance>
+{
+	fn on_asset_created(
+		foreign_asset: &ForeignAsset,
+		asset_id: &AssetId,
+		min_balance: &AssetBalance,
+	) {
+		note_on_asset_created_hook_invocation(foreign_asset, asset_id, min_balance);
+	}
+}
+
+impl<ForeignAsset: Encode, AssetId: Encode, AssetBalance>
+	ForeignAssetDestroyedHook<ForeignAsset, AssetId>
+	for NoteDownHook<ForeignAsset, AssetId, AssetBalance>
+{
+	fn on_asset_destroyed(foreign_asset: &ForeignAsset, asset_id: &AssetId) {
+		note_on_asset_destroyed_hook_invocation(foreign_asset, asset_id);
+	}
+}
+
 impl Config for Test {
 	type RuntimeEvent = RuntimeEvent;
 	type ForeignAsset = Location;
@@ -134,6 +207,8 @@ impl Config for Test {
 	type ForeignAssetDestroyerOrigin = EnsureRoot<AccountId>;
 	type Fungibles = Assets;
 	type WeightInfo = ();
+	type OnForeignAssetCreated = NoteDownHook<Location, AssetId, Balance>;
+	type OnForeignAssetDestroyed = NoteDownHook<Location, AssetId, Balance>;
 }
 
 pub(crate) struct ExtBuilder {

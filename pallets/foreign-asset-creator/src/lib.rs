@@ -27,6 +27,35 @@ pub mod mock;
 #[cfg(test)]
 pub mod tests;
 
+/// Trait for the OnForeignAssetRegistered hook
+pub trait ForeignAssetCreatedHook<ForeignAsset, AssetId, AssetBalance> {
+	fn on_asset_created(
+		foreign_asset: &ForeignAsset,
+		asset_id: &AssetId,
+		min_balance: &AssetBalance,
+	);
+}
+
+impl<ForeignAsset, AssetId, AssetBalance>
+	ForeignAssetCreatedHook<ForeignAsset, AssetId, AssetBalance> for ()
+{
+	fn on_asset_created(
+		_foreign_asset: &ForeignAsset,
+		_asset_id: &AssetId,
+		_min_balance: &AssetBalance,
+	) {
+	}
+}
+
+/// Trait for the OnForeignAssetDeregistered hook
+pub trait ForeignAssetDestroyedHook<ForeignAsset, AssetId> {
+	fn on_asset_destroyed(foreign_asset: &ForeignAsset, asset_id: &AssetId);
+}
+
+impl<ForeignAsset, AssetId> ForeignAssetDestroyedHook<ForeignAsset, AssetId> for () {
+	fn on_asset_destroyed(_foreign_asset: &ForeignAsset, _asset_id: &AssetId) {}
+}
+
 #[pallet]
 pub mod pallet {
 	use super::*;
@@ -66,6 +95,16 @@ pub mod pallet {
 
 		/// Weight information for extrinsics in this pallet.
 		type WeightInfo: WeightInfo;
+
+		/// Hook to be called when new foreign asset is registered.
+		type OnForeignAssetCreated: ForeignAssetCreatedHook<
+			Self::ForeignAsset,
+			AssetId<Self>,
+			AssetBalance<Self>,
+		>;
+
+		/// Hook to be called when foreign asset is de-registered.
+		type OnForeignAssetDestroyed: ForeignAssetDestroyedHook<Self::ForeignAsset, AssetId<Self>>;
 	}
 
 	pub type AssetBalance<T> = <<T as Config>::Fungibles as fungibles::Inspect<
@@ -152,6 +191,8 @@ pub mod pallet {
 			AssetIdToForeignAsset::<T>::insert(&asset_id, &foreign_asset);
 			ForeignAssetToAssetId::<T>::insert(&foreign_asset, &asset_id);
 
+			T::OnForeignAssetCreated::on_asset_created(&foreign_asset, &asset_id, &min_balance);
+
 			Self::deposit_event(Event::ForeignAssetCreated {
 				asset_id,
 				foreign_asset,
@@ -232,6 +273,8 @@ pub mod pallet {
 			AssetIdToForeignAsset::<T>::remove(&asset_id);
 			// Remove from ForeignAssetToAssetId
 			ForeignAssetToAssetId::<T>::remove(&foreign_asset);
+
+			T::OnForeignAssetDestroyed::on_asset_destroyed(&foreign_asset, &asset_id);
 
 			Self::deposit_event(Event::ForeignAssetDestroyed {
 				asset_id,
