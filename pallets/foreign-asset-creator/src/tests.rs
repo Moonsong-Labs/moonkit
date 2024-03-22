@@ -42,7 +42,14 @@ fn creating_foreign_works() {
 		expect_events(vec![crate::Event::ForeignAssetCreated {
 			asset_id: 1,
 			foreign_asset: Location::parent(),
-		}])
+		}]);
+
+		let (foreign_asset, asset_id, min_balance): (Location, u32, u64) =
+			get_asset_created_hook_invocation()
+				.expect("Decoding of invocation data should not fail");
+		assert_eq!(foreign_asset, Location::parent());
+		assert_eq!(asset_id, 1u32);
+		assert_eq!(min_balance, 1u64);
 	});
 }
 
@@ -205,6 +212,13 @@ fn test_destroy_foreign_asset_also_removes_everything() {
 			1u64,
 		));
 
+		let (foreign_asset, asset_id, min_balance): (Location, u32, u64) =
+			get_asset_created_hook_invocation()
+				.expect("Decoding of invocation data should not fail");
+		assert_eq!(foreign_asset, Location::parent());
+		assert_eq!(asset_id, 1u32);
+		assert_eq!(min_balance, 1u64);
+
 		assert_ok!(ForeignAssetCreator::destroy_foreign_asset(
 			RuntimeOrigin::root(),
 			1
@@ -223,6 +237,11 @@ fn test_destroy_foreign_asset_also_removes_everything() {
 				asset_id: 1,
 				foreign_asset: Location::parent(),
 			},
-		])
+		]);
+
+		let (foreign_asset, asset_id): (Location, u32) = get_asset_destroyed_hook_invocation()
+			.expect("Decoding of invocation data should not fail");
+		assert_eq!(foreign_asset, Location::parent());
+		assert_eq!(asset_id, 1u32);
 	});
 }
