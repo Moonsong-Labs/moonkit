@@ -101,7 +101,6 @@ pub mod pallet {
 	}
 
 	#[pallet::storage]
-	#[pallet::getter(fn mode)]
 	/// Whether incoming XCM is enabled or paused
 	pub type Mode<T: Config> = StorageValue<_, XcmMode, ValueQuery>;
 

@@ -16,21 +16,19 @@
 
 use super::*;
 use crate as pallet_emergency_para_xcm;
-use cumulus_pallet_parachain_system::{CheckAssociatedRelayNumber, ParachainSetCode};
+use cumulus_pallet_parachain_system::ParachainSetCode;
 use cumulus_primitives_core::{
-	relay_chain::BlockNumber as RelayBlockNumber, AggregateMessageOrigin, InboundDownwardMessage,
-	InboundHrmpMessage, ParaId, PersistedValidationData,
+	relay_chain::BlockNumber as RelayBlockNumber, AggregateMessageOrigin, ParaId,
 };
 use frame_support::parameter_types;
-use frame_support::traits::{ConstU32, ProcessMessage, ProcessMessageError};
-use frame_support::weights::{RuntimeDbWeight, Weight, WeightMeter};
+use frame_support::traits::ConstU32;
+use frame_support::weights::Weight;
 use frame_system::EnsureRoot;
 use sp_core::H256;
 use sp_runtime::{
 	traits::{BlakeTwo256, IdentityLookup},
 	BuildStorage,
 };
-use std::cell::RefCell;
 
 type Block = frame_system::mocking::MockBlock<Test>;
 
@@ -102,7 +100,8 @@ parameter_types! {
 
 impl pallet_message_queue::Config for Test {
 	type RuntimeEvent = RuntimeEvent;
-	type MessageProcessor = SaveIntoThreadLocal;
+	type MessageProcessor =
+		pallet_message_queue::mock_helpers::NoopMessageProcessor<AggregateMessageOrigin>;
 	type Size = u32;
 	type HeapSize = MessageQueueHeapSize;
 	type MaxStale = MessageQueueMaxStale;
@@ -118,66 +117,31 @@ impl Config for Test {
 	type RuntimeEvent = RuntimeEvent;
 	type CheckAssociatedRelayNumber = cumulus_pallet_parachain_system::AnyRelayNumber;
 	type QueuePausedQuery = ();
-	type HrmpMessageHandler = ();
+	type HrmpMessageHandler = JustConsumeAllWeight;
 	type PausedThreshold = ConstU32<PAUSED_THRESHOLD>;
 	type FastAuthorizeUpgradeOrigin = EnsureRoot<AccountId>;
 	type PausedToNormalOrigin = EnsureRoot<AccountId>;
 }
 
-// A `MessageProcessor` that stores all messages in thread-local.
-// taken from https://github.com/paritytech/polkadot-sdk/blob/3c6ebd9e9bfda58f199cba6ec3023e0d12d6b506/cumulus/pallets/parachain-system/src/mock.rs#L132
-pub struct SaveIntoThreadLocal;
+pub struct JustConsumeAllWeight;
 
-std::thread_local! {
-	pub static HANDLED_DMP_MESSAGES: RefCell<Vec<Vec<u8>>> = RefCell::new(Vec::new());
-	pub static HANDLED_XCMP_MESSAGES: RefCell<Vec<(ParaId, RelayChainBlockNumber, Vec<u8>)>> = RefCell::new(Vec::new());
-}
-
-impl ProcessMessage for SaveIntoThreadLocal {
-	type Origin = AggregateMessageOrigin;
-
-	fn process_message(
-		message: &[u8],
-		origin: Self::Origin,
-		_meter: &mut WeightMeter,
-		_id: &mut [u8; 32],
-	) -> Result<bool, ProcessMessageError> {
-		assert_eq!(origin, Self::Origin::Parent);
-
-		HANDLED_DMP_MESSAGES.with(|m| {
-			m.borrow_mut().push(message.to_vec());
-			Weight::zero()
-		});
-		Ok(true)
-	}
-}
-
-impl XcmpMessageHandler for SaveIntoThreadLocal {
+impl XcmpMessageHandler for JustConsumeAllWeight {
 	fn handle_xcmp_messages<'a, I: Iterator<Item = (ParaId, RelayBlockNumber, &'a [u8])>>(
-		iter: I,
-		_max_weight: Weight,
+		_iter: I,
+		max_weight: Weight,
 	) -> Weight {
-		HANDLED_XCMP_MESSAGES.with(|m| {
-			for (sender, sent_at, message) in iter {
-				m.borrow_mut().push((sender, sent_at, message.to_vec()));
-			}
-			Weight::zero()
-		})
+		max_weight
 	}
 }
 
-pub(crate) struct ExtBuilder;
-
-impl ExtBuilder {
-	pub(crate) fn build(self) -> sp_io::TestExternalities {
-		let mut storage = frame_system::GenesisConfig::<Test>::default()
-			.build_storage()
-			.expect("Frame system builds valid default genesis config");
-
-		let mut ext = sp_io::TestExternalities::new(storage);
-		ext.execute_with(|| System::set_block_number(1));
-		ext
-	}
+/// Build genesis storage according to the mock runtime.
+pub fn new_test_ext() -> sp_io::TestExternalities {
+	let storage = frame_system::GenesisConfig::<Test>::default()
+		.build_storage()
+		.unwrap();
+	let mut ext = sp_io::TestExternalities::new(storage);
+	ext.execute_with(|| System::set_block_number(1));
+	ext
 }
 
 pub(crate) fn events() -> Vec<pallet_emergency_para_xcm::Event> {
