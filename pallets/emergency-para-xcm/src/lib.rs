@@ -14,7 +14,26 @@
 // You should have received a copy of the GNU General Public License
 // along with Moonkit.  If not, see <http://www.gnu.org/licenses/>.
 
-//! A pallet to put your incoming XCM execution into a restricted emergency or safe mode automatically.
+//! A pallet to put your incoming XCM execution into a restricted emergency
+//! or safe mode automatically.
+//!
+//! Whenever the difference between the current relay block number and
+//! the relay block number from the previous block is greater than a
+//! certain threshold, the pallet will enter an `Paused` mode that
+//! will prevent any XCM messages to be executed (while still enqueuing them)
+//! and will allow a configurable origin to authorize a runtime upgrade.
+//! This helps on situations where a bug could cause the execution
+//! of a particular message to render a block invalid (e.g: if the message takes
+//! too long to execute), by allowing to unstall the chain without the need
+//! of a governance proposal on the relay chain.
+//!
+//! The pallet implements some traits from other pallets and forces the runtime
+//! to use those implementations. These work as wrappers for the actual traits
+//! to be used by the runtime, which should be given as Config types here.
+//! In particular:
+//! * `CheckAssociatedRelayNumber` is used to check the relay chain block diff and
+//!    enter emergency mode when appropriate.
+//! * `QueuePausedQuery` and `XcmpMessageHandler` are used to pause XCM execution
 
 #![allow(non_camel_case_types)]
 #![cfg_attr(not(feature = "std"), no_std)]
@@ -35,11 +54,14 @@ use frame_system::RawOrigin;
 use parity_scale_codec::{Decode, Encode};
 use polkadot_parachain_primitives::primitives::{Id, RelayChainBlockNumber, XcmpMessageHandler};
 
-// TODO: move to file type.rs
 #[derive(Decode, Default, Encode, PartialEq, TypeInfo)]
+/// XCM Execution mode
 pub enum XcmMode {
+	/// Normal operation
 	#[default]
 	Normal,
+	/// Paused: no XCM messages are processed and `FastAuthorizedUpgrade`
+	/// origin can authorized a runtime upgrade
 	Paused,
 }
 
@@ -89,7 +111,7 @@ pub mod pallet {
 	pub enum Event {
 		/// The XCM incoming execution was Paused
 		EnteredPausedXcmMode,
-		/// The XCM incoming execution returned to normal operations
+		/// The XCM incoming execution returned to normal operation
 		NormalXcmOperationResumed,
 	}
 
@@ -114,6 +136,7 @@ pub mod pallet {
 
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
+		/// Resume `Normal` mode
 		#[pallet::call_index(0)]
 		#[pallet::weight((T::DbWeight::get().reads_writes(1, 2), DispatchClass::Operational))]
 		pub fn paused_to_normal(origin: OriginFor<T>) -> DispatchResultWithPostInfo {
@@ -130,6 +153,7 @@ pub mod pallet {
 			Ok(().into())
 		}
 
+		/// Authorize a runtime upgrade. Only callable in `Paused` mode
 		#[pallet::call_index(1)]
 		#[pallet::weight((T::DbWeight::get().read, DispatchClass::Operational))]
 		pub fn fast_authorize_upgrade(origin: OriginFor<T>, code_hash: T::Hash) -> DispatchResult {
