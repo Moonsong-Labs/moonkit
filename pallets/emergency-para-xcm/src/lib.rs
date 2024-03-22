@@ -115,7 +115,7 @@ pub mod pallet {
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
 		#[pallet::call_index(0)]
-		#[pallet::weight((0, DispatchClass::Operational))]
+		#[pallet::weight((T::DbWeight::get().reads_writes(1, 2), DispatchClass::Operational))]
 		pub fn paused_to_normal(origin: OriginFor<T>) -> DispatchResultWithPostInfo {
 			T::PausedToNormalOrigin::ensure_origin(origin)?;
 
@@ -131,7 +131,7 @@ pub mod pallet {
 		}
 
 		#[pallet::call_index(1)]
-		#[pallet::weight((1_000_000, DispatchClass::Operational))]
+		#[pallet::weight((T::DbWeight::get().read, DispatchClass::Operational))]
 		pub fn fast_authorize_upgrade(origin: OriginFor<T>, code_hash: T::Hash) -> DispatchResult {
 			T::FastAuthorizeUpgradeOrigin::ensure_origin(origin)?;
 			ensure!(
