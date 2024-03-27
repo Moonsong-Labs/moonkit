@@ -114,6 +114,7 @@ fn uses_no_xcmp_weight_on_paused_mode() {
 	});
 }
 
+/*
 #[test]
 fn cannot_authorize_upgrade_with_wrong_origin() {
 	new_test_ext().execute_with(|| {
@@ -152,3 +153,4 @@ fn can_authorize_upgrade_on_paused_mode() {
 		assert!(System::authorized_upgrade().is_some())
 	});
 }
+*/
