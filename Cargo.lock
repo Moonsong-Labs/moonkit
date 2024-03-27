@@ -6981,6 +6981,36 @@ dependencies = [
 ]
 
 [[package]]
+name = "pallet-evm-precompile-xcm"
+version = "0.1.0"
+dependencies = [
+ "cumulus-primitives-core",
+ "derive_more",
+ "evm",
+ "fp-evm",
+ "frame-support",
+ "frame-system",
+ "log",
+ "num_enum",
+ "pallet-balances",
+ "pallet-evm",
+ "pallet-timestamp",
+ "pallet-xcm",
+ "parity-scale-codec",
+ "precompile-utils",
+ "scale-info",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std 14.0.0 (git+https://github.com/paritytech/polkadot-sdk?branch=release-polkadot-v1.7.0)",
+ "sp-weights",
+ "staging-xcm",
+ "staging-xcm-builder",
+ "staging-xcm-executor",
+ "xcm-primitives",
+]
+
+[[package]]
 name = "pallet-evm-precompile-xcm-utils"
 version = "0.1.0"
 dependencies = [
