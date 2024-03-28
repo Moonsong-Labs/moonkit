@@ -43,6 +43,7 @@ std = [
 	"log/std",
 	"pallet-message-queue/std",
 	"parity-scale-codec/std",
+	"polkadot-parachain-primitives/std",
 	"scale-info/std",
 	"sp-runtime/std",
 	"sp-std/std",
