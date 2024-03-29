@@ -90,6 +90,7 @@ impl cumulus_pallet_parachain_system::Config for Test {
 	type ReservedDmpWeight = ();
 	type CheckAssociatedRelayNumber = EmergencyParaXcm;
 	type WeightInfo = ();
+	type ConsensusHook = cumulus_pallet_parachain_system::ExpectParentIncluded;
 }
 
 parameter_types! {
@@ -117,7 +118,7 @@ impl Config for Test {
 	type RuntimeEvent = RuntimeEvent;
 	type CheckAssociatedRelayNumber = cumulus_pallet_parachain_system::AnyRelayNumber;
 	type QueuePausedQuery = ();
-	type HrmpMessageHandler = JustConsumeAllWeight;
+	type XcmpMessageHandler = JustConsumeAllWeight;
 	type PausedThreshold = ConstU32<PAUSED_THRESHOLD>;
 	type FastAuthorizeUpgradeOrigin = EnsureRoot<AccountId>;
 	type PausedToNormalOrigin = EnsureRoot<AccountId>;

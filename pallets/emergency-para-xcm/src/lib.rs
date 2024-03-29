@@ -93,8 +93,8 @@ pub mod pallet {
 		/// what would be passed to `pallet_message_queue` if this pallet was not being used.
 		type QueuePausedQuery: QueuePausedQuery<<Self::MessageProcessor as ProcessMessage>::Origin>;
 
-		/// The HRMP handler to be used in normal operating mode
-		type HrmpMessageHandler: XcmpMessageHandler;
+		/// The XCMP handler to be used in normal operating mode
+		type XcmpMessageHandler: XcmpMessageHandler;
 
 		/// Maximum number of relay block to skip before trigering the Paused mode.
 		type PausedThreshold: Get<RelayChainBlockNumber>;
@@ -188,8 +188,10 @@ impl<T: Config> XcmpMessageHandler for Pallet<T> {
 		limit: Weight,
 	) -> Weight {
 		match Mode::<T>::get() {
-			XcmMode::Normal => T::HrmpMessageHandler::handle_xcmp_messages(iter, limit),
-			XcmMode::Paused => T::HrmpMessageHandler::handle_xcmp_messages(iter, Weight::zero()),
+			XcmMode::Normal => <T as Config>::XcmpMessageHandler::handle_xcmp_messages(iter, limit),
+			XcmMode::Paused => {
+				<T as Config>::XcmpMessageHandler::handle_xcmp_messages(iter, Weight::zero())
+			}
 		}
 	}
 }
