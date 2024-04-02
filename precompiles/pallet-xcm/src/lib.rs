@@ -71,7 +71,8 @@ where
 		fee_asset_item: u32,
 		weight: Weight,
 	) -> EvmResult {
-		// TODO: record proper cost
+		// No DB access before try_dispatch but some logical stuff.
+		// To prevent spam, we charge an arbitrary amount of gas.
 		handle.record_cost(1000)?;
 
 		let origin = Runtime::AddressMapping::into_account_id(handle.context().caller);
