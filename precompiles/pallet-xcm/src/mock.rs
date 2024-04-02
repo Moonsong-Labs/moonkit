@@ -18,7 +18,7 @@
 use super::*;
 use frame_support::{
 	construct_runtime, parameter_types,
-	traits::{Everything, Nothing, OriginTrait, PalletInfo as PalletInfoTrait},
+	traits::{Everything, Nothing, OriginTrait},
 	weights::{RuntimeDbWeight, Weight},
 };
 use pallet_evm::{EnsureAddressNever, EnsureAddressRoot, GasWeightMapping};

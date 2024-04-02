@@ -24,8 +24,13 @@ interface XCM {
         uint256 amount;
     }
 
-    /// @dev Function to make use of the transfer_assets() pallet-xcm extrinsic
+    /// @dev Function to send assets via XCM using transfer_assets() pallet-xcm extrinsic.
     /// @custom:selector 650ef8c7
+    /// @param dest The destination chain.
+    /// @param beneficiary The actual account that will receive the tokens in dest.
+    /// @param assets The combination (array) of assets to send.
+    /// @param feeAssetItem The index of the asset that will be used to pay for fees.
+    /// @param weight The weight to be used for the whole XCM operation.
     function transferAssets(
         Location memory dest,
         Location memory beneficiary,
