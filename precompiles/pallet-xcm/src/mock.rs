@@ -56,20 +56,6 @@ construct_runtime!(
 	}
 );
 
-pub struct AccountIdToLocation;
-impl sp_runtime::traits::Convert<AccountId, Location> for AccountIdToLocation {
-	fn convert(account: AccountId) -> Location {
-		let as_h160: H160 = account.into();
-		Location::new(
-			0,
-			[AccountKey20 {
-				network: None,
-				key: as_h160.as_fixed_bytes().clone(),
-			}],
-		)
-	}
-}
-
 parameter_types! {
 	pub ParachainId: cumulus_primitives_core::ParaId = 100.into();
 	pub LocalNetworkId: Option<NetworkId> = None;
@@ -135,10 +121,6 @@ pub type Precompiles<R> =
 pub type PCall = PalletXcmPrecompileCall<Runtime>;
 
 mock_account!(ParentAccount, |_| MockAccount::from_u64(4));
-mock_account!(SelfReserveAddress, |_| MockAccount::from_u64(3));
-mock_account!(AssetAddress(u128), |value: AssetAddress| {
-	AddressInPrefixedSet(0xffffffff, value.0).into()
-});
 
 // use simple encoding for parachain accounts.
 mock_account!(
