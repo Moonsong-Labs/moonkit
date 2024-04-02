@@ -31,6 +31,7 @@ interface XCM {
     /// @param assets The combination (array) of assets to send.
     /// @param feeAssetItem The index of the asset that will be used to pay for fees.
     /// @param weight The weight to be used for the whole XCM operation.
+    /// (uint64::MAX in refTime means Unlimited weight) 
     function transferAssets(
         Location memory dest,
         Location memory beneficiary,
