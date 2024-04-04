@@ -4,7 +4,6 @@ pragma solidity >=0.8.3;
 /// @author The Moonbeam Team
 /// @title XCM precompile Interface
 /// @dev The interface that Solidity contracts use to interact with the substrate pallet-xcm.
-/// @custom:address 0x0000000000000000000000000000000000000820
 interface XCM {
     // A location is defined by its number of parents and the encoded junctions (interior)
     struct Location {
