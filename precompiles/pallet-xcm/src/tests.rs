@@ -19,7 +19,7 @@ use precompile_utils::testing::*;
 use sp_weights::Weight;
 use xcm::latest::Junction::*;
 
-fn precompiles() -> Precompiles<Runtime> {
+fn precompiles() -> Precompiles<Runtime, AssetId, ForeignAssetCreator, AssetIdInfoGetter> {
 	PrecompilesValue::get()
 }
 

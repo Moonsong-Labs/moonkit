@@ -24,8 +24,8 @@ use frame_support::{
 use pallet_evm::AddressMapping;
 use precompile_utils::prelude::*;
 
-use sp_core::U256;
-use sp_runtime::traits::Dispatchable;
+use sp_core::{H160, U256};
+use sp_runtime::traits::{Dispatchable, MaybeEquivalence};
 use sp_std::marker::PhantomData;
 use sp_weights::Weight;
 use xcm::{
@@ -33,6 +33,7 @@ use xcm::{
 	prelude::WeightLimit::*,
 	VersionedAssets, VersionedLocation,
 };
+use xcm_primitives::location_converter::{AccountIdToLocationConverter, GetAssetId};
 
 #[cfg(test)]
 mod mock;
@@ -40,13 +41,20 @@ mod mock;
 mod tests;
 
 pub const MAX_ASSETS_ARRAY_LIMIT: u32 = 2;
-
 type GetArrayLimit = ConstU32<MAX_ASSETS_ARRAY_LIMIT>;
 
-pub struct PalletXcmPrecompile<Runtime>(PhantomData<Runtime>);
+pub struct PalletXcmPrecompile<Runtime, AssetId, AssetIdToLocationManager, AssetIdInfoGetter>(
+	PhantomData<(
+		Runtime,
+		AssetId,
+		AssetIdToLocationManager,
+		AssetIdInfoGetter,
+	)>,
+);
 
 #[precompile_utils::precompile]
-impl<Runtime> PalletXcmPrecompile<Runtime>
+impl<Runtime, AssetId, AssetIdToLocationManager, AssetIdInfoGetter>
+	PalletXcmPrecompile<Runtime, AssetId, AssetIdToLocationManager, AssetIdInfoGetter>
 where
 	Runtime: pallet_xcm::Config + pallet_evm::Config + frame_system::Config,
 	<Runtime as frame_system::Config>::RuntimeCall:
@@ -54,6 +62,10 @@ where
 	<<Runtime as frame_system::Config>::RuntimeCall as Dispatchable>::RuntimeOrigin:
 		From<Option<Runtime::AccountId>>,
 	<Runtime as frame_system::Config>::RuntimeCall: From<pallet_xcm::Call<Runtime>>,
+	AssetIdToLocationManager: MaybeEquivalence<Location, AssetId>,
+	AssetIdInfoGetter: GetAssetId<AssetId>,
+	Runtime::AccountId: From<H160> + Into<H160>,
+	AssetId: From<u8> + TryFrom<u16> + TryFrom<u128>,
 {
 	#[precompile::public(
 		"transferAssets(\
@@ -101,6 +113,24 @@ where
 		};
 
 		RuntimeHelper::<Runtime>::try_dispatch(handle, Some(origin).into(), call)?;
+		Ok(())
+	}
+
+	// TODO: finish
+	#[precompile::public("transferAssetsWithAddress()")]
+	fn transfer_assets_with_address(handle: &mut impl PrecompileHandle) -> EvmResult {
+		/*
+		// Just testing stuff
+		let asset_info = AssetIdInfoGetter::get_asset_id_info();
+		let account: <Runtime as frame_system::Config>::AccountId =
+			H160::from_low_u64_be(2050).into();
+
+		let result = AccountIdToLocationConverter::<_, AssetId, AssetIdToLocationManager>::convert(
+			account, asset_info, 3u8, 42u8,
+		);
+
+		println!("RESULT: {:#?}", result); */
+
 		Ok(())
 	}
 }

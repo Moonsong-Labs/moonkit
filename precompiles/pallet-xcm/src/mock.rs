@@ -21,6 +21,7 @@ use frame_support::{
 	traits::{Everything, Nothing, OriginTrait},
 	weights::{RuntimeDbWeight, Weight},
 };
+use frame_system::EnsureRoot;
 use pallet_evm::{EnsureAddressNever, EnsureAddressRoot, GasWeightMapping};
 use precompile_utils::{
 	mock_account,
@@ -38,6 +39,7 @@ use xcm_executor::{
 	traits::{ConvertLocation, TransactAsset, WeightTrader},
 	AssetsInHolding,
 };
+pub use xcm_primitives::location_converter::AssetIdInfoGetter;
 use Junctions::Here;
 
 pub type AccountId = MockAccount;
@@ -52,7 +54,9 @@ construct_runtime!(
 		Balances: pallet_balances,
 		Evm: pallet_evm,
 		Timestamp: pallet_timestamp,
-		PolkadotXcm: pallet_xcm
+		PolkadotXcm: pallet_xcm,
+		Assets: pallet_assets,
+		ForeignAssetCreator: pallet_foreign_asset_creator,
 	}
 );
 
@@ -114,11 +118,56 @@ impl pallet_balances::Config for Runtime {
 	type MaxFreezes = ();
 	type RuntimeFreezeReason = ();
 }
+parameter_types! {
+	pub const AssetDeposit: u64 = 0;
+	pub const ApprovalDeposit: u64 = 0;
+	pub const StringLimit: u32 = 50;
+	pub const MetadataDepositBase: u64 = 0;
+	pub const MetadataDepositPerByte: u64 = 0;
+}
 
-pub type Precompiles<R> =
-	PrecompileSetBuilder<R, PrecompileAt<AddressU64<1>, PalletXcmPrecompile<R>>>;
+pub type AssetId = u16;
 
-pub type PCall = PalletXcmPrecompileCall<Runtime>;
+impl pallet_assets::Config for Runtime {
+	type RuntimeEvent = RuntimeEvent;
+	type Balance = Balance;
+	type AssetId = AssetId;
+	type AssetIdParameter = parity_scale_codec::Compact<AssetId>;
+	type Currency = Balances;
+	type CreateOrigin = frame_support::traits::NeverEnsureOrigin<AccountId>;
+	type ForceOrigin = EnsureRoot<AccountId>;
+	type AssetDeposit = AssetDeposit;
+	type AssetAccountDeposit = AssetDeposit;
+	type MetadataDepositBase = MetadataDepositBase;
+	type MetadataDepositPerByte = MetadataDepositPerByte;
+	type ApprovalDeposit = ApprovalDeposit;
+	type StringLimit = StringLimit;
+	type Freezer = ();
+	type Extra = ();
+	type CallbackHandle = ();
+	type WeightInfo = ();
+	type RemoveItemsLimit = ConstU32<1000>;
+	pallet_assets::runtime_benchmarks_enabled! {
+		type BenchmarkHelper = ();
+	}
+}
+
+impl pallet_foreign_asset_creator::Config for Runtime {
+	type RuntimeEvent = RuntimeEvent;
+	type ForeignAsset = Location;
+	type ForeignAssetCreatorOrigin = EnsureRoot<AccountId>;
+	type ForeignAssetModifierOrigin = EnsureRoot<AccountId>;
+	type ForeignAssetDestroyerOrigin = EnsureRoot<AccountId>;
+	type Fungibles = Assets;
+	type WeightInfo = ();
+	type OnForeignAssetCreated = ();
+	type OnForeignAssetDestroyed = ();
+}
+
+pub type Precompiles<R, A, F, G> =
+	PrecompileSetBuilder<R, PrecompileAt<AddressU64<1>, PalletXcmPrecompile<R, A, F, G>>>;
+
+pub type PCall = PalletXcmPrecompileCall<Runtime, AssetId, ForeignAssetCreator, AssetIdInfoGetter>;
 
 mock_account!(ParentAccount, |_| MockAccount::from_u64(4));
 
@@ -134,7 +183,7 @@ const BLOCK_STORAGE_LIMIT: u64 = 40 * 1024;
 
 parameter_types! {
 	pub BlockGasLimit: U256 = U256::from(u64::MAX);
-	pub PrecompilesValue: Precompiles<Runtime> = Precompiles::new();
+	pub PrecompilesValue: Precompiles<Runtime, AssetId, ForeignAssetCreator, AssetIdInfoGetter> = Precompiles::new();
 	pub const WeightPerGas: Weight = Weight::from_parts(1, 0);
 	pub GasLimitPovSizeRatio: u64 = {
 		let block_gas_limit = BlockGasLimit::get().min(u64::MAX.into()).low_u64();
@@ -169,7 +218,7 @@ impl pallet_evm::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type Runner = pallet_evm::runner::stack::Runner<Self>;
 	type PrecompilesValue = PrecompilesValue;
-	type PrecompilesType = Precompiles<Self>;
+	type PrecompilesType = Precompiles<Self, AssetId, ForeignAssetCreator, AssetIdInfoGetter>;
 	type ChainId = ();
 	type OnChargeTransaction = ();
 	type BlockGasLimit = BlockGasLimit;
@@ -291,7 +340,7 @@ impl pallet_xcm::Config for Runtime {
 }
 
 use sp_std::cell::RefCell;
-use xcm::latest::opaque;
+use xcm::latest::{opaque, Assets as XcmAssets};
 // Simulates sending a XCM message
 thread_local! {
 	pub static SENT_XCM: RefCell<Vec<(Location, opaque::Xcm)>> = RefCell::new(Vec::new());
@@ -309,7 +358,7 @@ impl SendXcm for TestSendXcm {
 			q.borrow_mut()
 				.push((destination.clone().unwrap(), message.clone().unwrap()))
 		});
-		Ok(((), Assets::new()))
+		Ok(((), XcmAssets::new()))
 	}
 
 	fn deliver(_: Self::Ticket) -> Result<XcmHash, SendError> {
@@ -325,7 +374,7 @@ impl SendXcm for DoNothingRouter {
 		_destination: &mut Option<Location>,
 		_message: &mut Option<Xcm<()>>,
 	) -> SendResult<Self::Ticket> {
-		Ok(((), Assets::new()))
+		Ok(((), XcmAssets::new()))
 	}
 
 	fn deliver(_: Self::Ticket) -> Result<XcmHash, SendError> {

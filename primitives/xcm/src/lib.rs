@@ -20,6 +20,8 @@
 
 use sp_runtime::DispatchResult;
 
+pub mod location_converter;
+
 /// Pause and resume execution of XCM
 pub trait PauseXcmExecution {
 	fn suspend_xcm_execution() -> DispatchResult;
