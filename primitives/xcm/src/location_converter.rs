@@ -143,4 +143,3 @@ impl GetAssetId<u16> for AssetIdInfoGetter {
 		}
 	}
 }
-
