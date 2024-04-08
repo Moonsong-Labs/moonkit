@@ -33,7 +33,7 @@ use xcm::{
 	prelude::WeightLimit::*,
 	VersionedAssets, VersionedLocation,
 };
-use xcm_primitives::location_converter::{AccountIdToLocationConverter, GetAssetId};
+use xcm_primitives::location_converter::GetAssetId;
 
 #[cfg(test)]
 mod mock;
@@ -118,7 +118,7 @@ where
 
 	// TODO: finish
 	#[precompile::public("transferAssetsWithAddress()")]
-	fn transfer_assets_with_address(handle: &mut impl PrecompileHandle) -> EvmResult {
+	fn transfer_assets_with_address(_handle: &mut impl PrecompileHandle) -> EvmResult {
 		/*
 		// Just testing stuff
 		let asset_info = AssetIdInfoGetter::get_asset_id_info();

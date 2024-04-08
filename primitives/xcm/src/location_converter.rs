@@ -17,7 +17,7 @@
 use frame_support::Parameter;
 use sp_core::H160;
 use sp_runtime::traits::MaybeEquivalence;
-use sp_std::marker::PhantomData;
+use sp_std::{marker::PhantomData, mem::size_of};
 use xcm::latest::{Junction::*, Location};
 
 pub struct AccountIdToLocationConverter<AccountId, AssetId, AssetIdToLocationManager>(
@@ -84,16 +84,16 @@ where
 		let h160_account: H160 = account.into();
 		let (prefix_part, id_part) = h160_account
 			.as_fixed_bytes()
-			.split_at(asset_id_info.split_at);
+			.split_at(asset_id_info.size_of + 2);
 
 		if prefix_part == asset_id_info.foreign_asset_prefix {
-			let asset_id: AssetId = match asset_id_info.bit_type {
-				16 => {
+			let asset_id: AssetId = match asset_id_info.size_of {
+				2 => {
 					let mut data = [0u8; 2];
 					data.copy_from_slice(id_part);
 					u16::from_be_bytes(data).try_into().unwrap_or(0u8.into())
 				}
-				128 => {
+				16 => {
 					let mut data = [0u8; 16];
 					data.copy_from_slice(id_part);
 					u128::from_be_bytes(data).try_into().unwrap_or(0u8.into())
@@ -110,8 +110,7 @@ where
 /// Information to retrieve for a specific AssetId type.
 pub struct AssetIdInfo<'a> {
 	pub foreign_asset_prefix: &'a [u8],
-	pub split_at: usize,
-	pub bit_type: usize,
+	pub size_of: usize,
 }
 
 // Define a trait to abstract over different types of AssetId.
@@ -130,8 +129,7 @@ impl GetAssetId<u128> for AssetIdInfoGetter {
 	fn get_asset_id_info() -> AssetIdInfo<'static> {
 		AssetIdInfo {
 			foreign_asset_prefix: &[255u8; 4],
-			split_at: 4,
-			bit_type: 128,
+			size_of: size_of::<u128>(),
 		}
 	}
 }
@@ -141,8 +139,8 @@ impl GetAssetId<u16> for AssetIdInfoGetter {
 	fn get_asset_id_info() -> AssetIdInfo<'static> {
 		AssetIdInfo {
 			foreign_asset_prefix: &[255u8; 18],
-			split_at: 18,
-			bit_type: 16,
+			size_of: size_of::<u16>(),
 		}
 	}
 }
+
