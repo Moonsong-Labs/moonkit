@@ -61,7 +61,7 @@ pub enum XcmMode {
 	#[default]
 	Normal,
 	/// Paused: no XCM messages are processed and `FastAuthorizedUpgrade`
-	/// origin can authorized a runtime upgrade
+	/// origin can authorize a runtime upgrade
 	Paused,
 }
 
