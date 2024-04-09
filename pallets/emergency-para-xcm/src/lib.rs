@@ -50,7 +50,7 @@ use frame_support::pallet;
 use frame_support::pallet_prelude::*;
 use frame_support::traits::{ProcessMessage, QueuePausedQuery};
 use frame_system::pallet_prelude::*;
-use frame_system::RawOrigin;
+use frame_system::{RawOrigin, WeightInfo};
 use parity_scale_codec::{Decode, Encode};
 use polkadot_parachain_primitives::primitives::{Id, RelayChainBlockNumber, XcmpMessageHandler};
 
@@ -156,7 +156,7 @@ pub mod pallet {
 
 		/// Authorize a runtime upgrade. Only callable in `Paused` mode
 		#[pallet::call_index(1)]
-		#[pallet::weight((T::SystemWeightInfo::authorize_upgrade().saturating_add(T::DbWeight::get().read), DispatchClass::Operational))]
+		#[pallet::weight((T::SystemWeightInfo::authorize_upgrade().saturating_add(T::DbWeight::get().read.into()), DispatchClass::Operational))]
 		pub fn fast_authorize_upgrade(origin: OriginFor<T>, code_hash: T::Hash) -> DispatchResult {
 			T::FastAuthorizeUpgradeOrigin::ensure_origin(origin)?;
 			ensure!(
