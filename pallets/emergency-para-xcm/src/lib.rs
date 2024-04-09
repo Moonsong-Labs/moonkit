@@ -130,6 +130,7 @@ pub mod pallet {
 	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {
 		fn on_initialize(_: BlockNumberFor<T>) -> Weight {
 			// Account for 1 read and 1 write to `Mode`
+			// during `check_associated_relay_number`
 			T::DbWeight::get().reads_writes(1, 1)
 		}
 	}
