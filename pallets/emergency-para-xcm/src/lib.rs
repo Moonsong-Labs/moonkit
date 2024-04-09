@@ -156,7 +156,7 @@ pub mod pallet {
 
 		/// Authorize a runtime upgrade. Only callable in `Paused` mode
 		#[pallet::call_index(1)]
-		#[pallet::weight((T::SystemWeightInfo::authorize_upgrade().saturating_add(T::DbWeight::get().read.into()), DispatchClass::Operational))]
+		#[pallet::weight((T::SystemWeightInfo::authorize_upgrade().saturating_add(T::DbWeight::get().reads(1_u64)), DispatchClass::Operational))]
 		pub fn fast_authorize_upgrade(origin: OriginFor<T>, code_hash: T::Hash) -> DispatchResult {
 			T::FastAuthorizeUpgradeOrigin::ensure_origin(origin)?;
 			ensure!(
