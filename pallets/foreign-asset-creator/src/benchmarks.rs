@@ -40,7 +40,7 @@ benchmarks! {
 		const USER_SEED: u32 = 1;
 		let manager: T::AccountId = account("manager",  0, USER_SEED);
 
-		let foreign_asset:  T::ForeignAsset = Location::new(0, [GeneralIndex(0 as u128)]).into();
+		let foreign_asset:  T::ForeignAsset = Location::new(0, [GeneralIndex(0u128)]).into();
 		let asset_id: AssetId<T> = (0u16).into();
 		let amount = 1u32.into();
 		Pallet::<T>::create_foreign_asset(
@@ -67,7 +67,7 @@ benchmarks! {
 		const USER_SEED: u32 = 1;
 		let manager: T::AccountId = account("manager",  0, USER_SEED);
 
-			let foreign_asset:  T::ForeignAsset = Location::new(0, [GeneralIndex(0 u128)]).into();
+			let foreign_asset:  T::ForeignAsset = Location::new(0, [GeneralIndex(0u128)]).into();
 			let asset_id: AssetId<T> = 0u16.into();
 			let amount = 1u32.into();
 			Pallet::<T>::create_foreign_asset(
