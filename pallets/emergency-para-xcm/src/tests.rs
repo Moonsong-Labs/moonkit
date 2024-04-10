@@ -23,9 +23,20 @@ use sp_runtime::traits::Dispatchable;
 #[test]
 fn remains_in_normal_mode_when_relay_block_diff_is_within_threshold() {
 	new_test_ext().execute_with(|| {
-		let current_block = 1;
-		let new_block = PAUSED_THRESHOLD + current_block;
-		EmergencyParaXcm::check_associated_relay_number(new_block, current_block);
+		let previous_block = 1;
+		let current_block = PAUSED_THRESHOLD + previous_block;
+		EmergencyParaXcm::check_associated_relay_number(current_block, previous_block);
+		let xcm_mode = Mode::<Test>::get();
+		assert!(xcm_mode == XcmMode::Normal);
+	})
+}
+
+#[test]
+fn remains_in_normal_mode_if_previous_relay_block_is_0() {
+	new_test_ext().execute_with(|| {
+		let previous_block = 0;
+		let current_block = PAUSED_THRESHOLD + previous_block + 1;
+		EmergencyParaXcm::check_associated_relay_number(current_block, previous_block);
 		let xcm_mode = Mode::<Test>::get();
 		assert!(xcm_mode == XcmMode::Normal);
 	})
@@ -34,9 +45,9 @@ fn remains_in_normal_mode_when_relay_block_diff_is_within_threshold() {
 #[test]
 fn pauses_xcm_when_relay_block_diff_is_above_threshold() {
 	new_test_ext().execute_with(|| {
-		let current_block = 1;
-		let new_block = PAUSED_THRESHOLD + current_block + 1;
-		EmergencyParaXcm::check_associated_relay_number(new_block, current_block);
+		let previous_block = 1;
+		let current_block = PAUSED_THRESHOLD + previous_block + 1;
+		EmergencyParaXcm::check_associated_relay_number(current_block, previous_block);
 		let xcm_mode = Mode::<Test>::get();
 		assert!(xcm_mode == XcmMode::Paused);
 		assert_eq!(events(), vec![Event::EnteredPausedXcmMode,]);

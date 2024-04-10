@@ -176,7 +176,7 @@ impl<T: Config> CheckAssociatedRelayNumber for Pallet<T> {
 	) {
 		<T as Config>::CheckAssociatedRelayNumber::check_associated_relay_number(current, previous);
 
-		if current > previous + T::PausedThreshold::get() {
+		if (previous != 0) && (current > (previous + T::PausedThreshold::get())) {
 			Mode::<T>::set(XcmMode::Paused);
 			<Pallet<T>>::deposit_event(Event::EnteredPausedXcmMode);
 		}
