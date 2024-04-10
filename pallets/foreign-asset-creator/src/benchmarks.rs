@@ -37,45 +37,38 @@ benchmarks! {
 	}
 
 	change_existing_asset_type {
-		// We make it dependent on the number of existing assets already
-		let x in 5..100;
 		const USER_SEED: u32 = 1;
 		let manager: T::AccountId = account("manager",  0, USER_SEED);
 
-		for i in 0..x {
-			let foreign_asset:  T::ForeignAsset = Location::new(0, [GeneralIndex(i as u128)]).into();
-			let asset_id: AssetId<T> = (i as u16).into();
-			let amount = 1u32.into();
-			Pallet::<T>::create_foreign_asset(
-				RawOrigin::Root.into(),
-				foreign_asset.clone(),
-				asset_id.clone(),
-				manager.clone(),
-				true,
-				amount,
-			)?;
-		}
+		let foreign_asset:  T::ForeignAsset = Location::new(0, [GeneralIndex(0u128)]).into();
+		let asset_id: AssetId<T> = (0u16).into();
+		let amount = 1u32.into();
+		Pallet::<T>::create_foreign_asset(
+			RawOrigin::Root.into(),
+			foreign_asset.clone(),
+			asset_id.clone(),
+			manager.clone(),
+			true,
+			amount,
+		)?;
 
 		let new_foreign_asset = T::ForeignAsset::default();
 		let asset_type_to_be_changed: T::ForeignAsset = Location::new(
 			0,
-			[GeneralIndex((x-1) as u128)]
+			[GeneralIndex((0) as u128)]
 		).into();
-		let asset_id_to_be_changed: AssetId<T> = ((x-1) as u16).into();
+		let asset_id_to_be_changed: AssetId<T> = (0u16).into();
 	}: _(RawOrigin::Root, asset_id_to_be_changed.clone(), new_foreign_asset.clone())
 	verify {
 		assert_eq!(Pallet::<T>::foreign_asset_for_id(asset_id_to_be_changed), Some(new_foreign_asset.clone()));
 	}
 
 	remove_existing_asset_type {
-		// We make it dependent on the number of existing assets already
-		let x in 5..100;
 		const USER_SEED: u32 = 1;
 		let manager: T::AccountId = account("manager",  0, USER_SEED);
 
-		for i in 0..x {
-			let foreign_asset:  T::ForeignAsset = Location::new(0, [GeneralIndex(i as u128)]).into();
-			let asset_id: AssetId<T> = (i as u16).into();
+			let foreign_asset:  T::ForeignAsset = Location::new(0, [GeneralIndex(0u128)]).into();
+			let asset_id: AssetId<T> = 0u16.into();
 			let amount = 1u32.into();
 			Pallet::<T>::create_foreign_asset(
 				RawOrigin::Root.into(),
@@ -85,23 +78,19 @@ benchmarks! {
 				true,
 				amount,
 			)?;
-		}
 
-		let asset_id_to_be_removed: AssetId<T> = ((x-1) as u16).into();
+		let asset_id_to_be_removed: AssetId<T> = 0u16.into();
 	}: _(RawOrigin::Root, asset_id_to_be_removed.clone())
 	verify {
 		assert!(Pallet::<T>::foreign_asset_for_id(asset_id_to_be_removed).is_none());
 	}
 
 	destroy_foreign_asset {
-		// We make it dependent on the number of existing assets already
-		let x in 5..100;
 		const USER_SEED: u32 = 1;
 		let manager: T::AccountId = account("manager",  0, USER_SEED);
 
-		for i in 0..x {
-			let foreign_asset:  T::ForeignAsset = Location::new(0, [GeneralIndex(i as u128)]).into();
-			let asset_id: AssetId<T> = (i as u16).into();
+			let foreign_asset:  T::ForeignAsset = Location::new(0, [GeneralIndex(0u128)]).into();
+			let asset_id: AssetId<T> = 0u16.into();
 			let amount = 1u32.into();
 			Pallet::<T>::create_foreign_asset(
 				RawOrigin::Root.into(),
@@ -111,9 +100,8 @@ benchmarks! {
 				true,
 				amount,
 			)?;
-		}
 
-		let asset_id_to_be_destroyed: AssetId<T> = ((x-1) as u16).into();
+		let asset_id_to_be_destroyed: AssetId<T> = 0u16.into();
 	}: _(RawOrigin::Root, asset_id_to_be_destroyed.clone())
 	verify {
 		assert!(Pallet::<T>::foreign_asset_for_id(asset_id_to_be_destroyed).is_none());
