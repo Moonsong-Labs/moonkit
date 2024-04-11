@@ -6,6 +6,9 @@ edition = "2021"
 version = "0.1.0"
 
 [dependencies]
+impl-trait-for-tuples = { workspace = true }
+log = { workspace = true }
+
 frame-support = { workspace = true }
 sp-core = { workspace = true }
 sp-runtime = { workspace = true }

@@ -14,68 +14,102 @@
 // You should have received a copy of the GNU General Public License
 // along with Moonkit.  If not, see <http://www.gnu.org/licenses/>.
 
-use frame_support::Parameter;
+use frame_support::{traits::PalletInfoAccess, Parameter};
 use sp_core::H160;
 use sp_runtime::traits::MaybeEquivalence;
-use sp_std::{marker::PhantomData, mem::size_of};
+use sp_std::{fmt::Debug, marker::PhantomData, mem::size_of};
 use xcm::latest::{Junction::*, Location};
 
-pub struct AccountIdToLocationConverter<AccountId, AssetId, AssetIdToLocationManager>(
-	pub PhantomData<(AccountId, AssetId, AssetIdToLocationManager)>,
-);
+/// Information to retrieve for a specific AssetId type.
+pub struct AssetIdInfo<'a> {
+	pub foreign_asset_prefix: &'a [u8],
+	pub size_of: usize,
+}
 
-impl<AccountId, AssetId, AssetIdToLocationManager>
-	AccountIdToLocationConverter<AccountId, AssetId, AssetIdToLocationManager>
-where
-	AccountId: Parameter + From<H160> + Into<H160>,
-	AssetId: From<u8> + TryFrom<u128> + TryFrom<u16>,
-	AssetIdToLocationManager: MaybeEquivalence<Location, AssetId>,
-{
-	// Function that converts an AccountId into a Location.
-	pub fn convert(
-		account: AccountId,
-		asset_id_info: AssetIdInfo,
-		balances_index: u8,
-		erc20_xcm_bridge_index: u8,
-	) -> Option<Location> {
-		match account {
-			// First we check if the account matches the pallet-balances address.
-			// In that case we return the self-reserve location, which is the location
-			// of pallet-balances.
-			// TODO: how do we make it more generic?
-			a if a == H160::from_low_u64_be(2050).into() => {
-				Some(Location::new(0, [PalletInstance(balances_index)]))
-			}
-			// Then check if the asset is a foreign asset, we use the prefix for this.
-			_ => match Self::account_to_asset_id(account.clone(), asset_id_info) {
-				// If we encounter a prefix, it means the account is a foreign asset.
-				// In this case we call AssetIdToLocationManager::convert_back() to retrieve the
-				// desired location in a generic way.
-				Some((_prefix, asset_id)) => AssetIdToLocationManager::convert_back(&asset_id),
+// Define a trait to abstract over different types of AssetId.
+// We retrieve an AssetIdInfo type containing all the information we need
+// to handle the generic types over AssetId.
+pub trait GetAssetIdInfo<T> {
+	fn get_asset_id_info() -> AssetIdInfo<'static>;
+}
 
-				// If the address is not a foreign asset, then it means it is a real ERC20.
-				// Here we append an AccountKey20 to the location of the Erc20XcmBridgePallet.
-				//
-				// TODO: this will retrieve an unreal location in case the pallet is not installed
-				// in the runtime, we should handle this case as well.
-				// TODO: how do we make it more generic?
-				None => {
-					let h160_account: H160 = account.into();
-					Some(Location::new(
-						0,
-						[
-							PalletInstance(erc20_xcm_bridge_index),
-							AccountKey20 {
-								network: None,
-								key: h160_account.into(),
-							},
-						],
-					))
-				}
-			},
+/// A getter that contains the info for each type
+/// we admit as AssetId.
+pub struct AssetIdInfoGetter;
+
+// Implement GetAssetId trait for u128.
+impl GetAssetIdInfo<u128> for AssetIdInfoGetter {
+	fn get_asset_id_info() -> AssetIdInfo<'static> {
+		AssetIdInfo {
+			foreign_asset_prefix: &[255u8; 4],
+			size_of: size_of::<u128>(),
 		}
 	}
+}
 
+// Implement GetAssetId trait for u16.
+impl GetAssetIdInfo<u16> for AssetIdInfoGetter {
+	fn get_asset_id_info() -> AssetIdInfo<'static> {
+		AssetIdInfo {
+			foreign_asset_prefix: &[255u8; 18],
+			size_of: size_of::<u16>(),
+		}
+	}
+}
+
+pub trait AccountIdToLocationMatcher<AccountId> {
+	fn convert(account: AccountId) -> Option<Location>;
+}
+
+#[impl_trait_for_tuples::impl_for_tuples(30)]
+impl<AccountId: Debug + Parameter> AccountIdToLocationMatcher<AccountId> for Tuple {
+	fn convert(account: AccountId) -> Option<Location> {
+		for_tuples!( #(
+			match Tuple::convert(account.clone()) { o @ Some(_) => return o, _ => () }
+		)* );
+		log::trace!(target: "xcm_primitives::convert", "did not match any location to the account: {:?}", &account);
+		None
+	}
+}
+
+pub struct SingleAddressMatcher<AccountId, const ADDRESS: u64, PalletInstance>(
+	PhantomData<(AccountId, PalletInstance)>,
+);
+
+impl<AccountId, const ADDRESS: u64, PalletInstance> AccountIdToLocationMatcher<AccountId>
+	for SingleAddressMatcher<AccountId, ADDRESS, PalletInstance>
+where
+	AccountId: Parameter + From<H160>,
+	PalletInstance: PalletInfoAccess,
+{
+	fn convert(account: AccountId) -> Option<Location> {
+		if account == H160::from_low_u64_be(ADDRESS).into() {
+			return Some(Location::new(
+				0,
+				[PalletInstance(
+					<PalletInstance as PalletInfoAccess>::index() as u8,
+				)],
+			));
+		}
+		None
+	}
+}
+
+pub struct MatchThroughEquivalence<AccountId, AssetId, AssetIdInfoGetter, AssetIdToLocationManager>(
+	PhantomData<(
+		AccountId,
+		AssetId,
+		AssetIdInfoGetter,
+		AssetIdToLocationManager,
+	)>,
+);
+
+impl<AccountId, AssetId, AssetIdInfoGetter, AssetIdToLocationManager>
+	MatchThroughEquivalence<AccountId, AssetId, AssetIdInfoGetter, AssetIdToLocationManager>
+where
+	AccountId: Parameter + Into<H160>,
+	AssetId: From<u8> + TryFrom<u16> + TryFrom<u128>,
+{
 	// Helper function that retrieves the asset_id of a foreign asset account.
 	pub fn account_to_asset_id(
 		account: AccountId,
@@ -101,45 +135,27 @@ where
 				_ => return None,
 			};
 			return Some((prefix_part.to_vec(), asset_id));
-		} else {
-			return None;
 		}
+		None
 	}
 }
 
-/// Information to retrieve for a specific AssetId type.
-pub struct AssetIdInfo<'a> {
-	pub foreign_asset_prefix: &'a [u8],
-	pub size_of: usize,
-}
-
-// Define a trait to abstract over different types of AssetId.
-// We retrieve an AssetIdInfo type containing all the information we need
-// to handle the generic types over AssetId.
-pub trait GetAssetId<T> {
-	fn get_asset_id_info() -> AssetIdInfo<'static>;
-}
-
-/// A getter that contains the info for each type
-/// we admit as AssetId.
-pub struct AssetIdInfoGetter;
-
-// Implement GetAssetId trait for u128.
-impl GetAssetId<u128> for AssetIdInfoGetter {
-	fn get_asset_id_info() -> AssetIdInfo<'static> {
-		AssetIdInfo {
-			foreign_asset_prefix: &[255u8; 4],
-			size_of: size_of::<u128>(),
+impl<AccountId, AssetId, AssetIdInfoGetter, AssetIdToLocationManager>
+	AccountIdToLocationMatcher<AccountId>
+	for MatchThroughEquivalence<AccountId, AssetId, AssetIdInfoGetter, AssetIdToLocationManager>
+where
+	AccountId: Parameter + Into<H160>,
+	AssetId: From<u8> + TryFrom<u16> + TryFrom<u128>,
+	AssetIdInfoGetter: GetAssetIdInfo<AssetId>,
+	AssetIdToLocationManager: MaybeEquivalence<Location, AssetId>,
+{
+	fn convert(account: AccountId) -> Option<Location> {
+		let asset_id_info = AssetIdInfoGetter::get_asset_id_info();
+		if let Some((_prefix, asset_id)) = Self::account_to_asset_id(account, asset_id_info) {
+			return AssetIdToLocationManager::convert_back(&asset_id);
 		}
+		None
 	}
 }
 
-// Implement GetAssetId trait for u16.
-impl GetAssetId<u16> for AssetIdInfoGetter {
-	fn get_asset_id_info() -> AssetIdInfo<'static> {
-		AssetIdInfo {
-			foreign_asset_prefix: &[255u8; 18],
-			size_of: size_of::<u16>(),
-		}
-	}
-}
+// TODO: Erc20BridgeMatcher

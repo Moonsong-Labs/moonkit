@@ -33,7 +33,7 @@ use xcm::{
 	prelude::WeightLimit::*,
 	VersionedAssets, VersionedLocation,
 };
-use xcm_primitives::location_converter::GetAssetId;
+use xcm_primitives::location_converter::GetAssetIdInfo;
 
 #[cfg(test)]
 mod mock;
@@ -63,7 +63,7 @@ where
 		From<Option<Runtime::AccountId>>,
 	<Runtime as frame_system::Config>::RuntimeCall: From<pallet_xcm::Call<Runtime>>,
 	AssetIdToLocationManager: MaybeEquivalence<Location, AssetId>,
-	AssetIdInfoGetter: GetAssetId<AssetId>,
+	AssetIdInfoGetter: GetAssetIdInfo<AssetId>,
 	Runtime::AccountId: From<H160> + Into<H160>,
 	AssetId: From<u8> + TryFrom<u16> + TryFrom<u128>,
 {
@@ -113,24 +113,6 @@ where
 		};
 
 		RuntimeHelper::<Runtime>::try_dispatch(handle, Some(origin).into(), call)?;
-		Ok(())
-	}
-
-	// TODO: finish
-	#[precompile::public("transferAssetsWithAddress()")]
-	fn transfer_assets_with_address(_handle: &mut impl PrecompileHandle) -> EvmResult {
-		/*
-		// Just testing stuff
-		let asset_info = AssetIdInfoGetter::get_asset_id_info();
-		let account: <Runtime as frame_system::Config>::AccountId =
-			H160::from_low_u64_be(2050).into();
-
-		let result = AccountIdToLocationConverter::<_, AssetId, AssetIdToLocationManager>::convert(
-			account, asset_info, 3u8, 42u8,
-		);
-
-		println!("RESULT: {:#?}", result); */
-
 		Ok(())
 	}
 }
