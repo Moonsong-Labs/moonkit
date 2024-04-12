@@ -57,6 +57,7 @@ impl GetAssetIdInfo<u16> for AssetIdInfoGetter {
 	}
 }
 
+/// A converter from AccountId to a XCM Location.
 pub trait AccountIdToLocationMatcher<AccountId> {
 	fn convert(account: AccountId) -> Option<Location>;
 }
@@ -72,6 +73,8 @@ impl<AccountId: Debug + Parameter> AccountIdToLocationMatcher<AccountId> for Tup
 	}
 }
 
+/// A matcher for any address that we would like to compare against a received account.
+/// Tipically used to manage self-reserve currency through the pallet-balances address.
 pub struct SingleAddressMatcher<AccountId, const ADDRESS: u64, PalletInstance>(
 	PhantomData<(AccountId, PalletInstance)>,
 );
@@ -95,6 +98,7 @@ where
 	}
 }
 
+/// Matcher to compare a received account against some possible foreign asset address.
 pub struct MatchThroughEquivalence<AccountId, AssetId, AssetIdInfoGetter, AssetIdToLocationManager>(
 	PhantomData<(
 		AccountId,
@@ -158,4 +162,25 @@ where
 	}
 }
 
-// TODO: Erc20BridgeMatcher
+// Matcher for any pallet that handles ERC20s internally.
+pub struct Erc20PalletMatcher<AccountId, const PALLET_INDEX: u8>(PhantomData<AccountId>);
+
+impl<AccountId, const PALLET_INDEX: u8> AccountIdToLocationMatcher<AccountId>
+	for Erc20PalletMatcher<AccountId, PALLET_INDEX>
+where
+	AccountId: Parameter + Into<H160>,
+{
+	fn convert(account: AccountId) -> Option<Location> {
+		let h160_account = account.into();
+		return Some(Location::new(
+			0,
+			[
+				PalletInstance(PALLET_INDEX),
+				AccountKey20 {
+					key: h160_account.0,
+					network: None,
+				},
+			],
+		));
+	}
+}

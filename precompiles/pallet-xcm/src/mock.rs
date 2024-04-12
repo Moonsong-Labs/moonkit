@@ -28,7 +28,7 @@ use precompile_utils::{
 	precompile_set::*,
 	testing::{AddressInPrefixedSet, MockAccount},
 };
-use sp_core::{ConstU32, H160, H256, U256};
+use sp_core::{ConstU32, ConstU64, H160, H256, U256};
 use sp_runtime::traits::{BlakeTwo256, IdentityLookup, TryConvert};
 use sp_runtime::BuildStorage;
 use xcm::latest::{prelude::*, Error as XcmError};
@@ -39,7 +39,9 @@ use xcm_executor::{
 	traits::{ConvertLocation, TransactAsset, WeightTrader},
 	AssetsInHolding,
 };
-pub use xcm_primitives::location_converter::AssetIdInfoGetter;
+pub use xcm_primitives::location_converter::{
+	AssetIdInfoGetter, Erc20PalletMatcher, MatchThroughEquivalence, SingleAddressMatcher,
+};
 use Junctions::Here;
 
 pub type AccountId = MockAccount;
@@ -164,10 +166,20 @@ impl pallet_foreign_asset_creator::Config for Runtime {
 	type OnForeignAssetDestroyed = ();
 }
 
-pub type Precompiles<R, A, F, G> =
-	PrecompileSetBuilder<R, PrecompileAt<AddressU64<1>, PalletXcmPrecompile<R, A, F, G>>>;
+pub type Precompiles<R, M> =
+	PrecompileSetBuilder<R, PrecompileAt<AddressU64<1>, PalletXcmPrecompile<R, M>>>;
 
-pub type PCall = PalletXcmPrecompileCall<Runtime, AssetId, ForeignAssetCreator, AssetIdInfoGetter>;
+pub type AccountIdAlias = <mock::Runtime as frame_system::Config>::AccountId;
+
+pub type SingleAddressMatch = SingleAddressMatcher<AccountIdAlias, 2050, Balances>;
+
+pub type EquivalenceMatch =
+	MatchThroughEquivalence<AccountIdAlias, AssetId, AssetIdInfoGetter, ForeignAssetCreator>;
+
+pub type Erc20Match = Erc20PalletMatcher<AccountIdAlias, 42>;
+
+pub type PCall =
+	PalletXcmPrecompileCall<Runtime, (SingleAddressMatch, EquivalenceMatch, Erc20Match)>;
 
 mock_account!(ParentAccount, |_| MockAccount::from_u64(4));
 
@@ -183,7 +195,7 @@ const BLOCK_STORAGE_LIMIT: u64 = 40 * 1024;
 
 parameter_types! {
 	pub BlockGasLimit: U256 = U256::from(u64::MAX);
-	pub PrecompilesValue: Precompiles<Runtime, AssetId, ForeignAssetCreator, AssetIdInfoGetter> = Precompiles::new();
+	pub PrecompilesValue: Precompiles<Runtime, (SingleAddressMatch, EquivalenceMatch, Erc20Match)> = Precompiles::new();
 	pub const WeightPerGas: Weight = Weight::from_parts(1, 0);
 	pub GasLimitPovSizeRatio: u64 = {
 		let block_gas_limit = BlockGasLimit::get().min(u64::MAX.into()).low_u64();
@@ -218,7 +230,7 @@ impl pallet_evm::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type Runner = pallet_evm::runner::stack::Runner<Self>;
 	type PrecompilesValue = PrecompilesValue;
-	type PrecompilesType = Precompiles<Self, AssetId, ForeignAssetCreator, AssetIdInfoGetter>;
+	type PrecompilesType = Precompiles<Self, (SingleAddressMatch, EquivalenceMatch, Erc20Match)>;
 	type ChainId = ();
 	type OnChargeTransaction = ();
 	type BlockGasLimit = BlockGasLimit;
