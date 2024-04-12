@@ -54,7 +54,7 @@ where
 	<<Runtime as frame_system::Config>::RuntimeCall as Dispatchable>::RuntimeOrigin:
 		From<Option<Runtime::AccountId>>,
 	<Runtime as frame_system::Config>::RuntimeCall: From<pallet_xcm::Call<Runtime>>,
-	LocationMatcher: AccountIdToLocationMatcher<Runtime::AccountId>,
+	LocationMatcher: AccountIdToLocationMatcher<<Runtime as frame_system::Config>::AccountId>,
 {
 	#[precompile::public(
 		"transferAssets(\

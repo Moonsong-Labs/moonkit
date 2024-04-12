@@ -172,7 +172,7 @@ where
 {
 	fn convert(account: AccountId) -> Option<Location> {
 		let h160_account = account.into();
-		return Some(Location::new(
+		Some(Location::new(
 			0,
 			[
 				PalletInstance(PALLET_INDEX),
@@ -181,6 +181,6 @@ where
 					network: None,
 				},
 			],
-		));
+		))
 	}
 }
