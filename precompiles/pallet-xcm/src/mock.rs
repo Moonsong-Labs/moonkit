@@ -28,7 +28,7 @@ use precompile_utils::{
 	precompile_set::*,
 	testing::{AddressInPrefixedSet, MockAccount},
 };
-use sp_core::{ConstU32, ConstU64, H160, H256, U256};
+use sp_core::{ConstU32, H160, H256, U256};
 use sp_runtime::traits::{BlakeTwo256, IdentityLookup, TryConvert};
 use sp_runtime::BuildStorage;
 use xcm::latest::{prelude::*, Error as XcmError};
