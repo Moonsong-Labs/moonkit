@@ -39,7 +39,7 @@ use xcm_executor::{
 	traits::{ConvertLocation, TransactAsset, WeightTrader},
 	AssetsInHolding,
 };
-pub use xcm_primitives::location_converter::{
+pub use xcm_primitives::location_matcher::{
 	AssetIdInfoGetter, Erc20PalletMatcher, MatchThroughEquivalence, SingleAddressMatcher,
 };
 use Junctions::Here;

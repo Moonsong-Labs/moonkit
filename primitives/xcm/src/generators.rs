@@ -14,25 +14,27 @@
 // You should have received a copy of the GNU General Public License
 // along with Moonkit.  If not, see <http://www.gnu.org/licenses/>.
 
-//! The XCM primitive trait implementations
+use xcm::latest::{Junction::*, Location};
 
-#![cfg_attr(not(feature = "std"), no_std)]
-
-use sp_runtime::DispatchResult;
-
-pub mod generators;
-pub mod location_matcher;
-
-/// Pause and resume execution of XCM
-pub trait PauseXcmExecution {
-	fn suspend_xcm_execution() -> DispatchResult;
-	fn resume_xcm_execution() -> DispatchResult;
-}
-impl PauseXcmExecution for () {
-	fn suspend_xcm_execution() -> DispatchResult {
-		Ok(())
+// TODO: Does it make sense to have this generators
+//       instead of retrieving the proper location on each case?
+pub struct XcmSiblingDestinationGenerator;
+impl XcmSiblingDestinationGenerator {
+	pub fn generate(para_id: u32) -> Location {
+		Location::new(1, Parachain(para_id))
 	}
-	fn resume_xcm_execution() -> DispatchResult {
-		Ok(())
+}
+
+pub struct XcmLocalBeneficiary20Generator;
+impl XcmLocalBeneficiary20Generator {
+	pub fn generate(key: [u8; 20]) -> Location {
+		Location::new(0, AccountKey20 { network: None, key })
+	}
+}
+
+pub struct XcmLocalBeneficiary32Generator;
+impl XcmLocalBeneficiary32Generator {
+	pub fn generate(id: [u8; 32]) -> Location {
+		Location::new(0, AccountId32 { network: None, id })
 	}
 }

@@ -30,7 +30,10 @@ fn test_solidity_interface_has_all_function_selectors_documented_and_implemented
 
 #[test]
 fn selectors() {
-	assert!(PCall::transfer_assets_selectors().contains(&0x650ef8c7));
+	assert!(PCall::transfer_assets_location_selectors().contains(&0x59df8416));
+	assert!(PCall::transfer_assets_to_para_20_selectors().contains(&0xb489262e));
+	assert!(PCall::transfer_assets_to_para_32_selectors().contains(&0x4461e6f5));
+	assert!(PCall::transfer_assets_to_relay_selectors().contains(&0xd7c89659));
 }
 
 #[test]
@@ -39,7 +42,7 @@ fn modifiers() {
 		let mut tester =
 			PrecompilesModifierTester::new(PrecompilesValue::get(), Alice, Precompile1);
 
-		tester.test_default_modifier(PCall::transfer_assets_selectors());
+		tester.test_default_modifier(PCall::transfer_assets_location_selectors());
 	});
 }
 
@@ -86,7 +89,7 @@ fn test_transfer_assets_works() {
 				.prepare_test(
 					Alice,
 					Precompile1,
-					PCall::transfer_assets {
+					PCall::transfer_assets_location {
 						dest,
 						beneficiary,
 						assets: vec![
@@ -130,7 +133,7 @@ fn test_transfer_assets_success_when_paying_fees_with_foreign_asset() {
 				.prepare_test(
 					Alice,
 					Precompile1,
-					PCall::transfer_assets {
+					PCall::transfer_assets_location {
 						dest,
 						beneficiary,
 						assets: vec![
@@ -176,7 +179,7 @@ fn test_transfer_assets_fails_fees_unknown_reserve() {
 				.prepare_test(
 					Alice,
 					Precompile1,
-					PCall::transfer_assets {
+					PCall::transfer_assets_location {
 						dest,
 						beneficiary,
 						assets: vec![

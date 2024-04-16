@@ -18,23 +18,57 @@ interface XCM {
     }
 
     // A way to represent fungible assets in XCM
-    struct Asset {
+    struct AssetLocationInfo {
         Location location;
         uint256 amount;
     }
 
+    struct AssetAddressInfo {
+        address asset;
+        uint256 amount;
+    }
+
     /// @dev Function to send assets via XCM using transfer_assets() pallet-xcm extrinsic.
-    /// @custom:selector 650ef8c7
+    /// @custom:selector 59df8416
     /// @param dest The destination chain.
     /// @param beneficiary The actual account that will receive the tokens in dest.
     /// @param assets The combination (array) of assets to send.
     /// @param feeAssetItem The index of the asset that will be used to pay for fees.
     /// @param weight The weight to be used for the whole XCM operation.
     /// (uint64::MAX in refTime means Unlimited weight) 
-    function transferAssets(
+    function transferAssetsLocation(
         Location memory dest,
         Location memory beneficiary,
-        Asset[] memory assets,
+        AssetLocationInfo[] memory assets,
+        uint32 feeAssetItem,
+        Weight memory weight
+    ) external;
+
+    /// TODO add docs
+    /// @custom:selector b489262e
+    function transferAssetsToPara20(
+        uint32 paraId,
+        address beneficiary,
+        AssetAddressInfo[] memory assets,
+        uint32 feeAssetItem,
+        Weight memory weight
+    ) external;
+
+    /// TODO add docs
+    /// @custom:selector 4461e6f5
+    function transferAssetsToPara32(
+        uint32 paraId,
+        bytes32 beneficiary,
+        AssetAddressInfo[] memory assets,
+        uint32 feeAssetItem,
+        Weight memory weight
+    ) external;
+
+    /// TODO add docs
+    /// @custom:selector d7c89659
+    function transferAssetsToRelay(
+        bytes32 beneficiary,
+        AssetAddressInfo[] memory assets,
         uint32 feeAssetItem,
         Weight memory weight
     ) external;

@@ -16,7 +16,7 @@
 
 #![cfg_attr(not(feature = "std"), no_std)]
 
-use fp_evm::PrecompileHandle;
+use fp_evm::{PrecompileFailure, PrecompileHandle};
 use frame_support::{
 	dispatch::{GetDispatchInfo, PostDispatchInfo},
 	traits::ConstU32,
@@ -24,7 +24,7 @@ use frame_support::{
 use pallet_evm::AddressMapping;
 use precompile_utils::prelude::*;
 
-use sp_core::U256;
+use sp_core::{H256, U256};
 use sp_runtime::traits::Dispatchable;
 use sp_std::marker::PhantomData;
 use sp_weights::Weight;
@@ -33,7 +33,13 @@ use xcm::{
 	prelude::WeightLimit::*,
 	VersionedAssets, VersionedLocation,
 };
-use xcm_primitives::location_converter::AccountIdToLocationMatcher;
+use xcm_primitives::{
+	generators::{
+		XcmLocalBeneficiary20Generator, XcmLocalBeneficiary32Generator,
+		XcmSiblingDestinationGenerator,
+	},
+	location_matcher::AccountIdToLocationMatcher,
+};
 
 #[cfg(test)]
 mod mock;
@@ -57,14 +63,14 @@ where
 	LocationMatcher: AccountIdToLocationMatcher<<Runtime as frame_system::Config>::AccountId>,
 {
 	#[precompile::public(
-		"transferAssets(\
+		"transferAssetsLocation(\
 		(uint8,bytes[]),\
 		(uint8,bytes[]),\
 		((uint8,bytes[]),uint256)[],\
 		uint32,\
 		(uint64,uint64))"
 	)]
-	fn transfer_assets(
+	fn transfer_assets_location(
 		handle: &mut impl PrecompileHandle,
 		dest: Location,
 		beneficiary: Location,
@@ -103,5 +109,154 @@ where
 
 		RuntimeHelper::<Runtime>::try_dispatch(handle, Some(origin).into(), call)?;
 		Ok(())
+	}
+
+	#[precompile::public(
+		"transferAssetsToPara20(\
+			uint32,\
+			address,\
+			(address,uint256)[],\
+			uint32,\
+			(uint64,uint64))"
+	)]
+	fn transfer_assets_to_para_20(
+		handle: &mut impl PrecompileHandle,
+		para_id: u32,
+		beneficiary: Address,
+		assets: BoundedVec<(Address, Convert<U256, u128>), GetArrayLimit>,
+		fee_asset_item: u32,
+		weight: Weight,
+	) -> EvmResult {
+		// TODO: account for a possible storage read inside LocationMatcher::convert()
+
+		let origin = Runtime::AddressMapping::into_account_id(handle.context().caller);
+		let assets: Vec<_> = assets.into();
+
+		let assets_to_send: Vec<Asset> = Self::check_and_prepare_assets(assets)?;
+
+		let weight_limit = match weight.ref_time() {
+			u64::MAX => Unlimited,
+			_ => Limited(weight),
+		};
+
+		let dest = XcmSiblingDestinationGenerator::generate(para_id);
+		let beneficiary = XcmLocalBeneficiary20Generator::generate(beneficiary.0 .0);
+
+		let call = pallet_xcm::Call::<Runtime>::transfer_assets {
+			dest: Box::new(VersionedLocation::V4(dest)),
+			beneficiary: Box::new(VersionedLocation::V4(beneficiary)),
+			assets: Box::new(VersionedAssets::V4(assets_to_send.into())),
+			fee_asset_item,
+			weight_limit,
+		};
+
+		RuntimeHelper::<Runtime>::try_dispatch(handle, Some(origin).into(), call)?;
+
+		Ok(())
+	}
+
+	#[precompile::public(
+		"transferAssetsToPara32(\
+			uint32,\
+			bytes32,\
+			(address,uint256)[],\
+			uint32,\
+			(uint64,uint64))"
+	)]
+	fn transfer_assets_to_para_32(
+		handle: &mut impl PrecompileHandle,
+		para_id: u32,
+		beneficiary: H256,
+		assets: BoundedVec<(Address, Convert<U256, u128>), GetArrayLimit>,
+		fee_asset_item: u32,
+		weight: Weight,
+	) -> EvmResult {
+		// TODO: account for a possible storage read inside LocationMatcher::convert()
+
+		let origin = Runtime::AddressMapping::into_account_id(handle.context().caller);
+		let assets: Vec<_> = assets.into();
+
+		let assets_to_send: Vec<Asset> = Self::check_and_prepare_assets(assets)?;
+
+		let weight_limit = match weight.ref_time() {
+			u64::MAX => Unlimited,
+			_ => Limited(weight),
+		};
+
+		let dest = XcmSiblingDestinationGenerator::generate(para_id);
+		let beneficiary = XcmLocalBeneficiary32Generator::generate(beneficiary.0);
+
+		let call = pallet_xcm::Call::<Runtime>::transfer_assets {
+			dest: Box::new(VersionedLocation::V4(dest)),
+			beneficiary: Box::new(VersionedLocation::V4(beneficiary)),
+			assets: Box::new(VersionedAssets::V4(assets_to_send.into())),
+			fee_asset_item,
+			weight_limit,
+		};
+
+		RuntimeHelper::<Runtime>::try_dispatch(handle, Some(origin).into(), call)?;
+
+		Ok(())
+	}
+
+	#[precompile::public(
+		"transferAssetsToRelay(\
+			bytes32,\
+			(address,uint256)[],\
+			uint32,\
+			(uint64,uint64))"
+	)]
+	fn transfer_assets_to_relay(
+		handle: &mut impl PrecompileHandle,
+		beneficiary: H256,
+		assets: BoundedVec<(Address, Convert<U256, u128>), GetArrayLimit>,
+		fee_asset_item: u32,
+		weight: Weight,
+	) -> EvmResult {
+		// TODO: account for a possible storage read inside LocationMatcher::convert()
+
+		let origin = Runtime::AddressMapping::into_account_id(handle.context().caller);
+		let assets: Vec<_> = assets.into();
+
+		let assets_to_send: Vec<Asset> = Self::check_and_prepare_assets(assets)?;
+
+		let weight_limit = match weight.ref_time() {
+			u64::MAX => Unlimited,
+			_ => Limited(weight),
+		};
+
+		let dest = Location::parent();
+		let beneficiary = XcmLocalBeneficiary32Generator::generate(beneficiary.0);
+
+		let call = pallet_xcm::Call::<Runtime>::transfer_assets {
+			dest: Box::new(VersionedLocation::V4(dest)),
+			beneficiary: Box::new(VersionedLocation::V4(beneficiary)),
+			assets: Box::new(VersionedAssets::V4(assets_to_send.into())),
+			fee_asset_item,
+			weight_limit,
+		};
+
+		RuntimeHelper::<Runtime>::try_dispatch(handle, Some(origin).into(), call)?;
+
+		Ok(())
+	}
+
+	// Helper function to convert and prepare each asset into a proper Location.
+	fn check_and_prepare_assets(
+		assets: Vec<(Address, Convert<U256, u128>)>,
+	) -> Result<Vec<Asset>, PrecompileFailure> {
+		let mut assets_to_send: Vec<Asset> = vec![];
+		for asset in assets {
+			let asset_account = Runtime::AddressMapping::into_account_id(asset.0 .0);
+			let asset_location = LocationMatcher::convert(asset_account);
+			if asset_location == None {
+				return Err(revert("Asset not found"));
+			}
+			assets_to_send.push(Asset {
+				id: AssetId(asset_location.unwrap_or_default()),
+				fun: Fungibility::Fungible(asset.1.converted()),
+			})
+		}
+		Ok(assets_to_send)
 	}
 }
