@@ -39,9 +39,10 @@ use xcm_executor::{
 	traits::{ConvertLocation, TransactAsset, WeightTrader},
 	AssetsInHolding,
 };
-pub use xcm_primitives::{AccountIdAssetIdConversion, location_matcher::{
-	Erc20PalletMatcher, ForeignAssetMatcher, SingleAddressMatcher,
-}};
+pub use xcm_primitives::{
+	location_matcher::{Erc20PalletMatcher, ForeignAssetMatcher, SingleAddressMatcher},
+	AccountIdAssetIdConversion,
+};
 use Junctions::Here;
 
 pub type AccountId = MockAccount;
