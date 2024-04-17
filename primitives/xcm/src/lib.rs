@@ -36,3 +36,12 @@ impl PauseXcmExecution for () {
 		Ok(())
 	}
 }
+
+/// This trait ensure we can convert AccountIds to AssetIds.
+pub trait AccountIdAssetIdConversion<Account, AssetId> {
+	// Get assetId and prefix from account
+	fn account_to_asset_id(account: Account) -> Option<(Vec<u8>, AssetId)>;
+
+	// Get AccountId from AssetId and prefix
+	fn asset_id_to_account(prefix: &[u8], asset_id: AssetId) -> Account;
+}

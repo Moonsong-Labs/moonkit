@@ -39,9 +39,9 @@ use xcm_executor::{
 	traits::{ConvertLocation, TransactAsset, WeightTrader},
 	AssetsInHolding,
 };
-pub use xcm_primitives::location_matcher::{
-	AssetIdInfoGetter, Erc20PalletMatcher, MatchThroughEquivalence, SingleAddressMatcher,
-};
+pub use xcm_primitives::{AccountIdAssetIdConversion, location_matcher::{
+	Erc20PalletMatcher, ForeignAssetMatcher, SingleAddressMatcher,
+}};
 use Junctions::Here;
 
 pub type AccountId = MockAccount;
@@ -128,6 +128,35 @@ parameter_types! {
 	pub const MetadataDepositPerByte: u64 = 0;
 }
 
+pub const FOREIGN_ASSET_ADDRESS_PREFIX: &[u8] = &[255u8; 18];
+
+// Instruct how to go from an H160 to an AssetID
+// We just take the lowest 2 bytes
+impl AccountIdAssetIdConversion<AccountId, AssetId> for Runtime {
+	/// The way to convert an account to assetId is by ensuring that the prefix is [0xFF, 18]
+	/// and by taking the lowest 2 bytes as the assetId
+	fn account_to_asset_id(account: AccountId) -> Option<(Vec<u8>, AssetId)> {
+		let h160_account: H160 = account.into();
+		let mut data = [0u8; 2];
+		let (prefix_part, id_part) = h160_account.as_fixed_bytes().split_at(18);
+		if prefix_part == FOREIGN_ASSET_ADDRESS_PREFIX {
+			data.copy_from_slice(id_part);
+			let asset_id: AssetId = u16::from_be_bytes(data);
+			Some((prefix_part.to_vec(), asset_id))
+		} else {
+			None
+		}
+	}
+
+	// The opposite conversion
+	fn asset_id_to_account(prefix: &[u8], asset_id: AssetId) -> AccountId {
+		let mut data = [0u8; 20];
+		data[0..18].copy_from_slice(prefix);
+		data[18..20].copy_from_slice(&asset_id.to_be_bytes());
+		AccountId::from(data)
+	}
+}
+
 pub type AssetId = u16;
 
 impl pallet_assets::Config for Runtime {
@@ -173,13 +202,13 @@ pub type AccountIdAlias = <mock::Runtime as frame_system::Config>::AccountId;
 
 pub type SingleAddressMatch = SingleAddressMatcher<AccountIdAlias, 2050, Balances>;
 
-pub type EquivalenceMatch =
-	MatchThroughEquivalence<AccountIdAlias, AssetId, AssetIdInfoGetter, ForeignAssetCreator>;
+pub type ForeignAssetMatch =
+	ForeignAssetMatcher<AccountIdAlias, AssetId, mock::Runtime, ForeignAssetCreator>;
 
 pub type Erc20Match = Erc20PalletMatcher<AccountIdAlias, 42>;
 
 pub type PCall =
-	PalletXcmPrecompileCall<Runtime, (SingleAddressMatch, EquivalenceMatch, Erc20Match)>;
+	PalletXcmPrecompileCall<Runtime, (SingleAddressMatch, ForeignAssetMatch, Erc20Match)>;
 
 mock_account!(ParentAccount, |_| MockAccount::from_u64(4));
 
@@ -195,7 +224,7 @@ const BLOCK_STORAGE_LIMIT: u64 = 40 * 1024;
 
 parameter_types! {
 	pub BlockGasLimit: U256 = U256::from(u64::MAX);
-	pub PrecompilesValue: Precompiles<Runtime, (SingleAddressMatch, EquivalenceMatch, Erc20Match)> = Precompiles::new();
+	pub PrecompilesValue: Precompiles<Runtime, (SingleAddressMatch, ForeignAssetMatch, Erc20Match)> = Precompiles::new();
 	pub const WeightPerGas: Weight = Weight::from_parts(1, 0);
 	pub GasLimitPovSizeRatio: u64 = {
 		let block_gas_limit = BlockGasLimit::get().min(u64::MAX.into()).low_u64();
@@ -230,7 +259,7 @@ impl pallet_evm::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type Runner = pallet_evm::runner::stack::Runner<Self>;
 	type PrecompilesValue = PrecompilesValue;
-	type PrecompilesType = Precompiles<Self, (SingleAddressMatch, EquivalenceMatch, Erc20Match)>;
+	type PrecompilesType = Precompiles<Self, (SingleAddressMatch, ForeignAssetMatch, Erc20Match)>;
 	type ChainId = ();
 	type OnChargeTransaction = ();
 	type BlockGasLimit = BlockGasLimit;

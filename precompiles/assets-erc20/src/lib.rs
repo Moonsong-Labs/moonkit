@@ -38,6 +38,7 @@ use sp_std::{
 	convert::{TryFrom, TryInto},
 	marker::PhantomData,
 };
+use xcm_primitives::AccountIdAssetIdConversion;
 
 mod eip2612;
 use eip2612::Eip2612;
@@ -58,16 +59,6 @@ pub type BalanceOf<Runtime, Instance = ()> = <Runtime as pallet_assets::Config<I
 
 /// Alias for the Asset Id type for the provided Runtime and Instance.
 pub type AssetIdOf<Runtime, Instance = ()> = <Runtime as pallet_assets::Config<Instance>>::AssetId;
-
-/// This trait ensure we can convert AccountIds to AssetIds
-/// We will require Runtime to have this trait implemented
-pub trait AccountIdAssetIdConversion<Account, AssetId> {
-	// Get assetId and prefix from account
-	fn account_to_asset_id(account: Account) -> Option<(Vec<u8>, AssetId)>;
-
-	// Get AccountId from AssetId and prefix
-	fn asset_id_to_account(prefix: &[u8], asset_id: AssetId) -> Account;
-}
 
 /// The following distribution has been decided for the precompiles
 /// 0-1023: Ethereum Mainnet Precompiles
