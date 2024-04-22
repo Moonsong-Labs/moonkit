@@ -24,7 +24,7 @@ use frame_support::{
 use pallet_evm::AddressMapping;
 use precompile_utils::prelude::*;
 
-use sp_core::{H256, U256};
+use sp_core::{MaxEncodedLen, H256, U256};
 use sp_runtime::traits::Dispatchable;
 use sp_std::marker::PhantomData;
 use sp_weights::Weight;
@@ -127,7 +127,12 @@ where
 		fee_asset_item: u32,
 		weight: Weight,
 	) -> EvmResult {
-		// TODO: account for a possible storage read inside LocationMatcher::convert()
+		// Account for a possible storage read inside LocationMatcher::convert().
+		//
+		// Storage items: AssetIdToForeignAsset (ForeignAssetCreator pallet) or AssetIdType (AssetManager pallet).
+		//
+		// Blake2_128(16) + AssetId(16) + Location
+		handle.record_db_read::<Runtime>(32 + Location::max_encoded_len())?;
 
 		let origin = Runtime::AddressMapping::into_account_id(handle.context().caller);
 		let assets: Vec<_> = assets.into();
@@ -171,7 +176,12 @@ where
 		fee_asset_item: u32,
 		weight: Weight,
 	) -> EvmResult {
-		// TODO: account for a possible storage read inside LocationMatcher::convert()
+		// Account for a possible storage read inside LocationMatcher::convert().
+		//
+		// Storage items: AssetIdToForeignAsset (ForeignAssetCreator pallet) or AssetIdType (AssetManager pallet).
+		//
+		// Blake2_128(16) + AssetId(16) + Location
+		handle.record_db_read::<Runtime>(32 + Location::max_encoded_len())?;
 
 		let origin = Runtime::AddressMapping::into_account_id(handle.context().caller);
 		let assets: Vec<_> = assets.into();
@@ -213,7 +223,12 @@ where
 		fee_asset_item: u32,
 		weight: Weight,
 	) -> EvmResult {
-		// TODO: account for a possible storage read inside LocationMatcher::convert()
+		// Account for a possible storage read inside LocationMatcher::convert().
+		//
+		// Storage items: AssetIdToForeignAsset (ForeignAssetCreator pallet) or AssetIdType (AssetManager pallet).
+		//
+		// Blake2_128(16) + AssetId(16) + Location
+		handle.record_db_read::<Runtime>(32 + Location::max_encoded_len())?;
 
 		let origin = Runtime::AddressMapping::into_account_id(handle.context().caller);
 		let assets: Vec<_> = assets.into();

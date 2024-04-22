@@ -26,7 +26,7 @@ use pallet_evm::{EnsureAddressNever, EnsureAddressRoot, GasWeightMapping};
 use precompile_utils::{
 	mock_account,
 	precompile_set::*,
-	testing::{AddressInPrefixedSet, MockAccount},
+	testing::{AddressInPrefixedSet, Alice, MockAccount},
 };
 use sp_core::{ConstU32, H160, H256, U256};
 use sp_runtime::traits::{BlakeTwo256, IdentityLookup, TryConvert};
@@ -476,8 +476,16 @@ parameter_types! {
 		)),
 	};
 
+	pub RelayLocation: Location = Location::parent();
+
+	pub RelayAsset: Asset = Asset {
+		fun: Fungible(10000000),
+		id: AssetId(Location::parent()),
+	};
+
 	pub LocalAsset: (AssetFilter, Location) = (All.into(), Location::here());
 	pub TrustedForeignAsset: (AssetFilter, Location) = (ForeignAsset::get().into(), ForeignReserveLocation::get());
+	pub RelayForeignAsset: (AssetFilter, Location) = (RelayAsset::get().into(), RelayLocation::get());
 }
 
 pub struct XcmConfig;
@@ -486,7 +494,11 @@ impl xcm_executor::Config for XcmConfig {
 	type XcmSender = TestSendXcm;
 	type AssetTransactor = DummyAssetTransactor;
 	type OriginConverter = XcmOriginToTransactDispatchOrigin;
-	type IsReserve = (Case<LocalAsset>, Case<TrustedForeignAsset>);
+	type IsReserve = (
+		Case<LocalAsset>,
+		Case<TrustedForeignAsset>,
+		Case<RelayForeignAsset>,
+	);
 	type IsTeleporter = ();
 	type UniversalLocation = UniversalLocation;
 	type Barrier = Barrier;
@@ -510,14 +522,36 @@ impl xcm_executor::Config for XcmConfig {
 	type TransactionalProcessor = ();
 }
 
+pub fn root_origin() -> <Runtime as frame_system::Config>::RuntimeOrigin {
+	<Runtime as frame_system::Config>::RuntimeOrigin::root()
+}
+
+pub fn origin_of(account_id: AccountId) -> <Runtime as frame_system::Config>::RuntimeOrigin {
+	<Runtime as frame_system::Config>::RuntimeOrigin::signed(account_id)
+}
+
+#[derive(Clone)]
+pub struct XcmAssetDetails {
+	pub location: Location,
+	pub admin: <Runtime as frame_system::Config>::AccountId,
+	pub asset_id: <Runtime as pallet_assets::Config>::AssetId,
+	pub is_sufficient: bool,
+	pub min_balance: u128,
+	pub balance_to_mint: u128,
+}
+
 pub(crate) struct ExtBuilder {
 	// endowed accounts with balances
 	balances: Vec<(AccountId, Balance)>,
+	xcm_assets: Vec<XcmAssetDetails>,
 }
 
 impl Default for ExtBuilder {
 	fn default() -> ExtBuilder {
-		ExtBuilder { balances: vec![] }
+		ExtBuilder {
+			balances: vec![],
+			xcm_assets: vec![],
+		}
 	}
 }
 
@@ -526,6 +560,11 @@ impl ExtBuilder {
 		self.balances = balances;
 		self
 	}
+	pub(crate) fn with_xcm_assets(mut self, xcm_assets: Vec<XcmAssetDetails>) -> Self {
+		self.xcm_assets = xcm_assets;
+		self
+	}
+
 	pub(crate) fn build(self) -> sp_io::TestExternalities {
 		let mut t = frame_system::GenesisConfig::<Runtime>::default()
 			.build_storage()
@@ -537,8 +576,31 @@ impl ExtBuilder {
 		.assimilate_storage(&mut t)
 		.expect("Pallet balances storage can be assimilated");
 
+		let xcm_assets = self.xcm_assets.clone();
+
 		let mut ext = sp_io::TestExternalities::new(t);
-		ext.execute_with(|| System::set_block_number(1));
+		ext.execute_with(|| {
+			for xcm_asset in xcm_assets {
+				ForeignAssetCreator::create_foreign_asset(
+					root_origin(),
+					xcm_asset.location,
+					xcm_asset.asset_id,
+					xcm_asset.admin,
+					xcm_asset.is_sufficient,
+					xcm_asset.min_balance,
+				)
+				.unwrap();
+
+				Assets::mint(
+					origin_of(Alice.into()),
+					xcm_asset.asset_id.into(),
+					xcm_asset.admin,
+					xcm_asset.balance_to_mint,
+				)
+				.unwrap();
+			}
+			System::set_block_number(1);
+		});
 		ext
 	}
 }

@@ -14,8 +14,11 @@
 // You should have received a copy of the GNU General Public License
 // along with Moonkit.  If not, see <http://www.gnu.org/licenses/>.
 
+use core::str::FromStr;
+
 use crate::{mock::*, Location};
-use precompile_utils::testing::*;
+use precompile_utils::{prelude::*, testing::*};
+use sp_core::{H160, H256};
 use sp_weights::Weight;
 use xcm::latest::Junction::*;
 
@@ -196,5 +199,213 @@ fn test_transfer_assets_fails_fees_unknown_reserve() {
 				)
 				.expect_no_logs()
 				.execute_reverts(|output| output.ends_with(b"InvalidAssetUnknownReserve\") })"));
+		});
+}
+
+#[test]
+fn test_transfer_assets_to_para_20_native_asset() {
+	ExtBuilder::default()
+		.with_balances(vec![(Alice.into(), 1000)])
+		.build()
+		.execute_with(|| {
+			// We send the native currency of the origin chain.
+			let pallet_balances_address = H160::from_low_u64_be(2050);
+
+			precompiles()
+				.prepare_test(
+					Alice,
+					Precompile1,
+					PCall::transfer_assets_to_para_20 {
+						para_id: 2u32,
+						beneficiary: Address(Bob.into()),
+						assets: vec![(Address(pallet_balances_address), 500.into())].into(),
+						fee_asset_item: 0u32,
+						weight: Weight::from_parts(u64::MAX, 80000),
+					},
+				)
+				.expect_cost(100004001)
+				.expect_no_logs()
+				.execute_returns(());
+		});
+}
+
+#[test]
+fn test_transfer_assets_to_para_32_native_asset() {
+	ExtBuilder::default()
+		.with_balances(vec![(Alice.into(), 1000)])
+		.build()
+		.execute_with(|| {
+			// We send the native currency of the origin chain.
+			let pallet_balances_address = H160::from_low_u64_be(2050);
+
+			precompiles()
+				.prepare_test(
+					Alice,
+					Precompile1,
+					PCall::transfer_assets_to_para_32 {
+						para_id: 2u32,
+						beneficiary: H256([1u8; 32]),
+						assets: vec![(Address(pallet_balances_address), 500.into())].into(),
+						fee_asset_item: 0u32,
+						weight: Weight::from_parts(u64::MAX, 80000),
+					},
+				)
+				.expect_cost(100004001)
+				.expect_no_logs()
+				.execute_returns(());
+		});
+}
+
+#[test]
+fn test_transfer_assets_to_relay_native_asset() {
+	ExtBuilder::default()
+		.with_balances(vec![(Alice.into(), 1000)])
+		.build()
+		.execute_with(|| {
+			// We send the native currency of the origin chain.
+			let pallet_balances_address = H160::from_low_u64_be(2050);
+
+			precompiles()
+				.prepare_test(
+					Alice,
+					Precompile1,
+					PCall::transfer_assets_to_relay {
+						beneficiary: H256([1u8; 32]),
+						assets: vec![(Address(pallet_balances_address), 500.into())].into(),
+						fee_asset_item: 0u32,
+						weight: Weight::from_parts(u64::MAX, 80000),
+					},
+				)
+				.expect_cost(100004001)
+				.expect_no_logs()
+				.execute_returns(());
+		});
+}
+
+#[test]
+fn test_transfer_assets_to_para_20_foreign_asset() {
+	ExtBuilder::default()
+		.with_balances(vec![(Alice.into(), 1000)])
+		.with_xcm_assets(vec![XcmAssetDetails {
+			location: Location::new(1, [Parachain(2), PalletInstance(3)]),
+			admin: Alice.into(),
+			asset_id: 5u16,
+			is_sufficient: true,
+			balance_to_mint: 10000u128,
+			min_balance: 1u128,
+		}])
+		.build()
+		.execute_with(|| {
+			// Foreign asset with prefix [255; 18] and assetId of 5u16.
+			let asset_address =
+				H160::from_str("0xfFfFFFffFffFFFFffFFfFfffFfFFFFFfffFF0005").unwrap();
+
+			// We send the native currency of the origin chain and pay fees with it.
+			let pallet_balances_address = H160::from_low_u64_be(2050);
+
+			precompiles()
+				.prepare_test(
+					Alice,
+					Precompile1,
+					PCall::transfer_assets_to_para_20 {
+						para_id: 2u32,
+						beneficiary: Address(Bob.into()),
+						assets: vec![
+							(Address(pallet_balances_address), 500.into()),
+							(Address(asset_address), 500.into()),
+						]
+						.into(),
+						fee_asset_item: 0u32,
+						weight: Weight::from_parts(u64::MAX, 80000),
+					},
+				)
+				.expect_cost(100004001)
+				.expect_no_logs()
+				.execute_returns(());
+		});
+}
+
+#[test]
+fn test_transfer_assets_to_para_32_foreign_asset() {
+	ExtBuilder::default()
+		.with_balances(vec![(Alice.into(), 1000)])
+		.with_xcm_assets(vec![XcmAssetDetails {
+			location: Location::new(1, [Parachain(2), PalletInstance(3)]),
+			admin: Alice.into(),
+			asset_id: 5u16,
+			is_sufficient: true,
+			balance_to_mint: 10000u128,
+			min_balance: 1u128,
+		}])
+		.build()
+		.execute_with(|| {
+			// Foreign asset with prefix [255; 18] and assetId of 5u16.
+			let asset_address =
+				H160::from_str("0xfFfFFFffFffFFFFffFFfFfffFfFFFFFfffFF0005").unwrap();
+
+			// We send the native currency of the origin chain and pay fees with it.
+			let pallet_balances_address = H160::from_low_u64_be(2050);
+
+			precompiles()
+				.prepare_test(
+					Alice,
+					Precompile1,
+					PCall::transfer_assets_to_para_32 {
+						para_id: 2u32,
+						beneficiary: H256([0u8; 32]),
+						assets: vec![
+							(Address(pallet_balances_address), 500.into()),
+							(Address(asset_address), 500.into()),
+						]
+						.into(),
+						fee_asset_item: 0u32,
+						weight: Weight::from_parts(u64::MAX, 80000),
+					},
+				)
+				.expect_cost(100004001)
+				.expect_no_logs()
+				.execute_returns(());
+		});
+}
+
+#[test]
+fn test_transfer_assets_to_relay_foreign_asset() {
+	ExtBuilder::default()
+		.with_balances(vec![(Alice.into(), 1000)])
+		.with_xcm_assets(vec![XcmAssetDetails {
+			location: Location::parent(),
+			admin: Alice.into(),
+			asset_id: 5u16,
+			is_sufficient: true,
+			balance_to_mint: 10000u128,
+			min_balance: 1u128,
+		}])
+		.build()
+		.execute_with(|| {
+			// Foreign asset with prefix [255; 18] and assetId of 5u16.
+			let asset_address =
+				H160::from_str("0xfFfFFFffFffFFFFffFFfFfffFfFFFFFfffFF0005").unwrap();
+
+			// We send the native currency of the origin chain and pay fees with it.
+			let pallet_balances_address = H160::from_low_u64_be(2050);
+
+			precompiles()
+				.prepare_test(
+					Alice,
+					Precompile1,
+					PCall::transfer_assets_to_relay {
+						beneficiary: H256([0u8; 32]),
+						assets: vec![
+							(Address(pallet_balances_address), 500.into()),
+							(Address(asset_address), 500.into()),
+						]
+						.into(),
+						fee_asset_item: 0u32,
+						weight: Weight::from_parts(u64::MAX, 80000),
+					},
+				)
+				.expect_cost(100004001)
+				.expect_no_logs()
+				.execute_returns(());
 		});
 }
