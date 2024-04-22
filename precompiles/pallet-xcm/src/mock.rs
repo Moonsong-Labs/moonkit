@@ -26,7 +26,7 @@ use pallet_evm::{EnsureAddressNever, EnsureAddressRoot, GasWeightMapping};
 use precompile_utils::{
 	mock_account,
 	precompile_set::*,
-	testing::{AddressInPrefixedSet, Alice, MockAccount},
+	testing::{AddressInPrefixedSet, MockAccount},
 };
 use sp_core::{ConstU32, H160, H256, U256};
 use sp_runtime::traits::{BlakeTwo256, IdentityLookup, TryConvert};
@@ -592,7 +592,7 @@ impl ExtBuilder {
 				.unwrap();
 
 				Assets::mint(
-					origin_of(Alice.into()),
+					origin_of(xcm_asset.admin.into()),
 					xcm_asset.asset_id.into(),
 					xcm_asset.admin,
 					xcm_asset.balance_to_mint,
