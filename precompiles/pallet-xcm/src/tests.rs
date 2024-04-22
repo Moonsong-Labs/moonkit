@@ -223,7 +223,7 @@ fn test_transfer_assets_to_para_20_native_asset() {
 						weight: Weight::from_parts(u64::MAX, 80000),
 					},
 				)
-				.expect_cost(100004001)
+				.expect_cost(100005002)
 				.expect_no_logs()
 				.execute_returns(());
 		});
@@ -250,7 +250,7 @@ fn test_transfer_assets_to_para_32_native_asset() {
 						weight: Weight::from_parts(u64::MAX, 80000),
 					},
 				)
-				.expect_cost(100004001)
+				.expect_cost(100005002)
 				.expect_no_logs()
 				.execute_returns(());
 		});
@@ -276,7 +276,7 @@ fn test_transfer_assets_to_relay_native_asset() {
 						weight: Weight::from_parts(u64::MAX, 80000),
 					},
 				)
-				.expect_cost(100004001)
+				.expect_cost(100005002)
 				.expect_no_logs()
 				.execute_returns(());
 		});
@@ -319,7 +319,7 @@ fn test_transfer_assets_to_para_20_foreign_asset() {
 						weight: Weight::from_parts(u64::MAX, 80000),
 					},
 				)
-				.expect_cost(100004001)
+				.expect_cost(100005002)
 				.expect_no_logs()
 				.execute_returns(());
 		});
@@ -362,7 +362,7 @@ fn test_transfer_assets_to_para_32_foreign_asset() {
 						weight: Weight::from_parts(u64::MAX, 80000),
 					},
 				)
-				.expect_cost(100004001)
+				.expect_cost(100005002)
 				.expect_no_logs()
 				.execute_returns(());
 		});
@@ -404,7 +404,7 @@ fn test_transfer_assets_to_relay_foreign_asset() {
 						weight: Weight::from_parts(u64::MAX, 80000),
 					},
 				)
-				.expect_cost(100004001)
+				.expect_cost(100005002)
 				.expect_no_logs()
 				.execute_returns(());
 		});

@@ -133,6 +133,7 @@ where
 		//
 		// Blake2_128(16) + AssetId(16) + Location
 		handle.record_db_read::<Runtime>(32 + Location::max_encoded_len())?;
+		handle.record_cost(1000)?;
 
 		let origin = Runtime::AddressMapping::into_account_id(handle.context().caller);
 		let assets: Vec<_> = assets.into();
@@ -182,6 +183,7 @@ where
 		//
 		// Blake2_128(16) + AssetId(16) + Location
 		handle.record_db_read::<Runtime>(32 + Location::max_encoded_len())?;
+		handle.record_cost(1000)?;
 
 		let origin = Runtime::AddressMapping::into_account_id(handle.context().caller);
 		let assets: Vec<_> = assets.into();
@@ -229,6 +231,7 @@ where
 		//
 		// Blake2_128(16) + AssetId(16) + Location
 		handle.record_db_read::<Runtime>(32 + Location::max_encoded_len())?;
+		handle.record_cost(1000)?;
 
 		let origin = Runtime::AddressMapping::into_account_id(handle.context().caller);
 		let assets: Vec<_> = assets.into();
