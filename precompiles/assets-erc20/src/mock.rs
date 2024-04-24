@@ -36,6 +36,7 @@ use sp_runtime::{
 	traits::{BlakeTwo256, ConstU32, IdentityLookup},
 	BuildStorage,
 };
+use xcm_primitives::AccountIdAssetIdConversion;
 
 pub type AccountId = MockAccount;
 pub type AssetId = u128;

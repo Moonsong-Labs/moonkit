@@ -52,6 +52,8 @@ flume = "0.11.0"
 jsonrpsee = { version = "0.20.3" }
 hex-literal = "0.4.1"
 
+# Moonkit
+pallet-foreign-asset-creator = { path = "pallets/foreign-asset-creator", default-features = false }
 
 # Substrate (wasm)
 frame-benchmarking = { git = "https://github.com/paritytech/polkadot-sdk", branch = "release-polkadot-v1.7.0", default-features = false }
