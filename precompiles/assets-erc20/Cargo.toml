@@ -27,6 +27,9 @@ sp-std = { workspace = true }
 fp-evm = { workspace = true }
 pallet-evm = { workspace = true, features = [ "forbid-evm-reentrancy" ] }
 
+# Moonkit
+xcm-primitives = { workspace = true }
+
 [dev-dependencies]
 hex-literal = { workspace = true }
 libsecp256k1 = { workspace = true }
@@ -57,4 +60,5 @@ std = [
 	"sp-io/std",
 	"sp-runtime/std",
 	"sp-std/std",
+	"xcm-primitives/std",
 ]
