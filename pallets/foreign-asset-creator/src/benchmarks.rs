@@ -52,7 +52,7 @@ where
 	let admin: T::AccountId = whitelisted_caller();
 	let origin = T::ForeignAssetCreatorOrigin::try_successful_origin()
 		.map_err(|_| BenchmarkError::Weightless)
-		.unwrap();
+		.expect("Not able to generate an appropriate origin to disptach the call");
 	assert!(Pallet::<T>::create_foreign_asset(
 		origin,
 		foreign_asset.clone(),
