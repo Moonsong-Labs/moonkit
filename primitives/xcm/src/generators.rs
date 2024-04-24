@@ -16,8 +16,6 @@
 
 use xcm::latest::{Junction::*, Location};
 
-// TODO: Does it make sense to have this generators
-//       instead of retrieving the proper location on each case?
 pub struct XcmSiblingDestinationGenerator;
 impl XcmSiblingDestinationGenerator {
 	pub fn generate(para_id: u32) -> Location {
