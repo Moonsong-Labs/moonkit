@@ -21,7 +21,7 @@ pub use pallet::*;
 pub mod weights;
 pub use weights::WeightInfo;
 #[cfg(any(test, feature = "runtime-benchmarks"))]
-mod benchmarks;
+pub mod benchmarks;
 #[cfg(test)]
 pub mod mock;
 #[cfg(test)]
