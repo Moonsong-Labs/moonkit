@@ -16,11 +16,55 @@
 
 #![cfg(feature = "runtime-benchmarks")]
 
-use crate::{AssetId, Call, Config, Pallet};
-use frame_benchmarking::{account, benchmarks, impl_benchmark_test_suite};
+use crate::{AssetBalance, AssetId, Call, Config, Pallet};
+use frame_benchmarking::{
+	account, benchmarks, impl_benchmark_test_suite, whitelisted_caller, BenchmarkError,
+};
+use frame_support::traits::{fungibles, fungibles::Mutate, EnsureOrigin};
 use frame_system::RawOrigin;
 use sp_arithmetic::traits::AtLeast16BitUnsigned;
 use staging_xcm::latest::prelude::*;
+
+#[allow(dead_code)]
+pub fn create_default_minted_asset<T: Config>(
+	amount: AssetBalance<T>,
+	receiver: T::AccountId,
+) -> (AssetId<T>, T::ForeignAsset)
+where
+	T::ForeignAsset: From<Location>,
+	T::Fungibles: fungibles::Mutate<T::AccountId>,
+	AssetId<T>: AtLeast16BitUnsigned,
+{
+	let (asset_id, foreign_asset) = create_default_asset::<T>(true);
+
+	assert!(T::Fungibles::mint_into(asset_id.clone(), &receiver, amount).is_ok());
+	(asset_id, foreign_asset)
+}
+
+#[allow(dead_code)]
+fn create_default_asset<T: Config>(is_sufficient: bool) -> (AssetId<T>, T::ForeignAsset)
+where
+	T::ForeignAsset: From<Location>,
+	AssetId<T>: AtLeast16BitUnsigned,
+{
+	let asset_id: AssetId<T> = 1u16.into();
+	let foreign_asset: T::ForeignAsset = Location::parent().into();
+	let admin: T::AccountId = whitelisted_caller();
+	let origin = T::ForeignAssetCreatorOrigin::try_successful_origin()
+		.map_err(|_| BenchmarkError::Weightless)
+		.expect("Not able to generate an appropriate origin to disptach the call");
+	assert!(Pallet::<T>::create_foreign_asset(
+		origin,
+		foreign_asset.clone(),
+		asset_id.clone(),
+		admin,
+		is_sufficient,
+		1u32.into(),
+	)
+	.is_ok());
+	(asset_id, foreign_asset)
+}
+
 benchmarks! {
 	// This where clause allows us to create ForeignAssetTypes
 	where_clause { where T::ForeignAsset: From<Location>, AssetId<T>: AtLeast16BitUnsigned }
