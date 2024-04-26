@@ -22,7 +22,10 @@ use cumulus_client_consensus_common::{
 	ParentSearchParams,
 };
 use cumulus_client_consensus_proposer::ProposerInterface;
-use cumulus_primitives_core::{relay_chain::Hash as PHash, CollectCollationInfo, ParaId};
+use cumulus_primitives_core::{
+	relay_chain::{AsyncBackingParams, CoreIndex, CoreState, Hash as PHash},
+	CollectCollationInfo, ParaId,
+};
 use cumulus_relay_chain_interface::{OverseerHandle, RelayChainInterface};
 use futures::{channel::oneshot, prelude::*};
 use nimbus_primitives::{DigestsProvider, NimbusApi, NimbusId};
@@ -147,8 +150,19 @@ where
 		while let Some(relay_parent_header) = import_notifications.next().await {
 			let relay_parent = relay_parent_header.hash();
 
-			// First, verify if the parachain is active (have a core available on the relay)
-			if !is_para_scheduled(relay_parent, params.para_id, &mut params.overseer_handle).await {
+			// TODO: Currently we use just the first core here, but for elastic scaling
+			// we iterate and build on all of the cores returned.
+			let core_index = if let Some(core_index) = cores_scheduled_for_para(
+				relay_parent,
+				params.para_id,
+				&mut params.overseer_handle,
+				&mut params.relay_client,
+			)
+			.await
+			.get(0)
+			{
+				*core_index
+			} else {
 				tracing::trace!(
 					target: crate::LOG_TARGET,
 					?relay_parent,
@@ -157,7 +171,7 @@ where
 				);
 
 				continue;
-			}
+			};
 
 			// Get the PoV size limit dynamically
 			let max_pov_size = match params
@@ -371,6 +385,7 @@ where
 										parent_head: parent_header.encode().into(),
 										validation_code_hash,
 										result_sender: None,
+										core_index,
 									},
 								),
 								"SubmitCollation",
@@ -487,14 +502,41 @@ async fn max_ancestry_lookback(
 	}
 }
 
+/// Reads async backing parameters from the relay chain storage at the given relay parent.
+async fn async_backing_params(
+	relay_parent: PHash,
+	relay_client: &impl RelayChainInterface,
+) -> Option<AsyncBackingParams> {
+	match load_abridged_host_configuration(relay_parent, relay_client).await {
+		Ok(Some(config)) => Some(config.async_backing_params),
+		Ok(None) => {
+			tracing::error!(
+				target: crate::LOG_TARGET,
+				"Active config is missing in relay chain storage",
+			);
+			None
+		}
+		Err(err) => {
+			tracing::error!(
+				target: crate::LOG_TARGET,
+				?err,
+				?relay_parent,
+				"Failed to read active config from relay chain client",
+			);
+			None
+		}
+	}
+}
+
 // Checks if there exists a scheduled core for the para at the provided relay parent.
 //
 // Falls back to `false` in case of an error.
-async fn is_para_scheduled(
+async fn cores_scheduled_for_para(
 	relay_parent: PHash,
 	para_id: ParaId,
 	overseer_handle: &mut OverseerHandle,
-) -> bool {
+	relay_client: &impl RelayChainInterface,
+) -> Vec<CoreIndex> {
 	let (tx, rx) = oneshot::channel();
 	let request = RuntimeApiRequest::AvailabilityCores(tx);
 	overseer_handle
@@ -503,6 +545,11 @@ async fn is_para_scheduled(
 			"LookaheadCollator",
 		)
 		.await;
+
+	let max_candidate_depth = async_backing_params(relay_parent, relay_client)
+		.await
+		.map(|c| c.max_candidate_depth)
+		.unwrap_or(0);
 
 	let cores = match rx.await {
 		Ok(Ok(cores)) => cores,
@@ -513,7 +560,7 @@ async fn is_para_scheduled(
 				?relay_parent,
 				"Failed to query availability cores runtime API",
 			);
-			return false;
+			return Vec::new();
 		}
 		Err(oneshot::Canceled) => {
 			tracing::error!(
@@ -521,9 +568,28 @@ async fn is_para_scheduled(
 				?relay_parent,
 				"Sender for availability cores runtime request dropped",
 			);
-			return false;
+			return Vec::new();
 		}
 	};
 
-	cores.iter().any(|core| core.para_id() == Some(para_id))
+	cores
+		.iter()
+		.enumerate()
+		.filter_map(|(index, core)| {
+			let core_para_id = match core {
+				CoreState::Scheduled(scheduled_core) => Some(scheduled_core.para_id),
+				CoreState::Occupied(occupied_core) if max_candidate_depth >= 1 => occupied_core
+					.next_up_on_available
+					.as_ref()
+					.map(|scheduled_core| scheduled_core.para_id),
+				CoreState::Free | CoreState::Occupied(_) => None,
+			};
+
+			if core_para_id == Some(para_id) {
+				Some(CoreIndex(index as u32))
+			} else {
+				None
+			}
+		})
+		.collect()
 }
