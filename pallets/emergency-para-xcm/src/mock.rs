@@ -72,6 +72,11 @@ impl frame_system::Config for Test {
 	type OnSetCode = ParachainSetCode<Self>;
 	type MaxConsumers = ConstU32<16>;
 	type RuntimeTask = ();
+	type SingleBlockMigrations = ();
+	type MultiBlockMigrator = ();
+	type PreInherents = ();
+	type PostInherents = ();
+	type PostTransactions = ();
 }
 
 parameter_types! {
@@ -107,6 +112,7 @@ impl pallet_message_queue::Config for Test {
 	type HeapSize = MessageQueueHeapSize;
 	type MaxStale = MessageQueueMaxStale;
 	type ServiceWeight = MaxWeight;
+	type IdleMaxServiceWeight = MaxWeight;
 	type QueueChangeHandler = ();
 	type QueuePausedQuery = EmergencyParaXcm;
 	type WeightInfo = ();
