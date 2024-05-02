@@ -73,7 +73,6 @@ type ParachainBlockImport = TParachainBlockImport<Block, Arc<ParachainClient>, P
 /// be able to perform chain operations.
 pub fn new_partial(
 	config: &Configuration,
-	parachain: bool,
 ) -> Result<
 	PartialComponents<
 		ParachainClient,
@@ -145,9 +144,7 @@ pub fn new_partial(
 		client.clone(),
 	);
 
-	// `new_with_delayed_best_block` is now necessary: https://github.com/paritytech/polkadot-sdk/pull/2001
-	let block_import =
-		ParachainBlockImport::new_with_delayed_best_block(client.clone(), backend.clone());
+	let block_import = ParachainBlockImport::new(client.clone(), backend.clone());
 
 	let import_queue = nimbus_consensus::import_queue(
 		client.clone(),
@@ -159,7 +156,7 @@ pub fn new_partial(
 		},
 		&task_manager.spawn_essential_handle(),
 		config.prometheus_registry().clone(),
-		parachain,
+		None,
 	)?;
 
 	Ok(PartialComponents {
@@ -215,7 +212,7 @@ where
 {
 	let parachain_config = prepare_node_config(parachain_config);
 
-	let params = new_partial(&parachain_config, true)?;
+	let params = new_partial(&parachain_config)?;
 	let (block_import, mut telemetry, telemetry_worker_handle) = params.other;
 
 	let client = params.client.clone();
@@ -441,7 +438,7 @@ where
 		select_chain,
 		transaction_pool,
 		other: (_, mut telemetry, _),
-	} = new_partial(&config, false)?;
+	} = new_partial(&config)?;
 
 	let net_config = FullNetworkConfiguration::<_, _, N>::new(&config.network);
 
