@@ -24,13 +24,13 @@ sp-consensus-babe = { workspace = true }
 
 # Benchmarks
 frame-benchmarking = { workspace = true, optional = true }
+pallet-balances = { workspace = true, optional = true, features = [ "insecure_zero_ed" ] }
 hex = { workspace = true }
 
 
 [dev-dependencies]
 derive_more = { workspace = true }
 pallet-author-mapping = { workspace = true, features = [ "std" ] }
-pallet-balances = { workspace = true, features = [ "std", "insecure_zero_ed" ] }
 
 [features]
 default = [ "std" ]
@@ -49,10 +49,12 @@ std = [
 	"sp-io/std",
 	"sp-runtime/std",
 	"sp-std/std",
-	"schnorrkel/std"
+	"schnorrkel/std",
+	"pallet-balances/std"
 ]
 runtime-benchmarks = [
 	"frame-benchmarking",
+	"pallet-balances",
 	"session-keys-primitives/runtime-benchmarks",
 ]
 try-runtime = [ "frame-support/try-runtime" ]

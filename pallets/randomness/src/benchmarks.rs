@@ -44,15 +44,30 @@ use sp_runtime::traits::{Convert, One};
 use sp_std::{mem::size_of, vec};
 
 /// Create a funded user from the input
-fn fund_user<T: Config>(user: H160, fee: BalanceOf<T>) {
-	let total_minted = fee + <<T as Config>::Deposit as Get<BalanceOf<T>>>::get();
+fn fund_user<T: Config + pallet_balances::Config<Balance = BalanceOf<T>>>(
+	user: H160,
+	fee: BalanceOf<T>,
+) {
+	let existential_deposit = <T as pallet_balances::Config>::ExistentialDeposit::get();
+	let total_minted =
+		existential_deposit + fee + <<T as Config>::Deposit as Get<BalanceOf<T>>>::get();
 	T::Currency::make_free_balance_be(&T::AddressMapping::convert(user), total_minted);
 	T::Currency::issue(total_minted);
 }
 
+fn fund_pallet_account_with_existential_deposit<
+	T: Config + pallet_balances::Config<Balance = BalanceOf<T>>,
+>() {
+	let existential_deposit = <T as pallet_balances::Config>::ExistentialDeposit::get();
+	T::Currency::make_free_balance_be(&Pallet::<T>::account_id(), existential_deposit);
+	T::Currency::issue(existential_deposit);
+}
+
 benchmarks! {
 	where_clause {
-		where <T::VrfKeyLookup as KeysLookup<NimbusId, VrfId>>::Account: From<T::AccountId>
+		where
+			<T::VrfKeyLookup as KeysLookup<NimbusId, VrfId>>::Account: From<T::AccountId>,
+			 T: pallet_balances::Config<Balance = BalanceOf<T>>
 	}
 	// Benchmark for inherent included in every block
 	set_babe_randomness_results {
@@ -190,6 +205,7 @@ benchmarks! {
 		let x in 1..T::MaxRandomWords::get().into();
 		let more = <<T as Config>::Deposit as Get<BalanceOf<T>>>::get();
 		fund_user::<T>(H160::default(), more);
+
 		let result = Pallet::<T>::request_randomness(Request {
 			refund_address: H160::default(),
 			contract_address: H160::default(),
@@ -214,6 +230,8 @@ benchmarks! {
 	finish_fulfillment {
 		let more = <<T as Config>::Deposit as Get<BalanceOf<T>>>::get();
 		fund_user::<T>(H160::default(), more);
+		fund_pallet_account_with_existential_deposit::<T>();
+
 		let result = Pallet::<T>::request_randomness(Request {
 			refund_address: H160::default(),
 			contract_address: H160::default(),
@@ -254,6 +272,7 @@ benchmarks! {
 	increase_fee {
 		let more = <<T as Config>::Deposit as Get<BalanceOf<T>>>::get();
 		fund_user::<T>(H160::default(), more);
+
 		let result = Pallet::<T>::request_randomness(Request {
 			refund_address: H160::default(),
 			contract_address: H160::default(),
@@ -276,6 +295,8 @@ benchmarks! {
 	execute_request_expiration {
 		let more = <<T as Config>::Deposit as Get<BalanceOf<T>>>::get();
 		fund_user::<T>(H160::default(), more);
+		fund_pallet_account_with_existential_deposit::<T>();
+
 		let result = Pallet::<T>::request_randomness(Request {
 			refund_address: H160::default(),
 			contract_address: H160::default(),
