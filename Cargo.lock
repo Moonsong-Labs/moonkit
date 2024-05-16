@@ -6998,6 +6998,38 @@ dependencies = [
 ]
 
 [[package]]
+name = "pallet-evm-precompile-xcm"
+version = "0.1.0"
+dependencies = [
+ "cumulus-primitives-core",
+ "derive_more",
+ "evm",
+ "fp-evm",
+ "frame-support",
+ "frame-system",
+ "log",
+ "num_enum",
+ "pallet-assets",
+ "pallet-balances",
+ "pallet-evm",
+ "pallet-foreign-asset-creator",
+ "pallet-timestamp",
+ "pallet-xcm",
+ "parity-scale-codec",
+ "precompile-utils",
+ "scale-info",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std 14.0.0 (git+https://github.com/moonbeam-foundation/polkadot-sdk?branch=moonbeam-polkadot-v1.7.2)",
+ "sp-weights",
+ "staging-xcm",
+ "staging-xcm-builder",
+ "staging-xcm-executor",
+ "xcm-primitives",
+]
+
+[[package]]
 name = "pallet-evm-precompile-xcm-utils"
 version = "0.1.0"
 dependencies = [
@@ -7049,6 +7081,7 @@ dependencies = [
  "sp-io",
  "sp-runtime",
  "sp-std 14.0.0 (git+https://github.com/moonbeam-foundation/polkadot-sdk?branch=moonbeam-polkadot-v1.7.2)",
+ "xcm-primitives",
 ]
 
 [[package]]
@@ -15475,7 +15508,14 @@ dependencies = [
 name = "xcm-primitives"
 version = "0.1.0"
 dependencies = [
+ "frame-support",
+ "impl-trait-for-tuples",
+ "log",
+ "parity-scale-codec",
+ "sp-core",
  "sp-runtime",
+ "sp-std 14.0.0 (git+https://github.com/moonbeam-foundation/polkadot-sdk?branch=moonbeam-polkadot-v1.7.2)",
+ "staging-xcm",
 ]
 
 [[package]]

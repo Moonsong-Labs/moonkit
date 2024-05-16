@@ -19,6 +19,10 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
 use sp_runtime::DispatchResult;
+use sp_std::vec::Vec;
+
+pub mod generators;
+pub mod location_matcher;
 
 /// Pause and resume execution of XCM
 pub trait PauseXcmExecution {
@@ -32,4 +36,13 @@ impl PauseXcmExecution for () {
 	fn resume_xcm_execution() -> DispatchResult {
 		Ok(())
 	}
+}
+
+/// This trait ensure we can convert AccountIds to AssetIds.
+pub trait AccountIdAssetIdConversion<Account, AssetId> {
+	// Get assetId and prefix from account
+	fn account_to_asset_id(account: Account) -> Option<(Vec<u8>, AssetId)>;
+
+	// Get AccountId from AssetId and prefix
+	fn asset_id_to_account(prefix: &[u8], asset_id: AssetId) -> Account;
 }
