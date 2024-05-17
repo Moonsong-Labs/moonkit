@@ -22,7 +22,7 @@ use sp_core::{H160, H256};
 use sp_weights::Weight;
 use xcm::latest::Junction::*;
 
-fn precompiles() -> Precompiles<Runtime, (SingleAddressMatch, ForeignAssetMatch, Erc20Match)> {
+fn precompiles() -> Precompiles<Runtime, (SingleAddressMatch, ForeignAssetMatch)> {
 	PrecompilesValue::get()
 }
 
