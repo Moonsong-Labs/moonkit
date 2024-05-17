@@ -40,7 +40,7 @@ use xcm_executor::{
 	AssetsInHolding,
 };
 pub use xcm_primitives::{
-	location_matcher::{Erc20PalletMatcher, ForeignAssetMatcher, SingleAddressMatcher},
+	location_matcher::{ForeignAssetMatcher, SingleAddressMatcher},
 	AccountIdAssetIdConversion,
 };
 use Junctions::Here;
@@ -211,10 +211,7 @@ pub type SingleAddressMatch = SingleAddressMatcher<AccountIdAlias, 2050, Balance
 pub type ForeignAssetMatch =
 	ForeignAssetMatcher<AccountIdAlias, AssetId, mock::Runtime, ForeignAssetCreator>;
 
-pub type Erc20Match = Erc20PalletMatcher<AccountIdAlias, 42>;
-
-pub type PCall =
-	PalletXcmPrecompileCall<Runtime, (SingleAddressMatch, ForeignAssetMatch, Erc20Match)>;
+pub type PCall = PalletXcmPrecompileCall<Runtime, (SingleAddressMatch, ForeignAssetMatch)>;
 
 mock_account!(ParentAccount, |_| MockAccount::from_u64(4));
 
@@ -230,7 +227,7 @@ const BLOCK_STORAGE_LIMIT: u64 = 40 * 1024;
 
 parameter_types! {
 	pub BlockGasLimit: U256 = U256::from(u64::MAX);
-	pub PrecompilesValue: Precompiles<Runtime, (SingleAddressMatch, ForeignAssetMatch, Erc20Match)> = Precompiles::new();
+	pub PrecompilesValue: Precompiles<Runtime, (SingleAddressMatch, ForeignAssetMatch)> = Precompiles::new();
 	pub const WeightPerGas: Weight = Weight::from_parts(1, 0);
 	pub GasLimitPovSizeRatio: u64 = {
 		let block_gas_limit = BlockGasLimit::get().min(u64::MAX.into()).low_u64();
@@ -265,7 +262,7 @@ impl pallet_evm::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type Runner = pallet_evm::runner::stack::Runner<Self>;
 	type PrecompilesValue = PrecompilesValue;
-	type PrecompilesType = Precompiles<Self, (SingleAddressMatch, ForeignAssetMatch, Erc20Match)>;
+	type PrecompilesType = Precompiles<Self, (SingleAddressMatch, ForeignAssetMatch)>;
 	type ChainId = ();
 	type OnChargeTransaction = ();
 	type BlockGasLimit = BlockGasLimit;

@@ -93,19 +93,20 @@ where
 }
 
 // Matcher for any pallet that handles ERC20s internally.
-pub struct Erc20PalletMatcher<AccountId, const PALLET_INDEX: u8>(PhantomData<AccountId>);
+pub struct Erc20PalletMatcher<AccountId, PalletInstance>(PhantomData<(AccountId, PalletInstance)>);
 
-impl<AccountId, const PALLET_INDEX: u8> AccountIdToLocationMatcher<AccountId>
-	for Erc20PalletMatcher<AccountId, PALLET_INDEX>
+impl<AccountId, PalletInstance> AccountIdToLocationMatcher<AccountId>
+	for Erc20PalletMatcher<AccountId, PalletInstance>
 where
 	AccountId: Parameter + Into<H160>,
+	PalletInstance: PalletInfoAccess,
 {
 	fn convert(account: AccountId) -> Option<Location> {
 		let h160_account = account.into();
 		Some(Location::new(
 			0,
 			[
-				PalletInstance(PALLET_INDEX),
+				PalletInstance(<PalletInstance as PalletInfoAccess>::index() as u8),
 				AccountKey20 {
 					key: h160_account.0,
 					network: None,
