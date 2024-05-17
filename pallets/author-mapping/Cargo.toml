@@ -18,6 +18,7 @@ serde = { workspace = true, optional = true }
 frame-benchmarking = { workspace = true, optional = true }
 frame-support = { workspace = true }
 frame-system = { workspace = true }
+pallet-balances = { workspace = true, optional = true }
 parity-scale-codec = { workspace = true, features = [ "derive" ] }
 scale-info = { workspace = true, features = [ "derive" ] }
 sp-runtime = { workspace = true }
@@ -27,7 +28,6 @@ sp-std = { workspace = true }
 session-keys-primitives = { workspace = true }
 
 [dev-dependencies]
-pallet-balances = { workspace = true, features = ["std"] }
 sp-core = { workspace = true }
 sp-io = { workspace = true }
 
@@ -45,9 +45,11 @@ std = [
 	"session-keys-primitives/std",
 	"sp-runtime/std",
 	"sp-std/std",
+	"pallet-balances/std"
 ]
 runtime-benchmarks = [
 	"frame-benchmarking",
+	"pallet-balances",
 	"session-keys-primitives/runtime-benchmarks",
 ]
 try-runtime = [ "frame-support/try-runtime" ]
