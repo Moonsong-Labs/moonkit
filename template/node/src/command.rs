@@ -1,6 +1,5 @@
 use std::net::SocketAddr;
 
-use cumulus_client_service::storage_proof_size::HostFunctions as ReclaimHostFunctions;
 use cumulus_primitives_core::ParaId;
 use frame_benchmarking_cli::BenchmarkCmd;
 use log::info;
@@ -192,9 +191,9 @@ pub fn run() -> Result<()> {
 				BenchmarkCmd::Pallet(cmd) => {
 					if cfg!(feature = "runtime-benchmarks") {
 						runner.sync_run(|config| {
-							cmd.run::<sp_runtime::traits::HashingFor<Block>, ReclaimHostFunctions>(
-								config,
-							)
+							cmd.run_with_spec::<sp_runtime::traits::HashingFor<Block>, ()>(Some(
+								config.chain_spec,
+							))
 						})
 					} else {
 						Err("Benchmarking wasn't enabled when building the node. \
@@ -236,7 +235,8 @@ pub fn run() -> Result<()> {
 		Some(Subcommand::RunInstantSeal(run_cmd)) => {
 			let runner = cli.create_runner(run_cmd)?;
 			runner.run_node_until_exit(|config| async move {
-				crate::service::start_instant_seal_node(config).map_err(sc_cli::Error::Service)
+				crate::service::start_instant_seal_node::<sc_network::NetworkWorker<_, _>>(config)
+					.map_err(sc_cli::Error::Service)
 			})
 		}
 		None => {

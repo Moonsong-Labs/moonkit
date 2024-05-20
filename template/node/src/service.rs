@@ -41,6 +41,7 @@ use sc_network::{config::FullNetworkConfiguration, NetworkBlock};
 use sc_service::{Configuration, PartialComponents, TFullBackend, TFullClient, TaskManager};
 use sc_telemetry::{Telemetry, TelemetryHandle, TelemetryWorker, TelemetryWorkerHandle};
 use sp_keystore::KeystorePtr;
+use sp_runtime::traits::Block as BlockT;
 use substrate_prometheus_endpoint::Registry;
 /// Native executor instance.
 pub struct TemplateRuntimeExecutor;
@@ -201,12 +202,15 @@ async fn build_relay_chain_interface(
 ///
 /// This is the actual implementation that is abstract over the executor and the runtime api.
 #[sc_tracing::logging::prefix_logs_with("Parachain")]
-async fn start_node_impl(
+async fn start_node_impl<N>(
 	parachain_config: Configuration,
 	polkadot_config: Configuration,
 	collator_options: CollatorOptions,
 	para_id: ParaId,
-) -> sc_service::error::Result<(TaskManager, Arc<ParachainClient>)> {
+) -> sc_service::error::Result<(TaskManager, Arc<ParachainClient>)>
+where
+	N: sc_network::NetworkBackend<Block, <Block as BlockT>::Hash>,
+{
 	let parachain_config = prepare_node_config(parachain_config);
 
 	let params = new_partial(&parachain_config, true)?;
@@ -234,7 +238,14 @@ async fn start_node_impl(
 	let transaction_pool = params.transaction_pool.clone();
 	let import_queue_service = params.import_queue.service();
 
-	let net_config = FullNetworkConfiguration::new(&parachain_config.network);
+	let net_config = FullNetworkConfiguration::<_, _, N>::new(&parachain_config.network);
+
+	let metrics = N::register_notification_metrics(
+		parachain_config
+			.prometheus_config
+			.as_ref()
+			.map(|cfg| &cfg.registry),
+	);
 
 	let (network, system_rpc_tx, tx_handler_controller, start_network, sync_service) =
 		sc_service::build_network(sc_service::BuildNetworkParams {
@@ -249,6 +260,7 @@ async fn start_node_impl(
 			warp_sync_params: None,
 			net_config,
 			block_relay: None,
+			metrics,
 		})?;
 
 	let rpc_extensions_builder = {
@@ -401,12 +413,21 @@ pub async fn start_parachain_node(
 	TaskManager,
 	Arc<TFullClient<Block, RuntimeApi, NativeElseWasmExecutor<TemplateRuntimeExecutor>>>,
 )> {
-	start_node_impl(parachain_config, polkadot_config, collator_options, para_id).await
+	start_node_impl::<sc_network::NetworkWorker<_, _>>(
+		parachain_config,
+		polkadot_config,
+		collator_options,
+		para_id,
+	)
+	.await
 }
 
 use sc_transaction_pool_api::OffchainTransactionPoolFactory;
 /// Builds a new service for a full client.
-pub fn start_instant_seal_node(config: Configuration) -> Result<TaskManager, sc_service::Error> {
+pub fn start_instant_seal_node<N>(config: Configuration) -> Result<TaskManager, sc_service::Error>
+where
+	N: sc_network::NetworkBackend<Block, <Block as BlockT>::Hash>,
+{
 	let sc_service::PartialComponents {
 		client,
 		backend,
@@ -418,7 +439,11 @@ pub fn start_instant_seal_node(config: Configuration) -> Result<TaskManager, sc_
 		other: (_, mut telemetry, _),
 	} = new_partial(&config, false)?;
 
-	let net_config = FullNetworkConfiguration::new(&config.network);
+	let net_config = FullNetworkConfiguration::<_, _, N>::new(&config.network);
+
+	let metrics = N::register_notification_metrics(
+		config.prometheus_config.as_ref().map(|cfg| &cfg.registry),
+	);
 
 	let (network, system_rpc_tx, tx_handler_controller, network_starter, sync_service) =
 		sc_service::build_network(sc_service::BuildNetworkParams {
@@ -431,6 +456,7 @@ pub fn start_instant_seal_node(config: Configuration) -> Result<TaskManager, sc_
 			warp_sync_params: None,
 			net_config,
 			block_relay: None,
+			metrics,
 		})?;
 
 	if config.offchain_worker.enabled {
@@ -444,7 +470,7 @@ pub fn start_instant_seal_node(config: Configuration) -> Result<TaskManager, sc_
 				transaction_pool: Some(OffchainTransactionPoolFactory::new(
 					transaction_pool.clone(),
 				)),
-				network_provider: network.clone(),
+				network_provider: Arc::new(network.clone()),
 				is_validator: config.role.is_authority(),
 				enable_http_requests: false,
 				custom_extensions: move |_| vec![],
