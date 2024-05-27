@@ -9,9 +9,6 @@ version = "0.1.0"
 log = { workspace = true }
 num_enum = { workspace = true }
 
-# Moonbeam
-precompile-utils = { workspace = true }
-
 # Substrate
 frame-support = { workspace = true }
 frame-system = { workspace = true }
@@ -26,6 +23,7 @@ sp-std = { workspace = true }
 evm = { workspace = true, features = [ "with-codec" ] }
 fp-evm = { workspace = true }
 pallet-evm = { workspace = true, features = [ "forbid-evm-reentrancy" ] }
+precompile-utils = { workspace = true }
 
 [dev-dependencies]
 derive_more = { workspace = true }
@@ -33,7 +31,7 @@ hex-literal = { workspace = true }
 serde = { workspace = true }
 sha3 = { workspace = true }
 
-# Moonbeam
+# Frontier
 precompile-utils = { workspace = true, features = [ "std", "testing" ] }
 
 # Substrate
