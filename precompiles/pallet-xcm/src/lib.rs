@@ -26,7 +26,7 @@ use precompile_utils::prelude::*;
 
 use sp_core::{MaxEncodedLen, H256, U256};
 use sp_runtime::traits::Dispatchable;
-use sp_std::marker::PhantomData;
+use sp_std::{boxed::Box, marker::PhantomData, vec, vec::Vec};
 use sp_weights::Weight;
 use xcm::{
 	latest::{Asset, AssetId, Assets, Fungibility, Location},
