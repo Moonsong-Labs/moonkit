@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-only
 pragma solidity >=0.8.3;
 
-/// @author The Moonbeam Team
+/// @author The Moonsong Labs Team
 /// @title Pallet Proxy Interface
 /// @title The interface through which solidity contracts will interact with the Proxy pallet
 interface Proxy {
