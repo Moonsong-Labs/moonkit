@@ -15740,6 +15740,7 @@ dependencies = [
  "impl-trait-for-tuples",
  "log",
  "parity-scale-codec",
+ "primitive-types",
  "sp-core",
  "sp-runtime",
  "sp-std",
