@@ -14,6 +14,7 @@ sp-core = { workspace = true }
 sp-runtime = { workspace = true }
 sp-std = { workspace = true }
 parity-scale-codec = { workspace = true, features = [ "derive" ] }
+primitive-types = { version = "0.12.2", default-features = false, features = ["byteorder"] }
 xcm = { workspace = true }
 
 [features]
@@ -24,6 +25,7 @@ std = [
 	"sp-runtime/std",
 	"sp-std/std",
 	"parity-scale-codec/std",
+	"primitive-types/std",
 	"xcm/std"
 ]
 runtime-benchmarks = []
