@@ -15,6 +15,8 @@ sp-runtime = { workspace = true }
 sp-std = { workspace = true }
 parity-scale-codec = { workspace = true, features = [ "derive" ] }
 xcm = { workspace = true }
+# needed for H160_from_low_u64_be as sp-core does not add this feature
+primitive-types = { workspace = true, featues = ["byteorder"] }
 
 [features]
 default = [ "std" ]
@@ -24,6 +26,7 @@ std = [
 	"sp-runtime/std",
 	"sp-std/std",
 	"parity-scale-codec/std",
+	"primitive-types/std",
 	"xcm/std"
 ]
 runtime-benchmarks = []
