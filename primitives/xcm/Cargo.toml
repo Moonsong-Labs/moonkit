@@ -16,7 +16,7 @@ sp-std = { workspace = true }
 parity-scale-codec = { workspace = true, features = [ "derive" ] }
 xcm = { workspace = true }
 # needed for H160_from_low_u64_be as sp-core does not add this feature
-primitive-types = { workspace = true, featues = ["byteorder"] }
+primitive-types = { workspace = true, features = ["byteorder"] }
 
 [features]
 default = [ "std" ]
