@@ -200,7 +200,6 @@ pub fn import_queue<Client, Block: BlockT, I, CIDP>(
 	create_inherent_data_providers: CIDP,
 	spawner: &impl sp_core::traits::SpawnEssentialNamed,
 	registry: Option<&substrate_prometheus_endpoint::Registry>,
-	parachain: bool,
 ) -> ClientResult<BasicQueue<Block>>
 where
 	I: BlockImport<Block, Error = ConsensusError> + Send + Sync + 'static,
@@ -216,65 +215,9 @@ where
 
 	Ok(BasicQueue::new(
 		verifier,
-		Box::new(NimbusBlockImport::new(block_import, parachain)),
+		Box::new(block_import),
 		None,
 		spawner,
 		registry,
 	))
-}
-
-/// Nimbus specific block import.
-///
-/// Nimbus supports both parachain and non-parachain contexts. In the parachain
-/// context, new blocks should not be imported as best. Cumulus's ParachainBlockImport
-/// handles this correctly, but does not work in non-parachain contexts.
-/// This block import has a field indicating whether we should apply parachain rules or not.
-///
-/// There may be additional nimbus-specific logic here in the future, but for now it is
-/// only the conditional parachain logic
-pub struct NimbusBlockImport<I> {
-	inner: I,
-	parachain_context: bool,
-}
-
-impl<I> NimbusBlockImport<I> {
-	/// Create a new instance.
-	pub fn new(inner: I, parachain_context: bool) -> Self {
-		Self {
-			inner,
-			parachain_context,
-		}
-	}
-}
-
-#[async_trait::async_trait]
-impl<Block, I> BlockImport<Block> for NimbusBlockImport<I>
-where
-	Block: BlockT,
-	I: BlockImport<Block> + Send,
-{
-	type Error = I::Error;
-
-	async fn check_block(
-		&mut self,
-		block: sc_consensus::BlockCheckParams<Block>,
-	) -> Result<sc_consensus::ImportResult, Self::Error> {
-		self.inner.check_block(block).await
-	}
-
-	async fn import_block(
-		&mut self,
-		mut block_import_params: sc_consensus::BlockImportParams<Block>,
-	) -> Result<sc_consensus::ImportResult, Self::Error> {
-		// If we are in the parachain context, best block is determined by the relay chain
-		// except during initial sync
-		if self.parachain_context {
-			block_import_params.fork_choice = Some(sc_consensus::ForkChoiceStrategy::Custom(
-				block_import_params.origin == sp_consensus::BlockOrigin::NetworkInitialSync,
-			));
-		}
-
-		// Now continue on to the rest of the import pipeline.
-		self.inner.import_block(block_import_params).await
-	}
 }
