@@ -24,7 +24,7 @@ sp-std = { workspace = true }
 
 # Cumulus
 cumulus-primitives-core = { workspace = true }
-cumulus-pallet-parachain-system = { workspace = true, features = ["parameterized-consensus-hook"] }
+cumulus-pallet-parachain-system = { workspace = true }
 
 # Polkadot
 polkadot-parachain-primitives = { workspace = true }

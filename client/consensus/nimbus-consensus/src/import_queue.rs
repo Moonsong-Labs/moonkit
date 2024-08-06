@@ -53,7 +53,7 @@ where
 	CIDP: CreateInherentDataProviders<Block, ()>,
 {
 	async fn verify(
-		&mut self,
+		&self,
 		mut block_params: BlockImportParams<Block>,
 	) -> Result<BlockImportParams<Block>, String> {
 		// Skip checks that include execution, if being told so or when importing only state.
@@ -251,12 +251,12 @@ impl<I> NimbusBlockImport<I> {
 impl<Block, I> BlockImport<Block> for NimbusBlockImport<I>
 where
 	Block: BlockT,
-	I: BlockImport<Block> + Send,
+	I: BlockImport<Block> + Send + Sync,
 {
 	type Error = I::Error;
 
 	async fn check_block(
-		&mut self,
+		&self,
 		block: sc_consensus::BlockCheckParams<Block>,
 	) -> Result<sc_consensus::ImportResult, Self::Error> {
 		self.inner.check_block(block).await
