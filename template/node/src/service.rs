@@ -34,6 +34,7 @@ use futures::FutureExt;
 use sc_client_api::Backend;
 use sc_consensus::ImportQueue;
 use sc_consensus_manual_seal::{run_instant_seal, InstantSealParams};
+#[allow(deprecated)]
 use sc_executor::{
 	HeapAllocStrategy, NativeElseWasmExecutor, WasmExecutor, DEFAULT_HEAP_ALLOC_STRATEGY,
 };
@@ -57,6 +58,7 @@ impl sc_executor::NativeExecutionDispatch for TemplateRuntimeExecutor {
 		moonkit_template_runtime::native_version()
 	}
 }
+#[allow(deprecated)]
 type ParachainExecutor = NativeElseWasmExecutor<TemplateRuntimeExecutor>;
 
 type ParachainClient = TFullClient<Block, RuntimeApi, ParachainExecutor>;
@@ -404,6 +406,7 @@ fn start_consensus(
 }
 
 /// Start a parachain node.
+#[allow(deprecated)]
 pub async fn start_parachain_node(
 	parachain_config: Configuration,
 	polkadot_config: Configuration,
