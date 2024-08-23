@@ -107,25 +107,6 @@ fn pauses_queue_on_paused_mode() {
 }
 
 #[test]
-fn uses_all_xcmp_weight_on_normal_mode() {
-	new_test_ext().execute_with(|| {
-		let msgs = vec![(100.into(), 1, [8_u8].as_slice())];
-		let assigned_weight = EmergencyParaXcm::handle_xcmp_messages(msgs.into_iter(), Weight::MAX);
-		assert_eq!(assigned_weight, Weight::MAX);
-	});
-}
-
-#[test]
-fn uses_no_xcmp_weight_on_paused_mode() {
-	new_test_ext().execute_with(|| {
-		Mode::<Test>::set(XcmMode::Paused);
-		let msgs = vec![(100.into(), 1, [8_u8].as_slice())];
-		let assigned_weight = EmergencyParaXcm::handle_xcmp_messages(msgs.into_iter(), Weight::MAX);
-		assert_eq!(assigned_weight, Weight::zero());
-	});
-}
-
-#[test]
 fn cannot_authorize_upgrade_with_wrong_origin() {
 	new_test_ext().execute_with(|| {
 		Mode::<Test>::set(XcmMode::Paused);
