@@ -236,13 +236,13 @@ pub type Precompiles<R> = PrecompileSetBuilder<
 	(
 		PrecompileAt<
 			AddressU64<1>,
-			XcmUtilsPrecompile<R, XcmConfig>,
-			CallableByContract<AllExceptXcmExecute<R, XcmConfig>>,
+			XcmUtilsPrecompile<R, XcmConfig, ()>,
+			CallableByContract<AllExceptXcmExecute<R, XcmConfig, ()>>,
 		>,
 	),
 >;
 
-pub type PCall = XcmUtilsPrecompileCall<Runtime, XcmConfig>;
+pub type PCall = XcmUtilsPrecompileCall<Runtime, XcmConfig, ()>;
 
 const MAX_POV_SIZE: u64 = 5 * 1024 * 1024;
 
@@ -287,6 +287,7 @@ impl pallet_evm::Config for Runtime {
 	type FindAuthor = ();
 	type OnCreate = ();
 	type GasLimitPovSizeRatio = GasLimitPovSizeRatio;
+	type GasLimitStorageGrowthRatio = ();
 	type SuicideQuickClearLimit = ConstU32<0>;
 	type Timestamp = Timestamp;
 	type WeightInfo = pallet_evm::weights::SubstrateWeight<Runtime>;
