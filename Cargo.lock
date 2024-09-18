@@ -3405,7 +3405,7 @@ dependencies = [
 [[package]]
 name = "fp-account"
 version = "1.0.0-dev"
-source = "git+https://github.com/moonbeam-foundation/frontier?branch=moonbeam-polkadot-v1.11.0#cf990e246d99a7e63b39aef3eaadd426b8d34127"
+source = "git+https://github.com/moonbeam-foundation/frontier?branch=perm-runtime-3102#f070fb0eacb9cb472f627ddbc0affadf1a23a7a2"
 dependencies = [
  "hex",
  "impl-serde",
@@ -3423,8 +3423,9 @@ dependencies = [
 [[package]]
 name = "fp-evm"
 version = "3.0.0-dev"
-source = "git+https://github.com/moonbeam-foundation/frontier?branch=moonbeam-polkadot-v1.11.0#cf990e246d99a7e63b39aef3eaadd426b8d34127"
+source = "git+https://github.com/moonbeam-foundation/frontier?branch=perm-runtime-3102#f070fb0eacb9cb472f627ddbc0affadf1a23a7a2"
 dependencies = [
+ "environmental",
  "evm",
  "frame-support",
  "num_enum",
@@ -7164,7 +7165,7 @@ dependencies = [
 [[package]]
 name = "pallet-evm"
 version = "6.0.0-dev"
-source = "git+https://github.com/moonbeam-foundation/frontier?branch=moonbeam-polkadot-v1.11.0#cf990e246d99a7e63b39aef3eaadd426b8d34127"
+source = "git+https://github.com/moonbeam-foundation/frontier?branch=perm-runtime-3102#f070fb0eacb9cb472f627ddbc0affadf1a23a7a2"
 dependencies = [
  "environmental",
  "evm",
@@ -9807,7 +9808,7 @@ checksum = "5b40af805b3121feab8a3c29f04d8ad262fa8e0561883e7653e024ae4479e6de"
 [[package]]
 name = "precompile-utils"
 version = "0.1.0"
-source = "git+https://github.com/moonbeam-foundation/frontier?branch=moonbeam-polkadot-v1.11.0#cf990e246d99a7e63b39aef3eaadd426b8d34127"
+source = "git+https://github.com/moonbeam-foundation/frontier?branch=perm-runtime-3102#f070fb0eacb9cb472f627ddbc0affadf1a23a7a2"
 dependencies = [
  "derive_more",
  "environmental",
@@ -9836,7 +9837,7 @@ dependencies = [
 [[package]]
 name = "precompile-utils-macro"
 version = "0.1.0"
-source = "git+https://github.com/moonbeam-foundation/frontier?branch=moonbeam-polkadot-v1.11.0#cf990e246d99a7e63b39aef3eaadd426b8d34127"
+source = "git+https://github.com/moonbeam-foundation/frontier?branch=perm-runtime-3102#f070fb0eacb9cb472f627ddbc0affadf1a23a7a2"
 dependencies = [
  "case",
  "num_enum",
