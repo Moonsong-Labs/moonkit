@@ -354,6 +354,81 @@ where
 		Ok(())
 	}
 
+	#[precompile::public(
+		"transferAssetsUsingTypeAndThenAddress(\
+		(uint8,bytes[]),\
+		(address,uint256)[],\
+		uint8,\
+		(uint8,bytes[]),\
+		uint8,\
+		uint8,\
+		(uint8,bytes[]),\
+		bytes,\
+		(uint64,uint64))"
+	)]
+	fn transfer_assets_using_type_and_then_address(
+		handle: &mut impl PrecompileHandle,
+		dest: Location,
+		assets: BoundedVec<(Address, Convert<U256, u128>), GetArrayLimit>,
+		assets_transfer_type: u8,
+		maybe_assets_remote_reserve: Location,
+		remote_fees_id_index: u8,
+		fees_transfer_type: u8,
+		maybe_fees_remote_reserve: Location,
+		custom_xcm_on_dest: BoundedBytes<GetXcmSizeLimit>,
+		weight: Weight,
+	) -> EvmResult {
+		// Account for a possible storage read inside LocationMatcher::convert().
+		//
+		// Storage items: AssetIdToForeignAsset (ForeignAssetCreator pallet) or AssetIdType (AssetManager pallet).
+		//
+		// Blake2_128(16) + AssetId(16) + Location
+		handle.record_db_read::<Runtime>(32 + Location::max_encoded_len())?;
+		handle.record_cost(1000)?;
+
+		let origin = Runtime::AddressMapping::into_account_id(handle.context().caller);
+		let assets: Vec<_> = assets.into();
+		let custom_xcm_on_dest: Vec<u8> = custom_xcm_on_dest.into();
+
+		let assets_to_send: Vec<Asset> = Self::check_and_prepare_assets(assets)?;
+		let remote_fees_id: AssetId = {
+			let asset = assets_to_send
+				.get(remote_fees_id_index as usize)
+				.ok_or_else(|| RevertReason::custom("remote_fees_id not found"))?;
+			AssetId(asset.id.0.clone())
+		};
+
+		let weight_limit = match weight.ref_time() {
+			u64::MAX => Unlimited,
+			_ => Limited(weight),
+		};
+
+		let assets_transfer_type =
+			Self::check_transfer_type(assets_transfer_type, maybe_assets_remote_reserve)?;
+		let fees_transfer_type =
+			Self::check_transfer_type(fees_transfer_type, maybe_fees_remote_reserve)?;
+
+		let custom_xcm_on_dest = VersionedXcm::<()>::decode_all_with_depth_limit(
+			MAX_XCM_DECODE_DEPTH,
+			&mut custom_xcm_on_dest.as_slice(),
+		)
+		.map_err(|_| RevertReason::custom("Failed decoding custom XCM message"))?;
+
+		let call = pallet_xcm::Call::<Runtime>::transfer_assets_using_type_and_then {
+			dest: Box::new(VersionedLocation::V4(dest)),
+			assets: Box::new(VersionedAssets::V4(assets_to_send.into())),
+			assets_transfer_type: Box::new(assets_transfer_type),
+			remote_fees_id: Box::new(VersionedAssetId::V4(remote_fees_id)),
+			fees_transfer_type: Box::new(fees_transfer_type),
+			custom_xcm_on_dest: Box::new(custom_xcm_on_dest),
+			weight_limit,
+		};
+
+		RuntimeHelper::<Runtime>::try_dispatch(handle, Some(origin).into(), call)?;
+
+		Ok(())
+	}
+
 	// Helper function to convert and prepare each asset into a proper Location.
 	fn check_and_prepare_assets(
 		assets: Vec<(Address, Convert<U256, u128>)>,
@@ -362,13 +437,15 @@ where
 		for asset in assets {
 			let asset_account = Runtime::AddressMapping::into_account_id(asset.0 .0);
 			let asset_location = LocationMatcher::convert(asset_account);
-			if asset_location == None {
+
+			if let Some(asset_loc) = asset_location {
+				assets_to_send.push(Asset {
+					id: AssetId(asset_loc),
+					fun: Fungibility::Fungible(asset.1.converted()),
+				})
+			} else {
 				return Err(revert("Asset not found"));
 			}
-			assets_to_send.push(Asset {
-				id: AssetId(asset_location.unwrap_or_default()),
-				fun: Fungibility::Fungible(asset.1.converted()),
-			})
 		}
 		Ok(assets_to_send)
 	}
