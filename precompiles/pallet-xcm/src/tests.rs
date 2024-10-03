@@ -19,7 +19,6 @@ use core::str::FromStr;
 use crate::{mock::*, Location};
 use precompile_utils::{prelude::*, testing::*};
 use sp_core::{H160, H256};
-use sp_weights::Weight;
 use xcm::latest::Junction::*;
 
 fn precompiles() -> Precompiles<Runtime, (SingleAddressMatch, ForeignAssetMatch)> {

@@ -29,10 +29,8 @@ use scale_info::TypeInfo;
 use sp_core::{H256, U256};
 use sp_runtime::traits::Dispatchable;
 use sp_std::{boxed::Box, marker::PhantomData, vec, vec::Vec};
-use sp_weights::Weight;
 use xcm::{
 	latest::{Asset, AssetId, Assets, Fungibility, Location, WeightLimit},
-	prelude::WeightLimit::*,
 	VersionedAssetId, VersionedAssets, VersionedLocation, VersionedXcm, MAX_XCM_DECODE_DEPTH,
 };
 use xcm_executor::traits::TransferType;
@@ -99,14 +97,7 @@ where
 		let origin = Runtime::AddressMapping::into_account_id(handle.context().caller);
 		let assets: Vec<_> = assets.into();
 
-		let assets_to_send: Assets = assets
-			.into_iter()
-			.map(|asset| Asset {
-				id: AssetId(asset.0),
-				fun: Fungibility::Fungible(asset.1.converted()),
-			})
-			.collect::<Vec<Asset>>()
-			.into();
+		let (assets_to_send, _) = Self::get_assets_to_send_and_remote_fees(assets, None)?;
 
 		let call = pallet_xcm::Call::<Runtime>::transfer_assets {
 			dest: Box::new(VersionedLocation::V4(dest)),
@@ -145,7 +136,8 @@ where
 		let origin = Runtime::AddressMapping::into_account_id(handle.context().caller);
 		let assets: Vec<_> = assets.into();
 
-		let assets_to_send: Vec<Asset> = Self::check_and_prepare_assets(assets)?;
+		let assets_converted = Self::convert_assets(assets)?;
+		let (assets_to_send, _) = Self::get_assets_to_send_and_remote_fees(assets_converted, None)?;
 
 		let dest = XcmSiblingDestinationGenerator::generate(para_id);
 		let beneficiary = XcmLocalBeneficiary20Generator::generate(beneficiary.0 .0);
@@ -188,7 +180,8 @@ where
 		let origin = Runtime::AddressMapping::into_account_id(handle.context().caller);
 		let assets: Vec<_> = assets.into();
 
-		let assets_to_send: Vec<Asset> = Self::check_and_prepare_assets(assets)?;
+		let assets_converted = Self::convert_assets(assets)?;
+		let (assets_to_send, _) = Self::get_assets_to_send_and_remote_fees(assets_converted, None)?;
 
 		let dest = XcmSiblingDestinationGenerator::generate(para_id);
 		let beneficiary = XcmLocalBeneficiary32Generator::generate(beneficiary.0);
@@ -229,7 +222,8 @@ where
 		let origin = Runtime::AddressMapping::into_account_id(handle.context().caller);
 		let assets: Vec<_> = assets.into();
 
-		let assets_to_send: Vec<Asset> = Self::check_and_prepare_assets(assets)?;
+		let assets_converted = Self::convert_assets(assets)?;
+		let (assets_to_send, _) = Self::get_assets_to_send_and_remote_fees(assets_converted, None)?;
 
 		let dest = Location::parent();
 		let beneficiary = XcmLocalBeneficiary32Generator::generate(beneficiary.0);
@@ -247,26 +241,23 @@ where
 		Ok(())
 	}
 
+	// First selector type: no reserves at all
 	#[precompile::public(
 		"transferAssetsUsingTypeAndThenLocation(\
 		(uint8,bytes[]),\
 		((uint8,bytes[]),uint256)[],\
 		uint8,\
-		(uint8,bytes[]),\
 		uint8,\
 		uint8,\
-		(uint8,bytes[]),\
 		bytes)"
 	)]
-	fn transfer_assets_using_type_and_then_location(
+	fn transfer_assets_using_type_and_then_location_no_reserves(
 		handle: &mut impl PrecompileHandle,
 		dest: Location,
 		assets: BoundedVec<(Location, Convert<U256, u128>), GetArrayLimit>,
 		assets_transfer_type: u8,
-		maybe_assets_remote_reserve: Location,
 		remote_fees_id_index: u8,
 		fees_transfer_type: u8,
-		maybe_fees_remote_reserve: Location,
 		custom_xcm_on_dest: BoundedBytes<GetXcmSizeLimit>,
 	) -> EvmResult {
 		// No DB access before try_dispatch but some logical stuff.
@@ -277,26 +268,150 @@ where
 		let assets: Vec<_> = assets.into();
 		let custom_xcm_on_dest: Vec<u8> = custom_xcm_on_dest.into();
 
-		let remote_fees_id: AssetId = {
-			let asset = assets
-				.get(remote_fees_id_index as usize)
-				.ok_or_else(|| RevertReason::custom("remote_fees_id not found"))?;
-			AssetId(asset.0.clone())
+		let (assets_to_send, remote_fees_id) = Self::get_assets_to_send_and_remote_fees(
+			assets.clone(),
+			Some(remote_fees_id_index as usize),
+		)?;
+		let remote_fees_id =
+			remote_fees_id.ok_or_else(|| RevertReason::custom("remote_fees_id not found"))?;
+
+		let assets_transfer_type = Self::check_transfer_type(assets_transfer_type, None)?;
+		let fees_transfer_type = Self::check_transfer_type(fees_transfer_type, None)?;
+
+		let custom_xcm_on_dest = VersionedXcm::<()>::decode_all_with_depth_limit(
+			MAX_XCM_DECODE_DEPTH,
+			&mut custom_xcm_on_dest.as_slice(),
+		)
+		.map_err(|_| RevertReason::custom("Failed decoding custom XCM message"))?;
+
+		let call = pallet_xcm::Call::<Runtime>::transfer_assets_using_type_and_then {
+			dest: Box::new(VersionedLocation::V4(dest)),
+			assets: Box::new(VersionedAssets::V4(assets_to_send)),
+			assets_transfer_type: Box::new(assets_transfer_type),
+			remote_fees_id: Box::new(VersionedAssetId::V4(remote_fees_id)),
+			fees_transfer_type: Box::new(fees_transfer_type),
+			custom_xcm_on_dest: Box::new(custom_xcm_on_dest),
+			weight_limit: WeightLimit::Unlimited,
 		};
 
-		let assets_to_send: Assets = assets
-			.into_iter()
-			.map(|asset| Asset {
-				id: AssetId(asset.0),
-				fun: Fungibility::Fungible(asset.1.converted()),
-			})
-			.collect::<Vec<Asset>>()
-			.into();
+		RuntimeHelper::<Runtime>::try_dispatch(handle, Some(origin).into(), call)?;
 
+		Ok(())
+	}
+
+	// Either assets reserve or fees reserve
+	#[precompile::public(
+		"transferAssetsUsingTypeAndThenLocation(\
+		(uint8,bytes[]),\
+		((uint8,bytes[]),uint256)[],\
+		uint8,\
+		uint8,\
+		uint8,\
+		bytes,\
+		(uint8,bytes[]),\
+		bool)"
+	)]
+	fn transfer_assets_using_type_and_then_location_assets_or_fee_reserve(
+		handle: &mut impl PrecompileHandle,
+		dest: Location,
+		assets: BoundedVec<(Location, Convert<U256, u128>), GetArrayLimit>,
+		assets_transfer_type: u8,
+		remote_fees_id_index: u8,
+		fees_transfer_type: u8,
+		custom_xcm_on_dest: BoundedBytes<GetXcmSizeLimit>,
+		assets_or_fee_remote_reserve: Location,
+		is_assets_reserve: bool,
+	) -> EvmResult {
+		// No DB access before try_dispatch but some logical stuff.
+		// To prevent spam, we charge an arbitrary amount of gas.
+		handle.record_cost(1000)?;
+
+		let origin = Runtime::AddressMapping::into_account_id(handle.context().caller);
+		let assets: Vec<_> = assets.into();
+		let custom_xcm_on_dest: Vec<u8> = custom_xcm_on_dest.into();
+
+		let (assets_to_send, remote_fees_id) = Self::get_assets_to_send_and_remote_fees(
+			assets.clone(),
+			Some(remote_fees_id_index as usize),
+		)?;
+		let remote_fees_id =
+			remote_fees_id.ok_or_else(|| RevertReason::custom("remote_fees_id not found"))?;
+
+		let (assets_transfer_type, fees_transfer_type) = if is_assets_reserve {
+			(
+				Self::check_transfer_type(
+					assets_transfer_type,
+					Some(assets_or_fee_remote_reserve),
+				)?,
+				Self::check_transfer_type(fees_transfer_type, None)?,
+			)
+		} else {
+			(
+				Self::check_transfer_type(assets_transfer_type, None)?,
+				Self::check_transfer_type(fees_transfer_type, Some(assets_or_fee_remote_reserve))?,
+			)
+		};
+
+		let custom_xcm_on_dest = VersionedXcm::<()>::decode_all_with_depth_limit(
+			MAX_XCM_DECODE_DEPTH,
+			&mut custom_xcm_on_dest.as_slice(),
+		)
+		.map_err(|_| RevertReason::custom("Failed decoding custom XCM message"))?;
+
+		let call = pallet_xcm::Call::<Runtime>::transfer_assets_using_type_and_then {
+			dest: Box::new(VersionedLocation::V4(dest)),
+			assets: Box::new(VersionedAssets::V4(assets_to_send)),
+			assets_transfer_type: Box::new(assets_transfer_type),
+			remote_fees_id: Box::new(VersionedAssetId::V4(remote_fees_id)),
+			fees_transfer_type: Box::new(fees_transfer_type),
+			custom_xcm_on_dest: Box::new(custom_xcm_on_dest),
+			weight_limit: WeightLimit::Unlimited,
+		};
+
+		RuntimeHelper::<Runtime>::try_dispatch(handle, Some(origin).into(), call)?;
+
+		Ok(())
+	}
+
+	// Both reserves for assets and fees
+	#[precompile::public(
+		"transferAssetsUsingTypeAndThenLocation(\
+		(uint8,bytes[]),\
+		((uint8,bytes[]),uint256)[],\
+		uint8,\
+		bytes,\
+		(uint8,bytes[]),\
+		(uint8,bytes[]))"
+	)]
+	fn transfer_assets_using_type_and_then_location_both_reserves(
+		handle: &mut impl PrecompileHandle,
+		dest: Location,
+		assets: BoundedVec<(Location, Convert<U256, u128>), GetArrayLimit>,
+		remote_fees_id_index: u8,
+		custom_xcm_on_dest: BoundedBytes<GetXcmSizeLimit>,
+		assets_remote_reserve: Location,
+		fees_remote_reserve: Location,
+	) -> EvmResult {
+		// No DB access before try_dispatch but some logical stuff.
+		// To prevent spam, we charge an arbitrary amount of gas.
+		handle.record_cost(1000)?;
+
+		let origin = Runtime::AddressMapping::into_account_id(handle.context().caller);
+		let assets: Vec<_> = assets.into();
+		let custom_xcm_on_dest: Vec<u8> = custom_xcm_on_dest.into();
+
+		let (assets_to_send, remote_fees_id) = Self::get_assets_to_send_and_remote_fees(
+			assets.clone(),
+			Some(remote_fees_id_index as usize),
+		)?;
+		let remote_fees_id =
+			remote_fees_id.ok_or_else(|| RevertReason::custom("remote_fees_id not found"))?;
+
+		let remote_reserve_transfer_type: u8 = TransferTypeHelper::RemoteReserve as u8;
 		let assets_transfer_type =
-			Self::check_transfer_type(assets_transfer_type, maybe_assets_remote_reserve)?;
+			Self::check_transfer_type(remote_reserve_transfer_type, Some(assets_remote_reserve))?;
 		let fees_transfer_type =
-			Self::check_transfer_type(fees_transfer_type, maybe_fees_remote_reserve)?;
+			Self::check_transfer_type(remote_reserve_transfer_type, Some(fees_remote_reserve))?;
 
 		let custom_xcm_on_dest = VersionedXcm::<()>::decode_all_with_depth_limit(
 			MAX_XCM_DECODE_DEPTH,
@@ -324,21 +439,17 @@ where
 		(uint8,bytes[]),\
 		(address,uint256)[],\
 		uint8,\
-		(uint8,bytes[]),\
 		uint8,\
 		uint8,\
-		(uint8,bytes[]),\
 		bytes)"
 	)]
-	fn transfer_assets_using_type_and_then_address(
+	fn transfer_assets_using_type_and_then_address_no_reserves(
 		handle: &mut impl PrecompileHandle,
 		dest: Location,
 		assets: BoundedVec<(Address, Convert<U256, u128>), GetArrayLimit>,
 		assets_transfer_type: u8,
-		maybe_assets_remote_reserve: Location,
 		remote_fees_id_index: u8,
 		fees_transfer_type: u8,
-		maybe_fees_remote_reserve: Location,
 		custom_xcm_on_dest: BoundedBytes<GetXcmSizeLimit>,
 	) -> EvmResult {
 		// Account for a possible storage read inside LocationMatcher::convert().
@@ -353,18 +464,159 @@ where
 		let assets: Vec<_> = assets.into();
 		let custom_xcm_on_dest: Vec<u8> = custom_xcm_on_dest.into();
 
-		let assets_to_send: Vec<Asset> = Self::check_and_prepare_assets(assets)?;
-		let remote_fees_id: AssetId = {
-			let asset = assets_to_send
-				.get(remote_fees_id_index as usize)
-				.ok_or_else(|| RevertReason::custom("remote_fees_id not found"))?;
-			AssetId(asset.id.0.clone())
+		let assets_converted = Self::convert_assets(assets)?;
+		let (assets_to_send, remote_fees_id) = Self::get_assets_to_send_and_remote_fees(
+			assets_converted,
+			Some(remote_fees_id_index as usize),
+		)?;
+		let remote_fees_id =
+			remote_fees_id.ok_or_else(|| RevertReason::custom("remote_fees_id not found"))?;
+
+		let assets_transfer_type = Self::check_transfer_type(assets_transfer_type, None)?;
+		let fees_transfer_type = Self::check_transfer_type(fees_transfer_type, None)?;
+
+		let custom_xcm_on_dest = VersionedXcm::<()>::decode_all_with_depth_limit(
+			MAX_XCM_DECODE_DEPTH,
+			&mut custom_xcm_on_dest.as_slice(),
+		)
+		.map_err(|_| RevertReason::custom("Failed decoding custom XCM message"))?;
+
+		let call = pallet_xcm::Call::<Runtime>::transfer_assets_using_type_and_then {
+			dest: Box::new(VersionedLocation::V4(dest)),
+			assets: Box::new(VersionedAssets::V4(assets_to_send.into())),
+			assets_transfer_type: Box::new(assets_transfer_type),
+			remote_fees_id: Box::new(VersionedAssetId::V4(remote_fees_id)),
+			fees_transfer_type: Box::new(fees_transfer_type),
+			custom_xcm_on_dest: Box::new(custom_xcm_on_dest),
+			weight_limit: WeightLimit::Unlimited,
 		};
 
+		RuntimeHelper::<Runtime>::try_dispatch(handle, Some(origin).into(), call)?;
+
+		Ok(())
+	}
+
+	#[precompile::public(
+		"transferAssetsUsingTypeAndThenAddress(\
+		(uint8,bytes[]),\
+		(address,uint256)[],\
+		uint8,\
+		uint8,\
+		uint8,\
+		bytes,\
+		(uint8,bytes[]),\
+		bool)"
+	)]
+	fn transfer_assets_using_type_and_then_address_assets_or_fee_reserve(
+		handle: &mut impl PrecompileHandle,
+		dest: Location,
+		assets: BoundedVec<(Address, Convert<U256, u128>), GetArrayLimit>,
+		assets_transfer_type: u8,
+		remote_fees_id_index: u8,
+		fees_transfer_type: u8,
+		custom_xcm_on_dest: BoundedBytes<GetXcmSizeLimit>,
+		assets_or_fee_remote_reserve: Location,
+		is_assets_reserve: bool,
+	) -> EvmResult {
+		// Account for a possible storage read inside LocationMatcher::convert().
+		//
+		// Storage items: AssetIdToForeignAsset (ForeignAssetCreator pallet) or AssetIdType (AssetManager pallet).
+		//
+		// Blake2_128(16) + AssetId(16) + Location
+		handle.record_db_read::<Runtime>(32 + Location::max_encoded_len())?;
+		handle.record_cost(1000)?;
+
+		let origin = Runtime::AddressMapping::into_account_id(handle.context().caller);
+		let assets: Vec<_> = assets.into();
+		let custom_xcm_on_dest: Vec<u8> = custom_xcm_on_dest.into();
+
+		let assets_converted = Self::convert_assets(assets)?;
+		let (assets_to_send, remote_fees_id) = Self::get_assets_to_send_and_remote_fees(
+			assets_converted,
+			Some(remote_fees_id_index as usize),
+		)?;
+		let remote_fees_id =
+			remote_fees_id.ok_or_else(|| RevertReason::custom("remote_fees_id not found"))?;
+
+		let (assets_transfer_type, fees_transfer_type) = if is_assets_reserve {
+			(
+				Self::check_transfer_type(
+					assets_transfer_type,
+					Some(assets_or_fee_remote_reserve),
+				)?,
+				Self::check_transfer_type(fees_transfer_type, None)?,
+			)
+		} else {
+			(
+				Self::check_transfer_type(assets_transfer_type, None)?,
+				Self::check_transfer_type(fees_transfer_type, Some(assets_or_fee_remote_reserve))?,
+			)
+		};
+
+		let custom_xcm_on_dest = VersionedXcm::<()>::decode_all_with_depth_limit(
+			MAX_XCM_DECODE_DEPTH,
+			&mut custom_xcm_on_dest.as_slice(),
+		)
+		.map_err(|_| RevertReason::custom("Failed decoding custom XCM message"))?;
+
+		let call = pallet_xcm::Call::<Runtime>::transfer_assets_using_type_and_then {
+			dest: Box::new(VersionedLocation::V4(dest)),
+			assets: Box::new(VersionedAssets::V4(assets_to_send.into())),
+			assets_transfer_type: Box::new(assets_transfer_type),
+			remote_fees_id: Box::new(VersionedAssetId::V4(remote_fees_id)),
+			fees_transfer_type: Box::new(fees_transfer_type),
+			custom_xcm_on_dest: Box::new(custom_xcm_on_dest),
+			weight_limit: WeightLimit::Unlimited,
+		};
+
+		RuntimeHelper::<Runtime>::try_dispatch(handle, Some(origin).into(), call)?;
+
+		Ok(())
+	}
+
+	#[precompile::public(
+		"transferAssetsUsingTypeAndThenAddress(\
+		(uint8,bytes[]),\
+		(address,uint256)[],\
+		uint8,\
+		bytes,\
+		(uint8,bytes[]),\
+		(uint8,bytes[]))"
+	)]
+	fn transfer_assets_using_type_and_then_address_both_reserves(
+		handle: &mut impl PrecompileHandle,
+		dest: Location,
+		assets: BoundedVec<(Address, Convert<U256, u128>), GetArrayLimit>,
+		remote_fees_id_index: u8,
+		custom_xcm_on_dest: BoundedBytes<GetXcmSizeLimit>,
+		assets_remote_reserve: Location,
+		fees_remote_reserve: Location,
+	) -> EvmResult {
+		// Account for a possible storage read inside LocationMatcher::convert().
+		//
+		// Storage items: AssetIdToForeignAsset (ForeignAssetCreator pallet) or AssetIdType (AssetManager pallet).
+		//
+		// Blake2_128(16) + AssetId(16) + Location
+		handle.record_db_read::<Runtime>(32 + Location::max_encoded_len())?;
+		handle.record_cost(1000)?;
+
+		let origin = Runtime::AddressMapping::into_account_id(handle.context().caller);
+		let assets: Vec<_> = assets.into();
+		let custom_xcm_on_dest: Vec<u8> = custom_xcm_on_dest.into();
+
+		let assets_converted = Self::convert_assets(assets)?;
+		let (assets_to_send, remote_fees_id) = Self::get_assets_to_send_and_remote_fees(
+			assets_converted,
+			Some(remote_fees_id_index as usize),
+		)?;
+		let remote_fees_id =
+			remote_fees_id.ok_or_else(|| RevertReason::custom("remote_fees_id not found"))?;
+
+		let remote_reserve_transfer_type: u8 = TransferTypeHelper::RemoteReserve as u8;
 		let assets_transfer_type =
-			Self::check_transfer_type(assets_transfer_type, maybe_assets_remote_reserve)?;
+			Self::check_transfer_type(remote_reserve_transfer_type, Some(assets_remote_reserve))?;
 		let fees_transfer_type =
-			Self::check_transfer_type(fees_transfer_type, maybe_fees_remote_reserve)?;
+			Self::check_transfer_type(remote_reserve_transfer_type, Some(fees_remote_reserve))?;
 
 		let custom_xcm_on_dest = VersionedXcm::<()>::decode_all_with_depth_limit(
 			MAX_XCM_DECODE_DEPTH,
@@ -388,19 +640,16 @@ where
 	}
 
 	// Helper function to convert and prepare each asset into a proper Location.
-	fn check_and_prepare_assets(
+	fn convert_assets(
 		assets: Vec<(Address, Convert<U256, u128>)>,
-	) -> Result<Vec<Asset>, PrecompileFailure> {
-		let mut assets_to_send: Vec<Asset> = vec![];
+	) -> Result<Vec<(Location, Convert<U256, u128>)>, PrecompileFailure> {
+		let mut assets_to_send: Vec<(Location, Convert<U256, u128>)> = vec![];
 		for asset in assets {
 			let asset_account = Runtime::AddressMapping::into_account_id(asset.0 .0);
 			let asset_location = LocationMatcher::convert(asset_account);
 
 			if let Some(asset_loc) = asset_location {
-				assets_to_send.push(Asset {
-					id: AssetId(asset_loc),
-					fun: Fungibility::Fungible(asset.1.converted()),
-				})
+				assets_to_send.push((asset_loc, asset.1))
 			} else {
 				return Err(revert("Asset not found"));
 			}
@@ -410,7 +659,7 @@ where
 
 	fn check_transfer_type(
 		transfer_type: u8,
-		remote_reserve: Location,
+		maybe_remote_reserve: Option<Location>,
 	) -> Result<TransferType, PrecompileFailure> {
 		let transfer_type_helper: TransferTypeHelper = TransferTypeHelper::decode(
 			&mut transfer_type.to_le_bytes().as_slice(),
@@ -422,10 +671,40 @@ where
 			TransferTypeHelper::LocalReserve => return Ok(TransferType::LocalReserve),
 			TransferTypeHelper::DestinationReserve => return Ok(TransferType::DestinationReserve),
 			TransferTypeHelper::RemoteReserve => {
-				return Ok(TransferType::RemoteReserve(VersionedLocation::V4(
-					remote_reserve,
-				)))
+				if let Some(remote_reserve) = maybe_remote_reserve {
+					return Ok(TransferType::RemoteReserve(VersionedLocation::V4(
+						remote_reserve,
+					)));
+				} else {
+					return Err(RevertReason::custom("No reserve specified!").into());
+				}
 			}
 		}
+	}
+
+	fn get_assets_to_send_and_remote_fees(
+		assets: Vec<(Location, Convert<U256, u128>)>,
+		remote_fees_id_index: Option<usize>,
+	) -> Result<(Assets, Option<AssetId>), PrecompileFailure> {
+		let assets_to_send: Assets = assets
+			.into_iter()
+			.map(|asset| Asset {
+				id: AssetId(asset.0),
+				fun: Fungibility::Fungible(asset.1.converted()),
+			})
+			.collect::<Vec<Asset>>()
+			.into();
+
+		if let Some(index) = remote_fees_id_index {
+			let remote_fees_id: AssetId = {
+				let asset = assets_to_send
+					.get(index)
+					.ok_or_else(|| RevertReason::custom("remote_fees_id not found"))?;
+				AssetId(asset.id.0.clone())
+			};
+			return Ok((assets_to_send, Some(remote_fees_id)));
+		}
+
+		Ok((assets_to_send, None))
 	}
 }

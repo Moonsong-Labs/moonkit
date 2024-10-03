@@ -90,25 +90,67 @@ interface XCM {
         uint32 feeAssetItem
     ) external;
 
+    // No reserves at all
     function transferAssetsUsingTypeAndThenLocation(
         Location memory dest,
         AssetLocationInfo[] memory assets,
         TransferType assetsTransferType,
-        Location memory maybeAssetsRemoteReserve,
         uint8 remoteFeesIdIndex,
         TransferType feesTransferType,
-        Location memory maybeFeesRemoteReserve,
         bytes memory customXcmOnDest
     ) external;
 
+    // Reserve for assets or fees (specified through isAssetReserve)
+    function transferAssetsUsingTypeAndThenLocation(
+        Location memory dest,
+        AssetLocationInfo[] memory assets,
+        TransferType assetsTransferType,
+        uint8 remoteFeesIdIndex,
+        TransferType feesTransferType,
+        bytes memory customXcmOnDest,
+        Location memory assetsOrFeeRemoteReserve,
+        bool isAssetsReserve
+    ) external;
+
+    // Reserve for both assets and fees
+    function transferAssetsUsingTypeAndThenLocation(
+        Location memory dest,
+        AssetLocationInfo[] memory assets,
+        uint8 remoteFeesIdIndex,
+        bytes memory customXcmOnDest,
+        Location memory assetsRemoteReserve,
+        Location memory feesRemoteReserve
+    ) external;
+
+    // No reserves at all
     function transferAssetsUsingTypeAndThenAddress(
         Location memory dest,
         AssetAddressInfo[] memory assets,
         TransferType assetsTransferType,
-        Location memory maybeAssetsRemoteReserve,
         uint8 remoteFeesIdIndex,
         TransferType feesTransferType,
-        Location memory maybeFeesRemoteReserve,
         bytes memory customXcmOnDest
+    ) external;
+
+    // Reserve for assets or fees (specified through isAssetReserve)
+    function transferAssetsUsingTypeAndThenAddress(
+        Location memory dest,
+        AssetAddressInfo[] memory assets,
+        TransferType assetsTransferType,
+        uint8 remoteFeesIdIndex,
+        TransferType feesTransferType,
+        bytes memory customXcmOnDest,
+        Location memory assetsOrFeeRemoteReserve,
+        bool isAssetsReserve
+    ) external;
+
+    // Reserve for both assets and fees
+    function transferAssetsUsingTypeAndThenAddress(
+        Location memory dest,
+        AssetAddressInfo[] memory assets,
+        uint8 remoteFeesIdIndex,
+        bytes memory customXcmOnDest,
+        Location memory assetsRemoteReserve,
+        Location memory feesRemoteReserve
     ) external;
 }
