@@ -31,7 +31,7 @@ use sp_runtime::traits::Dispatchable;
 use sp_std::{boxed::Box, marker::PhantomData, vec, vec::Vec};
 use sp_weights::Weight;
 use xcm::{
-	latest::{Asset, AssetId, Assets, Fungibility, Location},
+	latest::{Asset, AssetId, Assets, Fungibility, Location, WeightLimit},
 	prelude::WeightLimit::*,
 	VersionedAssetId, VersionedAssets, VersionedLocation, VersionedXcm, MAX_XCM_DECODE_DEPTH,
 };
@@ -83,8 +83,7 @@ where
 		(uint8,bytes[]),\
 		(uint8,bytes[]),\
 		((uint8,bytes[]),uint256)[],\
-		uint32,\
-		(uint64,uint64))"
+		uint32)"
 	)]
 	fn transfer_assets_location(
 		handle: &mut impl PrecompileHandle,
@@ -92,7 +91,6 @@ where
 		beneficiary: Location,
 		assets: BoundedVec<(Location, Convert<U256, u128>), GetArrayLimit>,
 		fee_asset_item: u32,
-		weight: Weight,
 	) -> EvmResult {
 		// No DB access before try_dispatch but some logical stuff.
 		// To prevent spam, we charge an arbitrary amount of gas.
@@ -110,17 +108,12 @@ where
 			.collect::<Vec<Asset>>()
 			.into();
 
-		let weight_limit = match weight.ref_time() {
-			u64::MAX => Unlimited,
-			_ => Limited(weight),
-		};
-
 		let call = pallet_xcm::Call::<Runtime>::transfer_assets {
 			dest: Box::new(VersionedLocation::V4(dest)),
 			beneficiary: Box::new(VersionedLocation::V4(beneficiary)),
 			assets: Box::new(VersionedAssets::V4(assets_to_send)),
 			fee_asset_item,
-			weight_limit,
+			weight_limit: WeightLimit::Unlimited,
 		};
 
 		RuntimeHelper::<Runtime>::try_dispatch(handle, Some(origin).into(), call, 0)?;
@@ -132,8 +125,7 @@ where
 			uint32,\
 			address,\
 			(address,uint256)[],\
-			uint32,\
-			(uint64,uint64))"
+			uint32)"
 	)]
 	fn transfer_assets_to_para_20(
 		handle: &mut impl PrecompileHandle,
@@ -141,7 +133,6 @@ where
 		beneficiary: Address,
 		assets: BoundedVec<(Address, Convert<U256, u128>), GetArrayLimit>,
 		fee_asset_item: u32,
-		weight: Weight,
 	) -> EvmResult {
 		// Account for a possible storage read inside LocationMatcher::convert().
 		//
@@ -156,11 +147,6 @@ where
 
 		let assets_to_send: Vec<Asset> = Self::check_and_prepare_assets(assets)?;
 
-		let weight_limit = match weight.ref_time() {
-			u64::MAX => Unlimited,
-			_ => Limited(weight),
-		};
-
 		let dest = XcmSiblingDestinationGenerator::generate(para_id);
 		let beneficiary = XcmLocalBeneficiary20Generator::generate(beneficiary.0 .0);
 
@@ -169,7 +155,7 @@ where
 			beneficiary: Box::new(VersionedLocation::V4(beneficiary)),
 			assets: Box::new(VersionedAssets::V4(assets_to_send.into())),
 			fee_asset_item,
-			weight_limit,
+			weight_limit: WeightLimit::Unlimited,
 		};
 
 		RuntimeHelper::<Runtime>::try_dispatch(handle, Some(origin).into(), call, 0)?;
@@ -182,8 +168,7 @@ where
 			uint32,\
 			bytes32,\
 			(address,uint256)[],\
-			uint32,\
-			(uint64,uint64))"
+			uint32)"
 	)]
 	fn transfer_assets_to_para_32(
 		handle: &mut impl PrecompileHandle,
@@ -191,7 +176,6 @@ where
 		beneficiary: H256,
 		assets: BoundedVec<(Address, Convert<U256, u128>), GetArrayLimit>,
 		fee_asset_item: u32,
-		weight: Weight,
 	) -> EvmResult {
 		// Account for a possible storage read inside LocationMatcher::convert().
 		//
@@ -206,11 +190,6 @@ where
 
 		let assets_to_send: Vec<Asset> = Self::check_and_prepare_assets(assets)?;
 
-		let weight_limit = match weight.ref_time() {
-			u64::MAX => Unlimited,
-			_ => Limited(weight),
-		};
-
 		let dest = XcmSiblingDestinationGenerator::generate(para_id);
 		let beneficiary = XcmLocalBeneficiary32Generator::generate(beneficiary.0);
 
@@ -219,7 +198,7 @@ where
 			beneficiary: Box::new(VersionedLocation::V4(beneficiary)),
 			assets: Box::new(VersionedAssets::V4(assets_to_send.into())),
 			fee_asset_item,
-			weight_limit,
+			weight_limit: WeightLimit::Unlimited,
 		};
 
 		RuntimeHelper::<Runtime>::try_dispatch(handle, Some(origin).into(), call, 0)?;
@@ -231,15 +210,13 @@ where
 		"transferAssetsToRelay(\
 			bytes32,\
 			(address,uint256)[],\
-			uint32,\
-			(uint64,uint64))"
+			uint32)"
 	)]
 	fn transfer_assets_to_relay(
 		handle: &mut impl PrecompileHandle,
 		beneficiary: H256,
 		assets: BoundedVec<(Address, Convert<U256, u128>), GetArrayLimit>,
 		fee_asset_item: u32,
-		weight: Weight,
 	) -> EvmResult {
 		// Account for a possible storage read inside LocationMatcher::convert().
 		//
@@ -254,11 +231,6 @@ where
 
 		let assets_to_send: Vec<Asset> = Self::check_and_prepare_assets(assets)?;
 
-		let weight_limit = match weight.ref_time() {
-			u64::MAX => Unlimited,
-			_ => Limited(weight),
-		};
-
 		let dest = Location::parent();
 		let beneficiary = XcmLocalBeneficiary32Generator::generate(beneficiary.0);
 
@@ -267,7 +239,7 @@ where
 			beneficiary: Box::new(VersionedLocation::V4(beneficiary)),
 			assets: Box::new(VersionedAssets::V4(assets_to_send.into())),
 			fee_asset_item,
-			weight_limit,
+			weight_limit: WeightLimit::Unlimited,
 		};
 
 		RuntimeHelper::<Runtime>::try_dispatch(handle, Some(origin).into(), call, 0)?;
@@ -284,8 +256,7 @@ where
 		uint8,\
 		uint8,\
 		(uint8,bytes[]),\
-		bytes,\
-		(uint64,uint64))"
+		bytes)"
 	)]
 	fn transfer_assets_using_type_and_then_location(
 		handle: &mut impl PrecompileHandle,
@@ -297,7 +268,6 @@ where
 		fees_transfer_type: u8,
 		maybe_fees_remote_reserve: Location,
 		custom_xcm_on_dest: BoundedBytes<GetXcmSizeLimit>,
-		weight: Weight,
 	) -> EvmResult {
 		// No DB access before try_dispatch but some logical stuff.
 		// To prevent spam, we charge an arbitrary amount of gas.
@@ -323,11 +293,6 @@ where
 			.collect::<Vec<Asset>>()
 			.into();
 
-		let weight_limit = match weight.ref_time() {
-			u64::MAX => Unlimited,
-			_ => Limited(weight),
-		};
-
 		let assets_transfer_type =
 			Self::check_transfer_type(assets_transfer_type, maybe_assets_remote_reserve)?;
 		let fees_transfer_type =
@@ -346,7 +311,7 @@ where
 			remote_fees_id: Box::new(VersionedAssetId::V4(remote_fees_id)),
 			fees_transfer_type: Box::new(fees_transfer_type),
 			custom_xcm_on_dest: Box::new(custom_xcm_on_dest),
-			weight_limit,
+			weight_limit: WeightLimit::Unlimited,
 		};
 
 		RuntimeHelper::<Runtime>::try_dispatch(handle, Some(origin).into(), call)?;
@@ -363,8 +328,7 @@ where
 		uint8,\
 		uint8,\
 		(uint8,bytes[]),\
-		bytes,\
-		(uint64,uint64))"
+		bytes)"
 	)]
 	fn transfer_assets_using_type_and_then_address(
 		handle: &mut impl PrecompileHandle,
@@ -376,7 +340,6 @@ where
 		fees_transfer_type: u8,
 		maybe_fees_remote_reserve: Location,
 		custom_xcm_on_dest: BoundedBytes<GetXcmSizeLimit>,
-		weight: Weight,
 	) -> EvmResult {
 		// Account for a possible storage read inside LocationMatcher::convert().
 		//
@@ -398,11 +361,6 @@ where
 			AssetId(asset.id.0.clone())
 		};
 
-		let weight_limit = match weight.ref_time() {
-			u64::MAX => Unlimited,
-			_ => Limited(weight),
-		};
-
 		let assets_transfer_type =
 			Self::check_transfer_type(assets_transfer_type, maybe_assets_remote_reserve)?;
 		let fees_transfer_type =
@@ -421,7 +379,7 @@ where
 			remote_fees_id: Box::new(VersionedAssetId::V4(remote_fees_id)),
 			fees_transfer_type: Box::new(fees_transfer_type),
 			custom_xcm_on_dest: Box::new(custom_xcm_on_dest),
-			weight_limit,
+			weight_limit: WeightLimit::Unlimited,
 		};
 
 		RuntimeHelper::<Runtime>::try_dispatch(handle, Some(origin).into(), call)?;

@@ -33,10 +33,10 @@ fn test_solidity_interface_has_all_function_selectors_documented_and_implemented
 
 #[test]
 fn selectors() {
-	assert!(PCall::transfer_assets_location_selectors().contains(&0x59df8416));
-	assert!(PCall::transfer_assets_to_para_20_selectors().contains(&0xb489262e));
-	assert!(PCall::transfer_assets_to_para_32_selectors().contains(&0x4461e6f5));
-	assert!(PCall::transfer_assets_to_relay_selectors().contains(&0xd7c89659));
+	assert!(PCall::transfer_assets_location_selectors().contains(&0x9ea8ada7));
+	assert!(PCall::transfer_assets_to_para_20_selectors().contains(&0xa0aeb5fe));
+	assert!(PCall::transfer_assets_to_para_32_selectors().contains(&0xf23032c3));
+	assert!(PCall::transfer_assets_to_relay_selectors().contains(&0x6521cc2c));
 }
 
 #[test]
@@ -101,9 +101,6 @@ fn test_transfer_assets_works() {
 						]
 						.into(),
 						fee_asset_item: 0u32,
-						// As we are indicating u64::MAX in ref_time, an Unlimited variant
-						// will be applied at the end.
-						weight: Weight::from_parts(u64::MAX, 80000),
 					},
 				)
 				.expect_cost(100001001)
@@ -147,9 +144,6 @@ fn test_transfer_assets_success_when_paying_fees_with_foreign_asset() {
 						// We also act as a reserve for the foreign asset thus when can pay local
 						// fees with it.
 						fee_asset_item: 1u32,
-						// As we are indicating u64::MAX in ref_time, an Unlimited variant
-						// will be applied at the end.
-						weight: Weight::from_parts(u64::MAX, 80000),
 					},
 				)
 				.expect_cost(100001001)
@@ -192,9 +186,6 @@ fn test_transfer_assets_fails_fees_unknown_reserve() {
 						.into(),
 						// No reserve will be found for this asset.
 						fee_asset_item: 1u32,
-						// As we are indicating u64::MAX in ref_time, an Unlimited variant
-						// will be applied at the end.
-						weight: Weight::from_parts(u64::MAX, 80000),
 					},
 				)
 				.expect_no_logs()
@@ -220,7 +211,6 @@ fn test_transfer_assets_to_para_20_native_asset() {
 						beneficiary: Address(Bob.into()),
 						assets: vec![(Address(pallet_balances_address), 500.into())].into(),
 						fee_asset_item: 0u32,
-						weight: Weight::from_parts(u64::MAX, 80000),
 					},
 				)
 				.expect_cost(100001002)
@@ -247,7 +237,6 @@ fn test_transfer_assets_to_para_32_native_asset() {
 						beneficiary: H256([1u8; 32]),
 						assets: vec![(Address(pallet_balances_address), 500.into())].into(),
 						fee_asset_item: 0u32,
-						weight: Weight::from_parts(u64::MAX, 80000),
 					},
 				)
 				.expect_cost(100001002)
@@ -273,7 +262,6 @@ fn test_transfer_assets_to_relay_native_asset() {
 						beneficiary: H256([1u8; 32]),
 						assets: vec![(Address(pallet_balances_address), 500.into())].into(),
 						fee_asset_item: 0u32,
-						weight: Weight::from_parts(u64::MAX, 80000),
 					},
 				)
 				.expect_cost(100001002)
@@ -316,7 +304,6 @@ fn test_transfer_assets_to_para_20_foreign_asset() {
 						]
 						.into(),
 						fee_asset_item: 0u32,
-						weight: Weight::from_parts(u64::MAX, 80000),
 					},
 				)
 				.expect_cost(100001002)
@@ -359,7 +346,6 @@ fn test_transfer_assets_to_para_32_foreign_asset() {
 						]
 						.into(),
 						fee_asset_item: 0u32,
-						weight: Weight::from_parts(u64::MAX, 80000),
 					},
 				)
 				.expect_cost(100001002)
@@ -401,7 +387,6 @@ fn test_transfer_assets_to_relay_foreign_asset() {
 						]
 						.into(),
 						fee_asset_item: 0u32,
-						weight: Weight::from_parts(u64::MAX, 80000),
 					},
 				)
 				.expect_cost(100001002)
