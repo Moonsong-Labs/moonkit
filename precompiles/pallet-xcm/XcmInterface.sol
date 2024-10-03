@@ -29,6 +29,14 @@ interface XCM {
         uint256 amount;
     }
 
+    // The values start at `0` and are represented as `uint8`
+    enum TransferType {
+        Teleport,
+        LocalReserve,
+        DestinationReserve,
+        RemoteReserve
+    }
+
     /// @dev Function to send assets via XCM using transfer_assets() pallet-xcm extrinsic.
     /// @custom:selector 59df8416
     /// @param dest The destination chain.
@@ -91,6 +99,30 @@ interface XCM {
         bytes32 beneficiary,
         AssetAddressInfo[] memory assets,
         uint32 feeAssetItem,
+        Weight memory weight
+    ) external;
+
+    function transferAssetsUsingTypeAndThenLocation(
+        Location memory dest,
+        AssetLocationInfo[] memory assets,
+        TransferType assetsTransferType,
+        Location memory maybeAssetsRemoteReserve,
+        uint8 remoteFeesIdIndex,
+        TransferType feesTransferType,
+        Location memory maybeFeesRemoteReserve,
+        bytes memory customXcmOnDest,
+        Weight memory weight
+    ) external;
+
+    function transferAssetsUsingTypeAndThenAddress(
+        Location memory dest,
+        AssetAddressInfo[] memory assets,
+        TransferType assetsTransferType,
+        Location memory maybeAssetsRemoteReserve,
+        uint8 remoteFeesIdIndex,
+        TransferType feesTransferType,
+        Location memory maybeFeesRemoteReserve,
+        bytes memory customXcmOnDest,
         Weight memory weight
     ) external;
 }
