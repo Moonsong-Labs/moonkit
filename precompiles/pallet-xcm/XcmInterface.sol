@@ -33,8 +33,7 @@ interface XCM {
     enum TransferType {
         Teleport,
         LocalReserve,
-        DestinationReserve,
-        RemoteReserve
+        DestinationReserve
     }
 
     /// @dev Function to send assets via XCM using transfer_assets() pallet-xcm extrinsic.
@@ -100,7 +99,7 @@ interface XCM {
         bytes memory customXcmOnDest
     ) external;
 
-    // Reserve for assets and fees (must share same reserve if the transfer type is RemoteReserve)
+    // Remote reserve for assets and fees (must share same remote reserve)
     function transferAssetsUsingTypeAndThenLocation(
         Location memory dest,
         AssetLocationInfo[] memory assets,
@@ -119,7 +118,7 @@ interface XCM {
         bytes memory customXcmOnDest
     ) external;
 
-    // Reserve for assets and fees (must share same reserve if the transfer type is RemoteReserve)
+    // Remote reserve for assets and fees (must share same reserve)
     function transferAssetsUsingTypeAndThenAddress(
         Location memory dest,
         AssetAddressInfo[] memory assets,

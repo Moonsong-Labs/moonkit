@@ -505,7 +505,7 @@ fn test_transfer_assets_using_type_and_then_address_no_remote_reserve() {
 					Precompile1,
 					PCall::transfer_assets_using_type_and_then_address_no_remote_reserve {
 						dest: Location::parent(),
-						assets:  vec![
+						assets: vec![
 							(Address(pallet_balances_address), 500.into()),
 							(Address(asset_address), 500.into()),
 						]
@@ -548,13 +548,10 @@ fn test_transfer_assets_using_type_and_then_address_remote_reserve() {
 					Precompile1,
 					PCall::transfer_assets_using_type_and_then_address_remote_reserve {
 						dest: Location::parent(),
-						assets:  vec![
-							(Address(asset_address), 500.into()),
-						]
-						.into(),
+						assets: vec![(Address(asset_address), 500.into())].into(),
 						remote_fees_id_index: 0u8,
 						custom_xcm_on_dest: message.into(),
-						remote_reserve: Location::parent()
+						remote_reserve: Location::parent(),
 					},
 				)
 				.expect_cost(100001002)
