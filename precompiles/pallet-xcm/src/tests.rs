@@ -38,10 +38,22 @@ fn selectors() {
 	assert!(PCall::transfer_assets_to_para_20_selectors().contains(&0xa0aeb5fe));
 	assert!(PCall::transfer_assets_to_para_32_selectors().contains(&0xf23032c3));
 	assert!(PCall::transfer_assets_to_relay_selectors().contains(&0x6521cc2c));
-	assert!(PCall::transfer_assets_using_type_and_then_location_no_remote_reserve_selectors().contains(&0x8425d893));
-	assert!(PCall::transfer_assets_using_type_and_then_location_remote_reserve_selectors().contains(&0xfc19376c));
-	assert!(PCall::transfer_assets_using_type_and_then_address_no_remote_reserve_selectors().contains(&0x998093ee));
-	assert!(PCall::transfer_assets_using_type_and_then_address_remote_reserve_selectors().contains(&0xaaecfc62));
+	assert!(
+		PCall::transfer_assets_using_type_and_then_location_no_remote_reserve_selectors()
+			.contains(&0x8425d893)
+	);
+	assert!(
+		PCall::transfer_assets_using_type_and_then_location_remote_reserve_selectors()
+			.contains(&0xfc19376c)
+	);
+	assert!(
+		PCall::transfer_assets_using_type_and_then_address_no_remote_reserve_selectors()
+			.contains(&0x998093ee)
+	);
+	assert!(
+		PCall::transfer_assets_using_type_and_then_address_remote_reserve_selectors()
+			.contains(&0xaaecfc62)
+	);
 }
 
 #[test]
