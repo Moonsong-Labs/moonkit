@@ -60,7 +60,6 @@ pub enum TransferTypeHelper {
 	Teleport = 0,
 	LocalReserve = 1,
 	DestinationReserve = 2,
-	RemoteReserve = 3,
 }
 
 pub struct PalletXcmPrecompile<Runtime, LocationMatcher>(PhantomData<(Runtime, LocationMatcher)>);
@@ -275,8 +274,8 @@ where
 		let remote_fees_id =
 			remote_fees_id.ok_or_else(|| RevertReason::custom("remote_fees_id not found"))?;
 
-		let assets_transfer_type = Self::check_transfer_type_is_not_reserve(assets_transfer_type)?;
-		let fees_transfer_type = Self::check_transfer_type_is_not_reserve(fees_transfer_type)?;
+		let assets_transfer_type = Self::parse_transfer_type(assets_transfer_type)?;
+		let fees_transfer_type = Self::parse_transfer_type(fees_transfer_type)?;
 
 		let custom_xcm_on_dest = VersionedXcm::<()>::decode_all_with_depth_limit(
 			MAX_XCM_DECODE_DEPTH,
@@ -393,8 +392,8 @@ where
 		let remote_fees_id =
 			remote_fees_id.ok_or_else(|| RevertReason::custom("remote_fees_id not found"))?;
 
-		let assets_transfer_type = Self::check_transfer_type_is_not_reserve(assets_transfer_type)?;
-		let fees_transfer_type = Self::check_transfer_type_is_not_reserve(fees_transfer_type)?;
+		let assets_transfer_type = Self::parse_transfer_type(assets_transfer_type)?;
+		let fees_transfer_type = Self::parse_transfer_type(fees_transfer_type)?;
 
 		let custom_xcm_on_dest = VersionedXcm::<()>::decode_all_with_depth_limit(
 			MAX_XCM_DECODE_DEPTH,
@@ -521,9 +520,7 @@ where
 		Ok((assets_to_send, None))
 	}
 
-	fn check_transfer_type_is_not_reserve(
-		transfer_type: u8,
-	) -> Result<TransferType, PrecompileFailure> {
+	fn parse_transfer_type(transfer_type: u8) -> Result<TransferType, PrecompileFailure> {
 		let transfer_type_helper: TransferTypeHelper = TransferTypeHelper::decode(
 			&mut transfer_type.to_le_bytes().as_slice(),
 		)
@@ -533,11 +530,6 @@ where
 			TransferTypeHelper::Teleport => return Ok(TransferType::Teleport),
 			TransferTypeHelper::LocalReserve => return Ok(TransferType::LocalReserve),
 			TransferTypeHelper::DestinationReserve => return Ok(TransferType::DestinationReserve),
-			TransferTypeHelper::RemoteReserve => {
-				return Err(
-					RevertReason::custom("RemoteReserve not allowed for this method!").into(),
-				)
-			}
 		}
 	}
 }
