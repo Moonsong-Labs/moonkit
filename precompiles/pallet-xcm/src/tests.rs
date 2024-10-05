@@ -475,3 +475,90 @@ fn test_transfer_assets_using_type_and_then_location_remote_reserve() {
 				.execute_returns(());
 		});
 }
+
+#[test]
+fn test_transfer_assets_using_type_and_then_address_no_remote_reserve() {
+	ExtBuilder::default()
+		.with_balances(vec![(Alice.into(), 1000)])
+		.with_xcm_assets(vec![XcmAssetDetails {
+			location: Location::parent(),
+			admin: Alice.into(),
+			asset_id: 5u16,
+			is_sufficient: true,
+			balance_to_mint: 10000u128,
+			min_balance: 1u128,
+		}])
+		.build()
+		.execute_with(|| {
+			// Foreign (relay) asset with prefix [255; 18] and assetId of 5u16.
+			let asset_address =
+				H160::from_str("0xfFfFFFffFffFFFFffFFfFfffFfFFFFFfffFF0005").unwrap();
+
+			// We send the native currency of the origin chain and pay fees with it.
+			let pallet_balances_address = H160::from_low_u64_be(2050);
+
+			let message: Vec<u8> = xcm::VersionedXcm::<()>::V4(Xcm(vec![ClearOrigin])).encode();
+
+			precompiles()
+				.prepare_test(
+					Alice,
+					Precompile1,
+					PCall::transfer_assets_using_type_and_then_address_no_remote_reserve {
+						dest: Location::parent(),
+						assets:  vec![
+							(Address(pallet_balances_address), 500.into()),
+							(Address(asset_address), 500.into()),
+						]
+						.into(),
+						assets_transfer_type: TransferTypeHelper::DestinationReserve as u8,
+						remote_fees_id_index: 0u8,
+						fees_transfer_type: TransferTypeHelper::LocalReserve as u8,
+						custom_xcm_on_dest: message.into(),
+					},
+				)
+				.expect_cost(100001002)
+				.expect_no_logs()
+				.execute_returns(());
+		});
+}
+
+#[test]
+fn test_transfer_assets_using_type_and_then_address_remote_reserve() {
+	ExtBuilder::default()
+		.with_balances(vec![(Alice.into(), 1000)])
+		.with_xcm_assets(vec![XcmAssetDetails {
+			location: Location::parent(),
+			admin: Alice.into(),
+			asset_id: 5u16,
+			is_sufficient: true,
+			balance_to_mint: 10000u128,
+			min_balance: 1u128,
+		}])
+		.build()
+		.execute_with(|| {
+			// Foreign (relay) asset with prefix [255; 18] and assetId of 5u16.
+			let asset_address =
+				H160::from_str("0xfFfFFFffFffFFFFffFFfFfffFfFFFFFfffFF0005").unwrap();
+
+			let message: Vec<u8> = xcm::VersionedXcm::<()>::V4(Xcm(vec![ClearOrigin])).encode();
+
+			precompiles()
+				.prepare_test(
+					Alice,
+					Precompile1,
+					PCall::transfer_assets_using_type_and_then_address_remote_reserve {
+						dest: Location::parent(),
+						assets:  vec![
+							(Address(asset_address), 500.into()),
+						]
+						.into(),
+						remote_fees_id_index: 0u8,
+						custom_xcm_on_dest: message.into(),
+						remote_reserve: Location::parent()
+					},
+				)
+				.expect_cost(100001002)
+				.expect_no_logs()
+				.execute_returns(());
+		});
+}
