@@ -240,7 +240,6 @@ where
 		Ok(())
 	}
 
-	// First selector type: no reserves at all
 	#[precompile::public(
 		"transferAssetsUsingTypeAndThenLocation(\
 		(uint8,bytes[]),\
@@ -298,7 +297,6 @@ where
 		Ok(())
 	}
 
-	// Either assets reserve or fees reserve
 	#[precompile::public(
 		"transferAssetsUsingTypeAndThenLocation(\
 		(uint8,bytes[]),\
