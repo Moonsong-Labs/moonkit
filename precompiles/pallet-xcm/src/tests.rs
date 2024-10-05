@@ -556,6 +556,7 @@ fn test_transfer_assets_using_type_and_then_address_remote_reserve() {
 			let asset_address =
 				H160::from_str("0xfFfFFFffFffFFFFffFFfFfffFfFFFFFfffFF0005").unwrap();
 
+			let dest = Location::new(1, [Parachain(2)]);
 			let message: Vec<u8> = xcm::VersionedXcm::<()>::V4(Xcm(vec![ClearOrigin])).encode();
 
 			precompiles()
@@ -563,7 +564,7 @@ fn test_transfer_assets_using_type_and_then_address_remote_reserve() {
 					Alice,
 					Precompile1,
 					PCall::transfer_assets_using_type_and_then_address_remote_reserve {
-						dest: Location::parent(),
+						dest,
 						assets: vec![(Address(asset_address), 500.into())].into(),
 						remote_fees_id_index: 0u8,
 						custom_xcm_on_dest: message.into(),
