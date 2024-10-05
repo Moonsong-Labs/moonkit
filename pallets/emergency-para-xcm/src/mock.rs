@@ -19,6 +19,7 @@ use crate as pallet_emergency_para_xcm;
 use cumulus_pallet_parachain_system::ParachainSetCode;
 use cumulus_primitives_core::{
 	relay_chain::BlockNumber as RelayBlockNumber, AggregateMessageOrigin, ParaId,
+	XcmpMessageHandler,
 };
 use frame_support::parameter_types;
 use frame_support::traits::ConstU32;
