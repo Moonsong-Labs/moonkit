@@ -100,7 +100,7 @@ interface XCM {
     /// @param assetsTransferType The TransferType corresponding to assets being sent.
     /// @param remoteFeesIdIndex The index of the asset (inside assets array) to use as fees.
     /// @param feesTransferType The TransferType corresponding to the asset used as fees.
-    /// @param customXcmOnDest The XCM message to execute on destination chain.
+    /// @param customXcmOnDest The XCM message to execute on destination chain (SCALE encoded).
     function transferAssetsUsingTypeAndThenLocation(
         Location memory dest,
         AssetLocationInfo[] memory assets,
@@ -116,7 +116,7 @@ interface XCM {
     /// @param dest The destination chain.
     /// @param assets The combination (array) of assets to send in Location format.
     /// @param remoteFeesIdIndex The index of the asset (inside assets array) to use as fees.
-    /// @param customXcmOnDest The XCM message to execute on destination chain.
+    /// @param customXcmOnDest The XCM message to execute on destination chain (SCALE encoded).
     /// @param remoteReserve The remote reserve corresponding for assets and fees. They MUST
     /// share the same reserve.
     function transferAssetsUsingTypeAndThenLocation(
@@ -138,7 +138,7 @@ interface XCM {
     /// @param assetsTransferType The TransferType corresponding to assets being sent.
     /// @param remoteFeesIdIndex The index of the asset (inside assets array) to use as fees.
     /// @param feesTransferType The TransferType corresponding to the asset used as fees.
-    /// @param customXcmOnDest The XCM message to execute on destination chain.
+    /// @param customXcmOnDest The XCM message to execute on destination chain (SCALE encoded).
     function transferAssetsUsingTypeAndThenAddress(
         Location memory dest,
         AssetAddressInfo[] memory assets,
@@ -154,7 +154,7 @@ interface XCM {
     /// @param dest The destination chain.
     /// @param assets The combination (array) of assets to send in Address format.
     /// @param remoteFeesIdIndex The index of the asset (inside assets array) to use as fees.
-    /// @param customXcmOnDest The XCM message to execute on destination chain.
+    /// @param customXcmOnDest The XCM message to execute on destination chain (SCALE encoded).
     /// @param remoteReserve The remote reserve corresponding for assets and fees. They MUST
     /// share the same reserve.
     function transferAssetsUsingTypeAndThenAddress(
