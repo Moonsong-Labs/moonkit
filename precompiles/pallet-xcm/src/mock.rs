@@ -252,6 +252,7 @@ impl GasWeightMapping for MockGasWeightMapping {
 }
 
 impl pallet_evm::Config for Runtime {
+	type AccountProvider = pallet_evm::FrameSystemAccountProvider<Self>;
 	type FeeCalculator = ();
 	type GasWeightMapping = MockGasWeightMapping;
 	type WeightPerGas = WeightPerGas;
