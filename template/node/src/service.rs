@@ -241,7 +241,10 @@ where
 	let transaction_pool = params.transaction_pool.clone();
 	let import_queue_service = params.import_queue.service();
 
-	let net_config = FullNetworkConfiguration::<_, _, N>::new(&parachain_config.network, prometheus_registry.clone());
+	let net_config = FullNetworkConfiguration::<_, _, N>::new(
+		&parachain_config.network,
+		prometheus_registry.clone(),
+	);
 
 	let metrics = N::register_notification_metrics(
 		parachain_config
@@ -443,7 +446,8 @@ where
 	} = new_partial(&config, false)?;
 
 	let prometheus_registry = config.prometheus_registry().cloned();
-	let net_config = FullNetworkConfiguration::<_, _, N>::new(&config.network, prometheus_registry.clone());
+	let net_config =
+		FullNetworkConfiguration::<_, _, N>::new(&config.network, prometheus_registry.clone());
 
 	let metrics = N::register_notification_metrics(
 		config.prometheus_config.as_ref().map(|cfg| &cfg.registry),
