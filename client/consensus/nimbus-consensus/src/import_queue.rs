@@ -263,7 +263,7 @@ where
 	}
 
 	async fn import_block(
-		&mut self,
+		&self,
 		mut block_import_params: sc_consensus::BlockImportParams<Block>,
 	) -> Result<sc_consensus::ImportResult, Self::Error> {
 		// If we are in the parachain context, best block is determined by the relay chain

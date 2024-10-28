@@ -54,6 +54,7 @@ where
 	<Runtime as frame_system::Config>::RuntimeCall:
 		From<ProxyCall<Runtime>> + From<BalancesCall<Runtime>>,
 	<Runtime as pallet_balances::Config<()>>::Balance: TryFrom<U256> + Into<U256>,
+	<Runtime as pallet_evm::Config>::AddressMapping: AddressMapping<Runtime::AccountId>,
 {
 	fn is_allowed(_caller: H160, selector: Option<u32>) -> bool {
 		match selector {
@@ -86,6 +87,7 @@ where
 	<Runtime as frame_system::Config>::RuntimeCall:
 		From<ProxyCall<Runtime>> + From<BalancesCall<Runtime>>,
 	<Runtime as pallet_balances::Config<()>>::Balance: TryFrom<U256> + Into<U256>,
+	<Runtime as pallet_evm::Config>::AddressMapping: AddressMapping<Runtime::AccountId>,
 {
 	fn is_allowed(_caller: H160, selector: Option<u32>) -> bool {
 		match selector {
@@ -147,6 +149,7 @@ where
 	<Runtime as frame_system::Config>::RuntimeCall:
 		From<ProxyCall<Runtime>> + From<BalancesCall<Runtime>>,
 	<Runtime as pallet_balances::Config<()>>::Balance: TryFrom<U256> + Into<U256>,
+	<Runtime as pallet_evm::Config>::AddressMapping: AddressMapping<Runtime::AccountId>,
 {
 	/// Register a proxy account for the sender that is able to make calls on its behalf.
 	/// The dispatch origin for this call must be Signed.
@@ -180,7 +183,7 @@ where
 		handle.record_db_read::<Runtime>(
 			28 + (29 * (<Runtime as pallet_proxy::Config>::MaxProxies::get() as usize)) + 8,
 		)?;
-		if ProxyPallet::<Runtime>::proxies(&origin)
+		if ProxyPallet::<Runtime>::proxies(origin.clone())
 			.0
 			.iter()
 			.any(|pd| pd.delegate == delegate)

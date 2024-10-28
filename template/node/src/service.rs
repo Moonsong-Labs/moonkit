@@ -101,17 +101,18 @@ pub fn new_partial(
 		.transpose()?;
 
 	let heap_pages = config
+		.executor
 		.default_heap_pages
 		.map_or(DEFAULT_HEAP_ALLOC_STRATEGY, |h| HeapAllocStrategy::Static {
 			extra_pages: h as _,
 		});
 
 	let wasm = WasmExecutor::builder()
-		.with_execution_method(config.wasm_method)
+		.with_execution_method(config.executor.wasm_method)
 		.with_onchain_heap_alloc_strategy(heap_pages)
 		.with_offchain_heap_alloc_strategy(heap_pages)
-		.with_max_runtime_instances(config.max_runtime_instances)
-		.with_runtime_cache_size(config.runtime_cache_size)
+		.with_max_runtime_instances(config.executor.max_runtime_instances)
+		.with_runtime_cache_size(config.executor.runtime_cache_size)
 		.build();
 
 	let executor = ParachainExecutor::new_with_wasm_executor(wasm);
@@ -240,7 +241,7 @@ where
 	let transaction_pool = params.transaction_pool.clone();
 	let import_queue_service = params.import_queue.service();
 
-	let net_config = FullNetworkConfiguration::<_, _, N>::new(&parachain_config.network);
+	let net_config = FullNetworkConfiguration::<_, _, N>::new(&parachain_config.network, prometheus_registry.clone());
 
 	let metrics = N::register_notification_metrics(
 		parachain_config
@@ -259,7 +260,7 @@ where
 			block_announce_validator_builder: Some(Box::new(|_| {
 				Box::new(block_announce_validator)
 			})),
-			warp_sync_params: None,
+			warp_sync_config: None,
 			net_config,
 			block_relay: None,
 			metrics,
@@ -269,11 +270,10 @@ where
 		let client = client.clone();
 		let transaction_pool = transaction_pool.clone();
 
-		Box::new(move |deny_unsafe, _| {
+		Box::new(move |_| {
 			let deps = crate::rpc::FullDeps {
 				client: client.clone(),
 				pool: transaction_pool.clone(),
-				deny_unsafe,
 			};
 
 			crate::rpc::create_full(deps).map_err(Into::into)
@@ -442,7 +442,8 @@ where
 		other: (_, mut telemetry, _),
 	} = new_partial(&config, false)?;
 
-	let net_config = FullNetworkConfiguration::<_, _, N>::new(&config.network);
+	let prometheus_registry = config.prometheus_registry().cloned();
+	let net_config = FullNetworkConfiguration::<_, _, N>::new(&config.network, prometheus_registry.clone());
 
 	let metrics = N::register_notification_metrics(
 		config.prometheus_config.as_ref().map(|cfg| &cfg.registry),
@@ -456,7 +457,7 @@ where
 			spawn_handle: task_manager.spawn_handle(),
 			import_queue,
 			block_announce_validator_builder: None,
-			warp_sync_params: None,
+			warp_sync_config: None,
 			net_config,
 			block_relay: None,
 			metrics,
@@ -490,11 +491,10 @@ where
 		let client = client.clone();
 		let transaction_pool = transaction_pool.clone();
 
-		Box::new(move |deny_unsafe, _| {
+		Box::new(move |_| {
 			let deps = crate::rpc::FullDeps {
 				client: client.clone(),
 				pool: transaction_pool.clone(),
-				deny_unsafe,
 			};
 
 			crate::rpc::create_full(deps).map_err(Into::into)
