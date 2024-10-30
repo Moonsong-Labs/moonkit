@@ -54,16 +54,17 @@ xcm-builder = { workspace = true }
 [features]
 default = [ "std" ]
 std = [
+	"cumulus-primitives-core/std",
 	"frame-support/std",
 	"frame-system/std",
-	"pallet-balances/std",
 	"pallet-evm/std",
-	"pallet-timestamp/std",
+	"pallet-xcm/std",
 	"parity-scale-codec/std",
 	"precompile-utils/std",
 	"sp-core/std",
 	"sp-io/std",
 	"sp-std/std",
+	"xcm/std",
 	"xcm-builder/std",
 	"xcm-executor/std",
 	"xcm-primitives/std",
