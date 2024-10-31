@@ -1,12 +1,10 @@
-use std::net::SocketAddr;
-
 use cumulus_primitives_core::ParaId;
 use frame_benchmarking_cli::BenchmarkCmd;
 use log::info;
 use moonkit_template_runtime::Block;
 use sc_cli::{
 	ChainSpec, CliConfiguration, DefaultConfigurationValues, ImportParams, KeystoreParams,
-	NetworkParams, Result, SharedParams, SubstrateCli,
+	NetworkParams, Result, RpcEndpoint, SharedParams, SubstrateCli,
 };
 use sc_service::config::{BasePath, PrometheusConfig};
 use sp_runtime::traits::AccountIdConversion;
@@ -325,7 +323,7 @@ impl CliConfiguration<Self> for RelayChainCli {
 			.or_else(|| Some(self.base_path.clone().into())))
 	}
 
-	fn rpc_addr(&self, default_listen_port: u16) -> Result<Option<SocketAddr>> {
+	fn rpc_addr(&self, default_listen_port: u16) -> Result<Option<Vec<RpcEndpoint>>> {
 		self.base.base.rpc_addr(default_listen_port)
 	}
 
@@ -339,15 +337,9 @@ impl CliConfiguration<Self> for RelayChainCli {
 			.prometheus_config(default_listen_port, chain_spec)
 	}
 
-	fn init<F>(
-		&self,
-		_support_url: &String,
-		_impl_version: &String,
-		_logger_hook: F,
-		_config: &sc_service::Configuration,
-	) -> Result<()>
+	fn init<F>(&self, _support_url: &String, _impl_version: &String, _logger_hook: F) -> Result<()>
 	where
-		F: FnOnce(&mut sc_cli::LoggerBuilder, &sc_service::Configuration),
+		F: FnOnce(&mut sc_cli::LoggerBuilder),
 	{
 		unreachable!("PolkadotCli is never initialized; qed");
 	}

@@ -74,6 +74,7 @@ where
 		From<Option<Runtime::AccountId>>,
 	<Runtime as frame_system::Config>::RuntimeCall: From<pallet_xcm::Call<Runtime>>,
 	LocationMatcher: AccountIdToLocationMatcher<<Runtime as frame_system::Config>::AccountId>,
+	<Runtime as pallet_evm::Config>::AddressMapping: AddressMapping<Runtime::AccountId>,
 {
 	#[precompile::public(
 		"transferAssetsLocation(\

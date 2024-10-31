@@ -252,6 +252,7 @@ impl GasWeightMapping for MockGasWeightMapping {
 }
 
 impl pallet_evm::Config for Runtime {
+	type AccountProvider = pallet_evm::FrameSystemAccountProvider<Self>;
 	type FeeCalculator = ();
 	type GasWeightMapping = MockGasWeightMapping;
 	type WeightPerGas = WeightPerGas;
@@ -480,14 +481,9 @@ parameter_types! {
 
 	pub RelayLocation: Location = Location::parent();
 
-	pub RelayAsset: Asset = Asset {
-		fun: Fungible(10000000),
-		id: AssetId(Location::parent()),
-	};
-
 	pub LocalAsset: (AssetFilter, Location) = (All.into(), Location::here());
 	pub TrustedForeignAsset: (AssetFilter, Location) = (ForeignAsset::get().into(), ForeignReserveLocation::get());
-	pub RelayForeignAsset: (AssetFilter, Location) = (RelayAsset::get().into(), RelayLocation::get());
+	pub RelayForeignAsset: (AssetFilter, Location) = (All.into(), RelayLocation::get());
 }
 
 pub struct XcmConfig;
