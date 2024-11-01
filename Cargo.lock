@@ -3154,7 +3154,7 @@ dependencies = [
 [[package]]
 name = "fp-account"
 version = "1.0.0-dev"
-source = "git+https://github.com/moonbeam-foundation/frontier?branch=moonbeam-polkadot-stable2407#e4fcc126ef2a584ef6ea361d9ee828aabaeec239"
+source = "git+https://github.com/moonbeam-foundation/frontier?branch=elois-reclaim-proof-size#6912d6098a4d677b01e65a8f18a46110863f8d5e"
 dependencies = [
  "hex",
  "impl-serde",
@@ -3173,7 +3173,7 @@ dependencies = [
 [[package]]
 name = "fp-evm"
 version = "3.0.0-dev"
-source = "git+https://github.com/moonbeam-foundation/frontier?branch=moonbeam-polkadot-stable2407#e4fcc126ef2a584ef6ea361d9ee828aabaeec239"
+source = "git+https://github.com/moonbeam-foundation/frontier?branch=elois-reclaim-proof-size#6912d6098a4d677b01e65a8f18a46110863f8d5e"
 dependencies = [
  "environmental",
  "evm",
@@ -7051,8 +7051,9 @@ dependencies = [
 [[package]]
 name = "pallet-evm"
 version = "6.0.0-dev"
-source = "git+https://github.com/moonbeam-foundation/frontier?branch=moonbeam-polkadot-stable2407#e4fcc126ef2a584ef6ea361d9ee828aabaeec239"
+source = "git+https://github.com/moonbeam-foundation/frontier?branch=elois-reclaim-proof-size#6912d6098a4d677b01e65a8f18a46110863f8d5e"
 dependencies = [
+ "cumulus-primitives-storage-weight-reclaim",
  "environmental",
  "evm",
  "fp-account",
@@ -9672,7 +9673,7 @@ checksum = "5b40af805b3121feab8a3c29f04d8ad262fa8e0561883e7653e024ae4479e6de"
 [[package]]
 name = "precompile-utils"
 version = "0.1.0"
-source = "git+https://github.com/moonbeam-foundation/frontier?branch=moonbeam-polkadot-stable2407#e4fcc126ef2a584ef6ea361d9ee828aabaeec239"
+source = "git+https://github.com/moonbeam-foundation/frontier?branch=elois-reclaim-proof-size#6912d6098a4d677b01e65a8f18a46110863f8d5e"
 dependencies = [
  "derive_more",
  "environmental",
@@ -9701,7 +9702,7 @@ dependencies = [
 [[package]]
 name = "precompile-utils-macro"
 version = "0.1.0"
-source = "git+https://github.com/moonbeam-foundation/frontier?branch=moonbeam-polkadot-stable2407#e4fcc126ef2a584ef6ea361d9ee828aabaeec239"
+source = "git+https://github.com/moonbeam-foundation/frontier?branch=elois-reclaim-proof-size#6912d6098a4d677b01e65a8f18a46110863f8d5e"
 dependencies = [
  "case",
  "num_enum",
