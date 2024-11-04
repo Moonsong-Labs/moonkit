@@ -1008,7 +1008,7 @@ fn batch_not_callable_by_smart_contract() {
 		.execute_with(|| {
 			// "deploy" SC to alice address
 			let alice_h160: H160 = Alice.into();
-			pallet_evm::AccountCodes::<Runtime>::insert(alice_h160, vec![10u8]);
+			pallet_evm::Pallet::<Runtime>::create_account(alice_h160, vec![10u8]);
 
 			// succeeds if not called by SC, see `evm_batch_recursion_under_limit`
 			let input = PCall::batch_all {
@@ -1049,7 +1049,7 @@ fn batch_is_not_callable_by_dummy_code() {
 		.execute_with(|| {
 			// "deploy" dummy code to alice address
 			let alice_h160: H160 = Alice.into();
-			pallet_evm::AccountCodes::<Runtime>::insert(
+			pallet_evm::Pallet::<Runtime>::create_account(
 				alice_h160,
 				[0x60, 0x00, 0x60, 0x00, 0xfd].to_vec(),
 			);
