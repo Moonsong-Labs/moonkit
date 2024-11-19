@@ -28,13 +28,14 @@ use nimbus_primitives::NimbusId;
 use parity_scale_codec::Decode;
 
 /// Create a funded user.
-fn create_funded_user<T: Config>() -> T::AccountId {
+fn create_funded_user<T: Config + pallet_balances::Config<Balance = BalanceOf<T>>>() -> T::AccountId
+{
 	let user = account("account id", 0u32, 0u32);
-	T::DepositCurrency::make_free_balance_be(
-		&user,
-		<<T as Config>::DepositAmount as Get<BalanceOf<T>>>::get(),
-	);
-	T::DepositCurrency::issue(<<T as Config>::DepositAmount as Get<BalanceOf<T>>>::get());
+	let existential_deposit = <T as pallet_balances::Config>::ExistentialDeposit::get();
+	let amount = existential_deposit + <<T as Config>::DepositAmount as Get<BalanceOf<T>>>::get();
+
+	T::DepositCurrency::make_free_balance_be(&user, amount);
+	T::DepositCurrency::issue(amount);
 	user
 }
 
@@ -45,6 +46,8 @@ pub fn nimbus_id(seed: u8) -> NimbusId {
 }
 
 benchmarks! {
+	where_clause { where T: pallet_balances::Config<Balance = BalanceOf<T>> }
+
 	add_association {
 		let caller = create_funded_user::<T>();
 		let id = nimbus_id(1u8);

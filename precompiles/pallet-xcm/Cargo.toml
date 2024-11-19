@@ -10,16 +10,18 @@ log = { workspace = true }
 num_enum = { workspace = true }
 
 # Moonbeam
-precompile-utils = { workspace = true }
+precompile-utils = { workspace = true, features = ["codec-xcm"] }
 xcm-primitives = { workspace = true }
 
 # Substrate
 frame-support = { workspace = true }
 frame-system = { workspace = true }
+scale-info = { workspace = true }
 sp-core = { workspace = true }
 sp-runtime = { workspace = true }
 sp-std = { workspace = true }
 sp-weights = { workspace = true }
+parity-scale-codec = { workspace = true, features = [ "derive" ] }
 
 # Frontier
 evm = { workspace = true, features = [ "with-codec" ] }
@@ -28,6 +30,7 @@ pallet-evm = { workspace = true, features = [ "forbid-evm-reentrancy" ] }
 
 # Polkadot
 xcm = { workspace = true }
+xcm-executor = { workspace = true }
 pallet-xcm = { workspace = true }
 
 # Cumulus
@@ -61,7 +64,9 @@ std = [
 	"frame-system/std",
 	"pallet-evm/std",
     "pallet-xcm/std",
+	"parity-scale-codec/std",
 	"precompile-utils/std",
+	"scale-info/std",
 	"sp-core/std",
 	"sp-std/std",
 	"xcm/std",

@@ -19,6 +19,7 @@ use crate as pallet_emergency_para_xcm;
 use cumulus_pallet_parachain_system::ParachainSetCode;
 use cumulus_primitives_core::{
 	relay_chain::BlockNumber as RelayBlockNumber, AggregateMessageOrigin, ParaId,
+	XcmpMessageHandler,
 };
 use frame_support::parameter_types;
 use frame_support::traits::ConstU32;
@@ -89,7 +90,7 @@ impl cumulus_pallet_parachain_system::Config for Test {
 	type SelfParaId = ParachainId;
 	type OnSystemEvent = ();
 	type OutboundXcmpMessageSource = ();
-	type XcmpMessageHandler = EmergencyParaXcm;
+	type XcmpMessageHandler = JustConsumeAllWeight;
 	type ReservedXcmpWeight = ();
 	type DmpQueue = frame_support::traits::EnqueueWithOrigin<MessageQueue, RelayOrigin>;
 	type ReservedDmpWeight = ();
@@ -124,7 +125,6 @@ impl Config for Test {
 	type RuntimeEvent = RuntimeEvent;
 	type CheckAssociatedRelayNumber = cumulus_pallet_parachain_system::AnyRelayNumber;
 	type QueuePausedQuery = ();
-	type XcmpMessageHandler = JustConsumeAllWeight;
 	type PausedThreshold = ConstU32<PAUSED_THRESHOLD>;
 	type FastAuthorizeUpgradeOrigin = EnsureRoot<AccountId>;
 	type PausedToNormalOrigin = EnsureRoot<AccountId>;

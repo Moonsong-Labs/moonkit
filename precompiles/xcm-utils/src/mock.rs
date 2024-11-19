@@ -31,11 +31,10 @@ use sp_core::{H256, U256};
 use sp_io;
 use sp_runtime::traits::{BlakeTwo256, IdentityLookup, TryConvert};
 use sp_runtime::BuildStorage;
-use xcm::latest::Error as XcmError;
-use xcm_builder::AllowUnpaidExecutionFrom;
-use xcm_builder::FixedWeightBounds;
-use xcm_builder::IsConcrete;
-use xcm_builder::SovereignSignedViaLocation;
+use xcm::latest::{Error as XcmError, WildAsset::All};
+use xcm_builder::{
+	AllowUnpaidExecutionFrom, Case, FixedWeightBounds, IsConcrete, SovereignSignedViaLocation,
+};
 use xcm_executor::{
 	traits::{ConvertLocation, TransactAsset, WeightTrader},
 	AssetsInHolding,
@@ -269,6 +268,7 @@ impl GasWeightMapping for MockGasWeightMapping {
 }
 
 impl pallet_evm::Config for Runtime {
+	type AccountProvider = pallet_evm::FrameSystemAccountProvider<Self>;
 	type FeeCalculator = ();
 	type GasWeightMapping = MockGasWeightMapping;
 	type WeightPerGas = WeightPerGas;
@@ -403,6 +403,9 @@ parameter_types! {
 		[GlobalConsensus(RelayNetwork::get()), Parachain(ParachainId::get().into()).into()].into();
 
 	pub const MaxAssetsIntoHolding: u32 = 64;
+
+	pub RelayLocation: Location = Location::parent();
+	pub RelayForeignAsset: (AssetFilter, Location) = (All.into(), RelayLocation::get());
 }
 
 pub type XcmOriginToTransactDispatchOrigin = (
@@ -417,7 +420,7 @@ impl xcm_executor::Config for XcmConfig {
 	type XcmSender = TestSendXcm;
 	type AssetTransactor = DummyAssetTransactor;
 	type OriginConverter = XcmOriginToTransactDispatchOrigin;
-	type IsReserve = ();
+	type IsReserve = Case<RelayForeignAsset>;
 	type IsTeleporter = ();
 	type UniversalLocation = UniversalLocation;
 	type Barrier = Barrier;
@@ -441,6 +444,7 @@ impl xcm_executor::Config for XcmConfig {
 	type HrmpNewChannelOpenRequestHandler = ();
 	type HrmpChannelAcceptedHandler = ();
 	type HrmpChannelClosingHandler = ();
+	type XcmRecorder = PolkadotXcm;
 }
 
 pub(crate) struct ExtBuilder {

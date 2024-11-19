@@ -14,32 +14,54 @@
 // You should have received a copy of the GNU General Public License
 // along with Moonkit.  If not, see <http://www.gnu.org/licenses/>.
 
-//! Testing utilities.
-
-use super::*;
-
-use frame_support::{construct_runtime, parameter_types, traits::Everything, weights::Weight};
-use pallet_evm::{EnsureAddressNever, EnsureAddressRoot};
-use precompile_utils::{precompile_set::*, testing::MockAccount};
-use sp_core::{ConstU32, H256, U256};
+//! Test utilities
+use crate::{ProxyPrecompile, ProxyPrecompileCall};
+use frame_support::{
+	construct_runtime, parameter_types,
+	traits::{Everything, InstanceFilter},
+	weights::Weight,
+};
+use pallet_evm::{EnsureAddressNever, EnsureAddressOrigin, SubstrateBlockHashMapping};
+use precompile_utils::{
+	precompile_set::{
+		AddressU64, CallableByContract, CallableByPrecompile, OnlyFrom, PrecompileAt,
+		PrecompileSetBuilder, RevertPrecompile, SubcallWithMaxNesting,
+	},
+	testing::MockAccount,
+};
+use scale_info::TypeInfo;
+use sp_core::{ConstU32, H160, H256, U256};
+use sp_io;
+use sp_runtime::traits::{BlakeTwo256, IdentityLookup};
 use sp_runtime::{
-	traits::{BlakeTwo256, IdentityLookup},
+	codec::{Decode, Encode, MaxEncodedLen},
 	BuildStorage,
 };
 
 pub type AccountId = MockAccount;
 pub type Balance = u128;
-pub type Block = frame_system::mocking::MockBlockU32<Runtime>;
+
+type Block = frame_system::mocking::MockBlockU32<Runtime>;
+
+construct_runtime!(
+	pub enum Runtime	{
+		System: frame_system,
+		Balances: pallet_balances,
+		Evm: pallet_evm,
+		Timestamp: pallet_timestamp,
+		Proxy: pallet_proxy,
+	}
+);
 
 parameter_types! {
 	pub const BlockHashCount: u32 = 250;
 	pub const SS58Prefix: u8 = 42;
 }
-
 impl frame_system::Config for Runtime {
 	type BaseCallFilter = Everything;
 	type DbWeight = ();
 	type RuntimeOrigin = RuntimeOrigin;
+	type RuntimeTask = RuntimeTask;
 	type Nonce = u64;
 	type Block = Block;
 	type RuntimeCall = RuntimeCall;
@@ -60,29 +82,15 @@ impl frame_system::Config for Runtime {
 	type SS58Prefix = SS58Prefix;
 	type OnSetCode = ();
 	type MaxConsumers = frame_support::traits::ConstU32<16>;
-	type RuntimeTask = ();
 	type SingleBlockMigrations = ();
 	type MultiBlockMigrator = ();
 	type PreInherents = ();
 	type PostInherents = ();
 	type PostTransactions = ();
 }
-
-parameter_types! {
-	pub const MinimumPeriod: u64 = 5;
-}
-
-impl pallet_timestamp::Config for Runtime {
-	type Moment = u64;
-	type OnTimestampSet = ();
-	type MinimumPeriod = MinimumPeriod;
-	type WeightInfo = ();
-}
-
 parameter_types! {
 	pub const ExistentialDeposit: u128 = 0;
 }
-
 impl pallet_balances::Config for Runtime {
 	type MaxReserves = ();
 	type ReserveIdentifier = ();
@@ -101,10 +109,41 @@ impl pallet_balances::Config for Runtime {
 
 pub type Precompiles<R> = PrecompileSetBuilder<
 	R,
-	(PrecompileAt<AddressU64<1>, Erc20BalancesPrecompile<R, NativeErc20Metadata>>,),
+	(
+		PrecompileAt<
+			AddressU64<1>,
+			ProxyPrecompile<R>,
+			(
+				SubcallWithMaxNesting<1>,
+				CallableByContract<crate::OnlyIsProxyAndProxy<R>>,
+				// Batch is the only precompile allowed to call Proxy.
+				CallableByPrecompile<OnlyFrom<AddressU64<2>>>,
+			),
+		>,
+		RevertPrecompile<AddressU64<2>>,
+	),
 >;
 
-pub type PCall = Erc20BalancesPrecompileCall<Runtime, NativeErc20Metadata, ()>;
+pub type PCall = ProxyPrecompileCall<Runtime>;
+
+pub struct EnsureAddressAlways;
+impl<OuterOrigin> EnsureAddressOrigin<OuterOrigin> for EnsureAddressAlways {
+	type Success = ();
+
+	fn try_address_origin(
+		_address: &H160,
+		_origin: OuterOrigin,
+	) -> Result<Self::Success, OuterOrigin> {
+		Ok(())
+	}
+
+	fn ensure_address_origin(
+		_address: &H160,
+		_origin: OuterOrigin,
+	) -> Result<Self::Success, sp_runtime::traits::BadOrigin> {
+		Ok(())
+	}
+}
 
 const MAX_POV_SIZE: u64 = 5 * 1024 * 1024;
 
@@ -117,13 +156,12 @@ parameter_types! {
 		block_gas_limit.saturating_div(MAX_POV_SIZE)
 	};
 }
-
 impl pallet_evm::Config for Runtime {
 	type AccountProvider = pallet_evm::FrameSystemAccountProvider<Self>;
 	type FeeCalculator = ();
 	type GasWeightMapping = pallet_evm::FixedGasWeightMapping<Self>;
 	type WeightPerGas = WeightPerGas;
-	type CallOrigin = EnsureAddressRoot<AccountId>;
+	type CallOrigin = EnsureAddressAlways;
 	type WithdrawOrigin = EnsureAddressNever<AccountId>;
 	type AddressMapping = AccountId;
 	type Currency = Balances;
@@ -134,7 +172,7 @@ impl pallet_evm::Config for Runtime {
 	type ChainId = ();
 	type OnChargeTransaction = ();
 	type BlockGasLimit = BlockGasLimit;
-	type BlockHashMapping = pallet_evm::SubstrateBlockHashMapping<Self>;
+	type BlockHashMapping = SubstrateBlockHashMapping<Self>;
 	type FindAuthor = ();
 	type OnCreate = ();
 	type GasLimitPovSizeRatio = GasLimitPovSizeRatio;
@@ -143,44 +181,81 @@ impl pallet_evm::Config for Runtime {
 	type WeightInfo = pallet_evm::weights::SubstrateWeight<Runtime>;
 }
 
-// Configure a mock runtime to test the pallet.
-construct_runtime!(
-	pub enum Runtime	{
-		System: frame_system,
-		Balances: pallet_balances,
-		Evm: pallet_evm,
-		Timestamp: pallet_timestamp,
-	}
-);
+parameter_types! {
+	pub const MinimumPeriod: u64 = 5;
+}
+impl pallet_timestamp::Config for Runtime {
+	type Moment = u64;
+	type OnTimestampSet = ();
+	type MinimumPeriod = MinimumPeriod;
+	type WeightInfo = ();
+}
 
-/// ERC20 metadata for the native token.
-pub struct NativeErc20Metadata;
+#[repr(u8)]
+#[derive(
+	Debug, Eq, PartialEq, Ord, PartialOrd, Decode, MaxEncodedLen, Encode, Clone, Copy, TypeInfo,
+)]
+pub enum ProxyType {
+	Any = 0,
+	Something = 1,
+	Nothing = 2,
+}
 
-impl Erc20Metadata for NativeErc20Metadata {
-	/// Returns the name of the token.
-	fn name() -> &'static str {
-		"Mock token"
-	}
-
-	/// Returns the symbol of the token.
-	fn symbol() -> &'static str {
-		"MOCK"
-	}
-
-	/// Returns the decimals places of the token.
-	fn decimals() -> u8 {
-		18
-	}
-
-	/// Must return `true` only if it represents the main native currency of
-	/// the network. It must be the currency used in `pallet_evm`.
-	fn is_native_currency() -> bool {
-		true
+impl std::default::Default for ProxyType {
+	fn default() -> Self {
+		ProxyType::Any
 	}
 }
 
+impl crate::EvmProxyCallFilter for ProxyType {
+	fn is_evm_proxy_call_allowed(
+		&self,
+		_call: &crate::EvmSubCall,
+		_recipient_has_code: bool,
+		_gas: u64,
+	) -> precompile_utils::EvmResult<bool> {
+		Ok(match self {
+			Self::Any => true,
+			Self::Something => true,
+			Self::Nothing => false,
+		})
+	}
+}
+
+impl InstanceFilter<RuntimeCall> for ProxyType {
+	fn filter(&self, _: &RuntimeCall) -> bool {
+		true
+	}
+
+	fn is_superset(&self, o: &Self) -> bool {
+		(*self as u8) > (*o as u8)
+	}
+}
+
+parameter_types! {
+	pub const ProxyDepositBase: u64 = 100;
+	pub const ProxyDepositFactor: u64 = 1;
+	pub const MaxProxies: u32 = 5;
+	pub const MaxPending: u32 = 5;
+}
+impl pallet_proxy::Config for Runtime {
+	type RuntimeEvent = RuntimeEvent;
+	type RuntimeCall = RuntimeCall;
+	type Currency = Balances;
+	type ProxyType = ProxyType;
+	type ProxyDepositBase = ProxyDepositBase;
+	type ProxyDepositFactor = ProxyDepositFactor;
+	type MaxProxies = MaxProxies;
+	type WeightInfo = ();
+	type MaxPending = MaxPending;
+	type CallHasher = BlakeTwo256;
+	type AnnouncementDepositBase = ();
+	type AnnouncementDepositFactor = ();
+}
+
+/// Build test externalities, prepopulated with data for testing democracy precompiles
 pub(crate) struct ExtBuilder {
-	// endowed accounts with balances
+	/// Endowed accounts with balances
 	balances: Vec<(AccountId, Balance)>,
 }
 
@@ -191,24 +266,28 @@ impl Default for ExtBuilder {
 }
 
 impl ExtBuilder {
+	/// Fund some accounts before starting the test
 	pub(crate) fn with_balances(mut self, balances: Vec<(AccountId, Balance)>) -> Self {
 		self.balances = balances;
 		self
 	}
 
+	/// Build the test externalities for use in tests
 	pub(crate) fn build(self) -> sp_io::TestExternalities {
 		let mut t = frame_system::GenesisConfig::<Runtime>::default()
 			.build_storage()
 			.expect("Frame system builds valid default genesis config");
 
 		pallet_balances::GenesisConfig::<Runtime> {
-			balances: self.balances,
+			balances: self.balances.clone(),
 		}
 		.assimilate_storage(&mut t)
 		.expect("Pallet balances storage can be assimilated");
 
 		let mut ext = sp_io::TestExternalities::new(t);
-		ext.execute_with(|| System::set_block_number(1));
+		ext.execute_with(|| {
+			System::set_block_number(1);
+		});
 		ext
 	}
 }
@@ -218,4 +297,38 @@ pub(crate) fn events() -> Vec<RuntimeEvent> {
 		.into_iter()
 		.map(|r| r.event)
 		.collect::<Vec<_>>()
+}
+
+/// Panics if an event is not found in the system log of events
+#[macro_export]
+macro_rules! assert_event_emitted {
+	($event:expr) => {
+		match &$event.into() {
+			e => {
+				assert!(
+					$crate::mock::events().iter().find(|x| *x == e).is_some(),
+					"Event {:#?} was not found in events: \n {:#?}",
+					e,
+					$crate::mock::events()
+				);
+			}
+		}
+	};
+}
+
+/// Panics if an event is found in the system log of events
+#[macro_export]
+macro_rules! assert_event_not_emitted {
+	($event:expr) => {
+		match &$event {
+			e => {
+				assert!(
+					$crate::mock::events().iter().find(|x| *x == e).is_none(),
+					"Event {:?} was found in events: \n {:?}",
+					e,
+					$crate::mock::events()
+				);
+			}
+		}
+	};
 }

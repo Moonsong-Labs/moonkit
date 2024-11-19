@@ -33,7 +33,7 @@
 //! In particular:
 //! * `CheckAssociatedRelayNumber` is used to check the relay chain block diff and
 //!    enter emergency mode when appropriate.
-//! * `QueuePausedQuery` and `XcmpMessageHandler` are used to pause XCM execution
+//! * `QueuePausedQuery` is used to pause XCM execution
 
 #![allow(non_camel_case_types)]
 #![cfg_attr(not(feature = "std"), no_std)]
@@ -52,7 +52,7 @@ use frame_support::traits::{ProcessMessage, QueuePausedQuery};
 use frame_system::pallet_prelude::*;
 use frame_system::{RawOrigin, WeightInfo};
 use parity_scale_codec::{Decode, Encode};
-use polkadot_parachain_primitives::primitives::{Id, RelayChainBlockNumber, XcmpMessageHandler};
+use polkadot_parachain_primitives::primitives::RelayChainBlockNumber;
 
 #[derive(Decode, Default, Encode, PartialEq, TypeInfo)]
 /// XCM Execution mode
@@ -77,10 +77,8 @@ pub mod pallet {
 	#[pallet::config]
 	pub trait Config:
 		frame_system::Config
-		+ cumulus_pallet_parachain_system::Config<
-			CheckAssociatedRelayNumber = Pallet<Self>,
-			XcmpMessageHandler = Pallet<Self>,
-		> + pallet_message_queue::Config<QueuePausedQuery = Pallet<Self>>
+		+ cumulus_pallet_parachain_system::Config<CheckAssociatedRelayNumber = Pallet<Self>>
+		+ pallet_message_queue::Config<QueuePausedQuery = Pallet<Self>>
 	{
 		/// Overarching event type
 		type RuntimeEvent: From<Event> + IsType<<Self as frame_system::Config>::RuntimeEvent>;
@@ -92,9 +90,6 @@ pub mod pallet {
 		/// Used to check wether message queue is paused when `XcmMode` is `Normal`. It should be
 		/// what would be passed to `pallet_message_queue` if this pallet was not being used.
 		type QueuePausedQuery: QueuePausedQuery<<Self::MessageProcessor as ProcessMessage>::Origin>;
-
-		/// The XCMP handler to be used in normal operating mode
-		type XcmpMessageHandler: XcmpMessageHandler;
 
 		/// Maximum number of relay block to skip before trigering the Paused mode.
 		type PausedThreshold: Get<RelayChainBlockNumber>;
@@ -179,20 +174,6 @@ impl<T: Config> CheckAssociatedRelayNumber for Pallet<T> {
 		if (previous != 0) && (current > (previous + T::PausedThreshold::get())) {
 			Mode::<T>::set(XcmMode::Paused);
 			<Pallet<T>>::deposit_event(Event::EnteredPausedXcmMode);
-		}
-	}
-}
-
-impl<T: Config> XcmpMessageHandler for Pallet<T> {
-	fn handle_xcmp_messages<'a, I: Iterator<Item = (Id, RelayChainBlockNumber, &'a [u8])>>(
-		iter: I,
-		limit: Weight,
-	) -> Weight {
-		match Mode::<T>::get() {
-			XcmMode::Normal => <T as Config>::XcmpMessageHandler::handle_xcmp_messages(iter, limit),
-			XcmMode::Paused => {
-				<T as Config>::XcmpMessageHandler::handle_xcmp_messages(iter, Weight::zero())
-			}
 		}
 	}
 }

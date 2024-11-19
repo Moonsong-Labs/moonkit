@@ -34,6 +34,7 @@ use futures::FutureExt;
 use sc_client_api::Backend;
 use sc_consensus::ImportQueue;
 use sc_consensus_manual_seal::{run_instant_seal, InstantSealParams};
+#[allow(deprecated)]
 use sc_executor::{
 	HeapAllocStrategy, NativeElseWasmExecutor, WasmExecutor, DEFAULT_HEAP_ALLOC_STRATEGY,
 };
@@ -41,6 +42,7 @@ use sc_network::{config::FullNetworkConfiguration, NetworkBlock};
 use sc_service::{Configuration, PartialComponents, TFullBackend, TFullClient, TaskManager};
 use sc_telemetry::{Telemetry, TelemetryHandle, TelemetryWorker, TelemetryWorkerHandle};
 use sp_keystore::KeystorePtr;
+use sp_runtime::traits::Block as BlockT;
 use substrate_prometheus_endpoint::Registry;
 /// Native executor instance.
 pub struct TemplateRuntimeExecutor;
@@ -56,6 +58,7 @@ impl sc_executor::NativeExecutionDispatch for TemplateRuntimeExecutor {
 		moonkit_template_runtime::native_version()
 	}
 }
+#[allow(deprecated)]
 type ParachainExecutor = NativeElseWasmExecutor<TemplateRuntimeExecutor>;
 
 type ParachainClient = TFullClient<Block, RuntimeApi, ParachainExecutor>;
@@ -97,17 +100,18 @@ pub fn new_partial(
 		.transpose()?;
 
 	let heap_pages = config
+		.executor
 		.default_heap_pages
 		.map_or(DEFAULT_HEAP_ALLOC_STRATEGY, |h| HeapAllocStrategy::Static {
 			extra_pages: h as _,
 		});
 
 	let wasm = WasmExecutor::builder()
-		.with_execution_method(config.wasm_method)
+		.with_execution_method(config.executor.wasm_method)
 		.with_onchain_heap_alloc_strategy(heap_pages)
 		.with_offchain_heap_alloc_strategy(heap_pages)
-		.with_max_runtime_instances(config.max_runtime_instances)
-		.with_runtime_cache_size(config.runtime_cache_size)
+		.with_max_runtime_instances(config.executor.max_runtime_instances)
+		.with_runtime_cache_size(config.executor.runtime_cache_size)
 		.build();
 
 	let executor = ParachainExecutor::new_with_wasm_executor(wasm);
@@ -199,12 +203,15 @@ async fn build_relay_chain_interface(
 ///
 /// This is the actual implementation that is abstract over the executor and the runtime api.
 #[sc_tracing::logging::prefix_logs_with("Parachain")]
-async fn start_node_impl(
+async fn start_node_impl<N>(
 	parachain_config: Configuration,
 	polkadot_config: Configuration,
 	collator_options: CollatorOptions,
 	para_id: ParaId,
-) -> sc_service::error::Result<(TaskManager, Arc<ParachainClient>)> {
+) -> sc_service::error::Result<(TaskManager, Arc<ParachainClient>)>
+where
+	N: sc_network::NetworkBackend<Block, <Block as BlockT>::Hash>,
+{
 	let parachain_config = prepare_node_config(parachain_config);
 
 	let params = new_partial(&parachain_config)?;
@@ -232,7 +239,17 @@ async fn start_node_impl(
 	let transaction_pool = params.transaction_pool.clone();
 	let import_queue_service = params.import_queue.service();
 
-	let net_config = FullNetworkConfiguration::new(&parachain_config.network);
+	let net_config = FullNetworkConfiguration::<_, _, N>::new(
+		&parachain_config.network,
+		prometheus_registry.clone(),
+	);
+
+	let metrics = N::register_notification_metrics(
+		parachain_config
+			.prometheus_config
+			.as_ref()
+			.map(|cfg| &cfg.registry),
+	);
 
 	let (network, system_rpc_tx, tx_handler_controller, start_network, sync_service) =
 		sc_service::build_network(sc_service::BuildNetworkParams {
@@ -244,20 +261,20 @@ async fn start_node_impl(
 			block_announce_validator_builder: Some(Box::new(|_| {
 				Box::new(block_announce_validator)
 			})),
-			warp_sync_params: None,
+			warp_sync_config: None,
 			net_config,
 			block_relay: None,
+			metrics,
 		})?;
 
 	let rpc_extensions_builder = {
 		let client = client.clone();
 		let transaction_pool = transaction_pool.clone();
 
-		Box::new(move |deny_unsafe, _| {
+		Box::new(move |_| {
 			let deps = crate::rpc::FullDeps {
 				client: client.clone(),
 				pool: transaction_pool.clone(),
-				deny_unsafe,
 			};
 
 			crate::rpc::create_full(deps).map_err(Into::into)
@@ -390,6 +407,7 @@ fn start_consensus(
 }
 
 /// Start a parachain node.
+#[allow(deprecated)]
 pub async fn start_parachain_node(
 	parachain_config: Configuration,
 	polkadot_config: Configuration,
@@ -399,12 +417,21 @@ pub async fn start_parachain_node(
 	TaskManager,
 	Arc<TFullClient<Block, RuntimeApi, NativeElseWasmExecutor<TemplateRuntimeExecutor>>>,
 )> {
-	start_node_impl(parachain_config, polkadot_config, collator_options, para_id).await
+	start_node_impl::<sc_network::NetworkWorker<_, _>>(
+		parachain_config,
+		polkadot_config,
+		collator_options,
+		para_id,
+	)
+	.await
 }
 
 use sc_transaction_pool_api::OffchainTransactionPoolFactory;
 /// Builds a new service for a full client.
-pub fn start_instant_seal_node(config: Configuration) -> Result<TaskManager, sc_service::Error> {
+pub fn start_instant_seal_node<N>(config: Configuration) -> Result<TaskManager, sc_service::Error>
+where
+	N: sc_network::NetworkBackend<Block, <Block as BlockT>::Hash>,
+{
 	let sc_service::PartialComponents {
 		client,
 		backend,
@@ -416,7 +443,13 @@ pub fn start_instant_seal_node(config: Configuration) -> Result<TaskManager, sc_
 		other: (_, mut telemetry, _),
 	} = new_partial(&config)?;
 
-	let net_config = FullNetworkConfiguration::new(&config.network);
+	let prometheus_registry = config.prometheus_registry().cloned();
+	let net_config =
+		FullNetworkConfiguration::<_, _, N>::new(&config.network, prometheus_registry.clone());
+
+	let metrics = N::register_notification_metrics(
+		config.prometheus_config.as_ref().map(|cfg| &cfg.registry),
+	);
 
 	let (network, system_rpc_tx, tx_handler_controller, network_starter, sync_service) =
 		sc_service::build_network(sc_service::BuildNetworkParams {
@@ -426,9 +459,10 @@ pub fn start_instant_seal_node(config: Configuration) -> Result<TaskManager, sc_
 			spawn_handle: task_manager.spawn_handle(),
 			import_queue,
 			block_announce_validator_builder: None,
-			warp_sync_params: None,
+			warp_sync_config: None,
 			net_config,
 			block_relay: None,
+			metrics,
 		})?;
 
 	if config.offchain_worker.enabled {
@@ -442,7 +476,7 @@ pub fn start_instant_seal_node(config: Configuration) -> Result<TaskManager, sc_
 				transaction_pool: Some(OffchainTransactionPoolFactory::new(
 					transaction_pool.clone(),
 				)),
-				network_provider: network.clone(),
+				network_provider: Arc::new(network.clone()),
 				is_validator: config.role.is_authority(),
 				enable_http_requests: false,
 				custom_extensions: move |_| vec![],
@@ -459,16 +493,18 @@ pub fn start_instant_seal_node(config: Configuration) -> Result<TaskManager, sc_
 		let client = client.clone();
 		let transaction_pool = transaction_pool.clone();
 
-		Box::new(move |deny_unsafe, _| {
+		Box::new(move |_| {
 			let deps = crate::rpc::FullDeps {
 				client: client.clone(),
 				pool: transaction_pool.clone(),
-				deny_unsafe,
 			};
 
 			crate::rpc::create_full(deps).map_err(Into::into)
 		})
 	};
+	let para_id = crate::chain_spec::Extensions::try_get(&*config.chain_spec)
+		.map(|e| e.para_id)
+		.ok_or_else(|| "Could not find parachain ID in chain-spec.")?;
 
 	sc_service::spawn_tasks(sc_service::SpawnTasksParams {
 		network,
@@ -527,18 +563,15 @@ pub fn start_instant_seal_node(config: Configuration) -> Result<TaskManager, sc_
 					let mocked_parachain = MockValidationDataInherentDataProvider {
 						additional_key_values: None,
 						current_para_block: 0,
+						current_para_block_head: None,
 						relay_offset: 0,
 						relay_blocks_per_para_block: 0,
 						para_blocks_per_relay_epoch: 0,
 						relay_randomness_config: (),
-						xcm_config: MockXcmConfig::new(
-							&*client_for_xcm,
-							block,
-							Default::default(),
-							Default::default(),
-						),
+						xcm_config: MockXcmConfig::new(&*client_for_xcm, block, Default::default()),
 						raw_downward_messages: downward_xcm_receiver.drain().collect(),
 						raw_horizontal_messages: hrmp_xcm_receiver.drain().collect(),
+						para_id: para_id.into(),
 					};
 
 					Ok((time, mocked_parachain))
