@@ -145,9 +145,7 @@ pub fn new_partial(
 		client.clone(),
 	);
 
-	// `new_with_delayed_best_block` is now necessary: https://github.com/paritytech/polkadot-sdk/pull/2001
-	let block_import =
-		ParachainBlockImport::new_with_delayed_best_block(client.clone(), backend.clone());
+	let block_import = ParachainBlockImport::new(client.clone(), backend.clone());
 
 	let import_queue = nimbus_consensus::import_queue(
 		client.clone(),
