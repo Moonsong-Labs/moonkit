@@ -200,7 +200,10 @@ pub fn import_queue<Client, Block: BlockT, I, CIDP>(
 	create_inherent_data_providers: CIDP,
 	spawner: &impl sp_core::traits::SpawnEssentialNamed,
 	registry: Option<&substrate_prometheus_endpoint::Registry>,
-	parachain: bool,
+	// Deprecated: Using a custom fork strategy for parachain at block
+	// import is no longer necessary.
+	// Context: https://github.com/paritytech/polkadot-sdk/issues/4333
+	use_custom_fork_strategy: Option<bool>,
 ) -> ClientResult<BasicQueue<Block>>
 where
 	I: BlockImport<Block, Error = ConsensusError> + Send + Sync + 'static,
@@ -214,9 +217,19 @@ where
 		_marker: PhantomData,
 	};
 
+	let block_import_for_queue: sc_consensus::BoxBlockImport<Block> = match use_custom_fork_strategy
+	{
+		Some(parachain_context) =>
+		{
+			#[allow(deprecated)]
+			Box::new(NimbusBlockImport::new(block_import, parachain_context))
+		}
+		None => Box::new(block_import),
+	};
+
 	Ok(BasicQueue::new(
 		verifier,
-		Box::new(NimbusBlockImport::new(block_import, parachain)),
+		block_import_for_queue,
 		None,
 		spawner,
 		registry,
@@ -232,11 +245,15 @@ where
 ///
 /// There may be additional nimbus-specific logic here in the future, but for now it is
 /// only the conditional parachain logic
+#[deprecated(
+	note = "Aura was using a custom fork strategy for parachain at block import, this is no longer necessary."
+)]
 pub struct NimbusBlockImport<I> {
 	inner: I,
 	parachain_context: bool,
 }
 
+#[allow(deprecated)]
 impl<I> NimbusBlockImport<I> {
 	/// Create a new instance.
 	pub fn new(inner: I, parachain_context: bool) -> Self {
@@ -247,6 +264,7 @@ impl<I> NimbusBlockImport<I> {
 	}
 }
 
+#[allow(deprecated)]
 #[async_trait::async_trait]
 impl<Block, I> BlockImport<Block> for NimbusBlockImport<I>
 where
