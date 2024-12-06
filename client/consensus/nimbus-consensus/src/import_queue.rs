@@ -200,10 +200,7 @@ pub fn import_queue<Client, Block: BlockT, I, CIDP>(
 	create_inherent_data_providers: CIDP,
 	spawner: &impl sp_core::traits::SpawnEssentialNamed,
 	registry: Option<&substrate_prometheus_endpoint::Registry>,
-	// Deprecated: Using a custom fork strategy for parachain at block
-	// import is no longer necessary.
-	// Context: https://github.com/paritytech/polkadot-sdk/issues/4333
-	use_custom_fork_strategy: Option<bool>,
+	with_delayed_best_block: bool,
 ) -> ClientResult<BasicQueue<Block>>
 where
 	I: BlockImport<Block, Error = ConsensusError> + Send + Sync + 'static,
@@ -217,15 +214,10 @@ where
 		_marker: PhantomData,
 	};
 
-	let block_import_for_queue: sc_consensus::BoxBlockImport<Block> = match use_custom_fork_strategy
-	{
-		Some(parachain_context) =>
-		{
-			#[allow(deprecated)]
-			Box::new(NimbusBlockImport::new(block_import, parachain_context))
-		}
-		None => Box::new(block_import),
-	};
+	let block_import_for_queue = Box::new(NimbusBlockImport::new(
+		block_import,
+		with_delayed_best_block,
+	));
 
 	Ok(BasicQueue::new(
 		verifier,
@@ -245,21 +237,17 @@ where
 ///
 /// There may be additional nimbus-specific logic here in the future, but for now it is
 /// only the conditional parachain logic
-#[deprecated(
-	note = "Aura was using a custom fork strategy for parachain at block import, this is no longer necessary."
-)]
 pub struct NimbusBlockImport<I> {
 	inner: I,
-	parachain_context: bool,
+	with_delayed_best_block: bool,
 }
 
-#[allow(deprecated)]
 impl<I> NimbusBlockImport<I> {
 	/// Create a new instance.
-	pub fn new(inner: I, parachain_context: bool) -> Self {
+	pub fn new(inner: I, with_delayed_best_block: bool) -> Self {
 		Self {
 			inner,
-			parachain_context,
+			with_delayed_best_block,
 		}
 	}
 }
@@ -284,9 +272,9 @@ where
 		&mut self,
 		mut block_import_params: sc_consensus::BlockImportParams<Block>,
 	) -> Result<sc_consensus::ImportResult, Self::Error> {
-		// If we are in the parachain context, best block is determined by the relay chain
-		// except during initial sync
-		if self.parachain_context {
+		// Best block is determined by the relay chain, or if we are doing the initial sync
+		// we import all blocks as new best.
+		if self.with_delayed_best_block {
 			block_import_params.fork_choice = Some(sc_consensus::ForkChoiceStrategy::Custom(
 				block_import_params.origin == sp_consensus::BlockOrigin::NetworkInitialSync,
 			));

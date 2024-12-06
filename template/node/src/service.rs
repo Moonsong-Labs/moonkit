@@ -156,7 +156,7 @@ pub fn new_partial(
 		},
 		&task_manager.spawn_essential_handle(),
 		config.prometheus_registry().clone(),
-		None,
+		false,
 	)?;
 
 	Ok(PartialComponents {
