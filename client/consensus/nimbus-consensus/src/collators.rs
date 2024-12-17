@@ -118,6 +118,8 @@ where
 	block_import_params.state_action = sc_consensus::StateAction::ApplyChanges(
 		sc_consensus::StorageChanges::Changes(storage_changes),
 	);
+	// The collator should follow the longest chain
+	block_import_params.fork_choice = Some(sc_consensus::ForkChoiceStrategy::LongestChain);
 
 	let post_hash = block_import_params.post_hash();
 
