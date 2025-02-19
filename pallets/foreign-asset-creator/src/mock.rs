@@ -48,6 +48,7 @@ parameter_types! {
 	pub const BlockHashCount: u32 = 250;
 }
 impl frame_system::Config for Test {
+	type ExtensionsWeightInfo = ();
 	type BaseCallFilter = Everything;
 	type BlockWeights = ();
 	type BlockLength = ();
@@ -97,6 +98,7 @@ impl pallet_balances::Config for Test {
 	type RuntimeFreezeReason = ();
 	type FreezeIdentifier = ();
 	type MaxFreezes = ();
+	type DoneSlashHandler = ();
 }
 
 parameter_types! {

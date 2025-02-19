@@ -49,6 +49,7 @@ parameter_types! {
 pub type AccountId = u64;
 
 impl frame_system::Config for Test {
+	type ExtensionsWeightInfo = ();
 	type BaseCallFilter = frame_support::traits::Everything;
 	type BlockWeights = ();
 	type BlockLength = ();
@@ -97,6 +98,7 @@ impl cumulus_pallet_parachain_system::Config for Test {
 	type CheckAssociatedRelayNumber = EmergencyParaXcm;
 	type WeightInfo = ();
 	type ConsensusHook = cumulus_pallet_parachain_system::ExpectParentIncluded;
+	type SelectCore = cumulus_pallet_parachain_system::DefaultCoreSelector<Test>;
 }
 
 parameter_types! {

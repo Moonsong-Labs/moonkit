@@ -13,14 +13,16 @@
 
 // You should have received a copy of the GNU General Public License
 // along with Moonkit.  If not, see <http://www.gnu.org/licenses/>.
+extern crate alloc;
+
+use alloc::string::String;
 use parity_scale_codec::{Decode, Encode};
 use sp_inherents::{Error, InherentData, InherentIdentifier, IsFatalError};
-use sp_runtime::RuntimeString;
 
 #[derive(Encode)]
 #[cfg_attr(feature = "std", derive(Debug, Decode))]
 pub enum InherentError {
-	Other(RuntimeString),
+	Other(String),
 }
 
 impl IsFatalError for InherentError {

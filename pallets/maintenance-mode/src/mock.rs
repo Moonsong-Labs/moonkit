@@ -51,6 +51,7 @@ parameter_types! {
 	pub const SS58Prefix: u8 = 42;
 }
 impl frame_system::Config for Test {
+	type ExtensionsWeightInfo = ();
 	type BaseCallFilter = MaintenanceMode;
 	type DbWeight = ();
 	type RuntimeOrigin = RuntimeOrigin;

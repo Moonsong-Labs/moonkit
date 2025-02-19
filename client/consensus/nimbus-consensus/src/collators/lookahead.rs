@@ -23,7 +23,7 @@ use cumulus_client_consensus_common::{
 };
 use cumulus_client_consensus_proposer::ProposerInterface;
 use cumulus_primitives_core::{
-	relay_chain::{AsyncBackingParams, CoreIndex, CoreState, Hash as PHash},
+	relay_chain::{vstaging::CoreState, AsyncBackingParams, CoreIndex, Hash as PHash},
 	CollectCollationInfo, ParaId,
 };
 use cumulus_relay_chain_interface::{OverseerHandle, RelayChainInterface};

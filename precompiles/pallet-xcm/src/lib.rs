@@ -100,14 +100,14 @@ where
 		let (assets_to_send, _) = Self::get_assets_to_send_and_remote_fees(assets, None)?;
 
 		let call = pallet_xcm::Call::<Runtime>::transfer_assets {
-			dest: Box::new(VersionedLocation::V4(dest)),
-			beneficiary: Box::new(VersionedLocation::V4(beneficiary)),
-			assets: Box::new(VersionedAssets::V4(assets_to_send)),
+			dest: Box::new(VersionedLocation::from(dest)),
+			beneficiary: Box::new(VersionedLocation::from(beneficiary)),
+			assets: Box::new(VersionedAssets::from(assets_to_send)),
 			fee_asset_item,
 			weight_limit: WeightLimit::Unlimited,
 		};
 
-		RuntimeHelper::<Runtime>::try_dispatch(handle, Some(origin).into(), call)?;
+		RuntimeHelper::<Runtime>::try_dispatch(handle, Some(origin).into(), call, 0)?;
 		Ok(())
 	}
 
@@ -143,14 +143,14 @@ where
 		let beneficiary = XcmLocalBeneficiary20Generator::generate(beneficiary.0 .0);
 
 		let call = pallet_xcm::Call::<Runtime>::transfer_assets {
-			dest: Box::new(VersionedLocation::V4(dest)),
-			beneficiary: Box::new(VersionedLocation::V4(beneficiary)),
-			assets: Box::new(VersionedAssets::V4(assets_to_send.into())),
+			dest: Box::new(VersionedLocation::from(dest)),
+			beneficiary: Box::new(VersionedLocation::from(beneficiary)),
+			assets: Box::new(VersionedAssets::from(assets_to_send)),
 			fee_asset_item,
 			weight_limit: WeightLimit::Unlimited,
 		};
 
-		RuntimeHelper::<Runtime>::try_dispatch(handle, Some(origin).into(), call)?;
+		RuntimeHelper::<Runtime>::try_dispatch(handle, Some(origin).into(), call, 0)?;
 
 		Ok(())
 	}
@@ -187,14 +187,14 @@ where
 		let beneficiary = XcmLocalBeneficiary32Generator::generate(beneficiary.0);
 
 		let call = pallet_xcm::Call::<Runtime>::transfer_assets {
-			dest: Box::new(VersionedLocation::V4(dest)),
-			beneficiary: Box::new(VersionedLocation::V4(beneficiary)),
-			assets: Box::new(VersionedAssets::V4(assets_to_send.into())),
+			dest: Box::new(VersionedLocation::from(dest)),
+			beneficiary: Box::new(VersionedLocation::from(beneficiary)),
+			assets: Box::new(VersionedAssets::from(assets_to_send)),
 			fee_asset_item,
 			weight_limit: WeightLimit::Unlimited,
 		};
 
-		RuntimeHelper::<Runtime>::try_dispatch(handle, Some(origin).into(), call)?;
+		RuntimeHelper::<Runtime>::try_dispatch(handle, Some(origin).into(), call, 0)?;
 
 		Ok(())
 	}
@@ -229,14 +229,14 @@ where
 		let beneficiary = XcmLocalBeneficiary32Generator::generate(beneficiary.0);
 
 		let call = pallet_xcm::Call::<Runtime>::transfer_assets {
-			dest: Box::new(VersionedLocation::V4(dest)),
-			beneficiary: Box::new(VersionedLocation::V4(beneficiary)),
-			assets: Box::new(VersionedAssets::V4(assets_to_send.into())),
+			dest: Box::new(VersionedLocation::from(dest)),
+			beneficiary: Box::new(VersionedLocation::from(beneficiary)),
+			assets: Box::new(VersionedAssets::from(assets_to_send)),
 			fee_asset_item,
 			weight_limit: WeightLimit::Unlimited,
 		};
 
-		RuntimeHelper::<Runtime>::try_dispatch(handle, Some(origin).into(), call)?;
+		RuntimeHelper::<Runtime>::try_dispatch(handle, Some(origin).into(), call, 0)?;
 
 		Ok(())
 	}
@@ -284,16 +284,16 @@ where
 		.map_err(|_| RevertReason::custom("Failed decoding custom XCM message"))?;
 
 		let call = pallet_xcm::Call::<Runtime>::transfer_assets_using_type_and_then {
-			dest: Box::new(VersionedLocation::V4(dest)),
-			assets: Box::new(VersionedAssets::V4(assets_to_send)),
+			dest: Box::new(VersionedLocation::from(dest)),
+			assets: Box::new(VersionedAssets::from(assets_to_send)),
 			assets_transfer_type: Box::new(assets_transfer_type),
-			remote_fees_id: Box::new(VersionedAssetId::V4(remote_fees_id)),
+			remote_fees_id: Box::new(VersionedAssetId::from(remote_fees_id)),
 			fees_transfer_type: Box::new(fees_transfer_type),
 			custom_xcm_on_dest: Box::new(custom_xcm_on_dest),
 			weight_limit: WeightLimit::Unlimited,
 		};
 
-		RuntimeHelper::<Runtime>::try_dispatch(handle, Some(origin).into(), call)?;
+		RuntimeHelper::<Runtime>::try_dispatch(handle, Some(origin).into(), call, 0)?;
 
 		Ok(())
 	}
@@ -336,19 +336,19 @@ where
 		.map_err(|_| RevertReason::custom("Failed decoding custom XCM message"))?;
 
 		let asset_and_fees_transfer_type =
-			TransferType::RemoteReserve(VersionedLocation::V4(remote_reserve));
+			TransferType::RemoteReserve(VersionedLocation::from(remote_reserve));
 
 		let call = pallet_xcm::Call::<Runtime>::transfer_assets_using_type_and_then {
-			dest: Box::new(VersionedLocation::V4(dest)),
-			assets: Box::new(VersionedAssets::V4(assets_to_send)),
+			dest: Box::new(VersionedLocation::from(dest)),
+			assets: Box::new(VersionedAssets::from(assets_to_send)),
 			assets_transfer_type: Box::new(asset_and_fees_transfer_type.clone()),
-			remote_fees_id: Box::new(VersionedAssetId::V4(remote_fees_id)),
+			remote_fees_id: Box::new(VersionedAssetId::from(remote_fees_id)),
 			fees_transfer_type: Box::new(asset_and_fees_transfer_type),
 			custom_xcm_on_dest: Box::new(custom_xcm_on_dest),
 			weight_limit: WeightLimit::Unlimited,
 		};
 
-		RuntimeHelper::<Runtime>::try_dispatch(handle, Some(origin).into(), call)?;
+		RuntimeHelper::<Runtime>::try_dispatch(handle, Some(origin).into(), call, 0)?;
 
 		Ok(())
 	}
@@ -401,16 +401,16 @@ where
 		.map_err(|_| RevertReason::custom("Failed decoding custom XCM message"))?;
 
 		let call = pallet_xcm::Call::<Runtime>::transfer_assets_using_type_and_then {
-			dest: Box::new(VersionedLocation::V4(dest)),
-			assets: Box::new(VersionedAssets::V4(assets_to_send.into())),
+			dest: Box::new(VersionedLocation::from(dest)),
+			assets: Box::new(VersionedAssets::from(assets_to_send)),
 			assets_transfer_type: Box::new(assets_transfer_type),
-			remote_fees_id: Box::new(VersionedAssetId::V4(remote_fees_id)),
+			remote_fees_id: Box::new(VersionedAssetId::from(remote_fees_id)),
 			fees_transfer_type: Box::new(fees_transfer_type),
 			custom_xcm_on_dest: Box::new(custom_xcm_on_dest),
 			weight_limit: WeightLimit::Unlimited,
 		};
 
-		RuntimeHelper::<Runtime>::try_dispatch(handle, Some(origin).into(), call)?;
+		RuntimeHelper::<Runtime>::try_dispatch(handle, Some(origin).into(), call, 0)?;
 
 		Ok(())
 	}
@@ -458,19 +458,19 @@ where
 		.map_err(|_| RevertReason::custom("Failed decoding custom XCM message"))?;
 
 		let asset_and_fees_transfer_type =
-			TransferType::RemoteReserve(VersionedLocation::V4(remote_reserve));
+			TransferType::RemoteReserve(VersionedLocation::from(remote_reserve));
 
 		let call = pallet_xcm::Call::<Runtime>::transfer_assets_using_type_and_then {
-			dest: Box::new(VersionedLocation::V4(dest)),
-			assets: Box::new(VersionedAssets::V4(assets_to_send.into())),
+			dest: Box::new(VersionedLocation::from(dest)),
+			assets: Box::new(VersionedAssets::from(assets_to_send)),
 			assets_transfer_type: Box::new(asset_and_fees_transfer_type.clone()),
-			remote_fees_id: Box::new(VersionedAssetId::V4(remote_fees_id)),
+			remote_fees_id: Box::new(VersionedAssetId::from(remote_fees_id)),
 			fees_transfer_type: Box::new(asset_and_fees_transfer_type),
 			custom_xcm_on_dest: Box::new(custom_xcm_on_dest),
 			weight_limit: WeightLimit::Unlimited,
 		};
 
-		RuntimeHelper::<Runtime>::try_dispatch(handle, Some(origin).into(), call)?;
+		RuntimeHelper::<Runtime>::try_dispatch(handle, Some(origin).into(), call, 0)?;
 
 		Ok(())
 	}

@@ -20,13 +20,16 @@
 
 #![cfg_attr(not(feature = "std"), no_std)]
 
+extern crate alloc;
+
+use alloc::string::String;
 use frame_support::traits::{FindAuthor, Get};
 use nimbus_primitives::{
 	AccountLookup, CanAuthor, NimbusId, SlotBeacon, INHERENT_IDENTIFIER, NIMBUS_ENGINE_ID,
 };
 use parity_scale_codec::{Decode, Encode, FullCodec};
 use sp_inherents::{InherentIdentifier, IsFatalError};
-use sp_runtime::{ConsensusEngineId, RuntimeString};
+use sp_runtime::ConsensusEngineId;
 
 pub use crate::weights::WeightInfo;
 pub use exec::BlockExecutor;
@@ -160,11 +163,9 @@ pub mod pallet {
 		fn is_inherent_required(_: &InherentData) -> Result<Option<Self::Error>, Self::Error> {
 			// Return Ok(Some(_)) unconditionally because this inherent is required in every block
 			// If it is not found, throw an AuthorInherentRequired error.
-			Ok(Some(InherentError::Other(
-				sp_runtime::RuntimeString::Borrowed(
-					"Inherent required to manually initiate author validation",
-				),
-			)))
+			Ok(Some(InherentError::Other(String::from(
+				"Inherent required to manually initiate author validation",
+			))))
 		}
 
 		// Regardless of whether the client is still supplying the author id,
@@ -232,7 +233,7 @@ pub mod pallet {
 #[derive(Encode)]
 #[cfg_attr(feature = "std", derive(Debug, Decode))]
 pub enum InherentError {
-	Other(RuntimeString),
+	Other(String),
 }
 
 impl IsFatalError for InherentError {
