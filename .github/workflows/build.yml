@@ -202,12 +202,12 @@ jobs:
       - name: Cargo build
         uses: ./.github/workflow-templates/cargo-build
       - name: Upload runtimes
-        uses: actions/upload-artifact@v3.1.2
+        uses: actions/upload-artifact@v4.6.0
         with:
           name: runtimes
           path: runtimes
       - name: Upload binary
-        uses: actions/upload-artifact@v3.1.2
+        uses: actions/upload-artifact@v4.6.0
         with:
           name: moonkit-template
           path: build/moonkit-template
@@ -228,7 +228,7 @@ jobs:
         with:
           features: "try-runtime,runtime-benchmarks"
       - name: Upload binary
-        uses: actions/upload-artifact@v3.1.2
+        uses: actions/upload-artifact@v4.6.0
         with:
           name: moonkit-template-features
           path: build/moonkit-template
