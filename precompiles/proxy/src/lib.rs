@@ -32,6 +32,10 @@ use sp_runtime::{
 };
 use sp_std::marker::PhantomData;
 
+/// System account size in bytes = Pallet_Name_Hash (16) + Storage_name_hash (16) +
+/// Blake2_128Concat (16) + AccountId (20) + AccountInfo (4 + 12 + AccountData (4* 16)) = 148
+pub const SYSTEM_ACCOUNT_SIZE: u64 = 148;
+
 #[cfg(test)]
 mod mock;
 #[cfg(test)]
@@ -425,7 +429,7 @@ where
 						balance
 					},
 				},
-				0,
+                SYSTEM_ACCOUNT_SIZE
 			)?;
 
 			Some(Transfer {

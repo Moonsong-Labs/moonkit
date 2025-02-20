@@ -834,7 +834,7 @@ fn permit_valid() {
 			let value: U256 = 500u16.into();
 			let deadline: U256 = 0u8.into(); // todo: proper timestamp
 
-			let permit = Eip2612::<Runtime, NativeErc20Metadata>::generate_permit(
+			let permit = Eip2612::<Runtime, NativeErc20Metadata, ()>::generate_permit(
 				Precompile1.into(),
 				owner,
 				spender,
@@ -921,7 +921,7 @@ fn permit_invalid_nonce() {
 			let value: U256 = 500u16.into();
 			let deadline: U256 = 0u8.into();
 
-			let permit = Eip2612::<Runtime, NativeErc20Metadata>::generate_permit(
+			let permit = Eip2612::<Runtime, NativeErc20Metadata, ()>::generate_permit(
 				Precompile1.into(),
 				owner,
 				spender,
@@ -1068,7 +1068,7 @@ fn permit_invalid_deadline() {
 			let value: U256 = 500u16.into();
 			let deadline: U256 = 5u8.into(); // deadline < timestamp => expired
 
-			let permit = Eip2612::<Runtime, NativeErc20Metadata>::generate_permit(
+			let permit = Eip2612::<Runtime, NativeErc20Metadata, ()>::generate_permit(
 				Precompile1.into(),
 				owner,
 				spender,
