@@ -400,6 +400,7 @@ fn start_consensus(
 		collator_service,
 		force_authoring,
 		additional_digests_provider: (),
+		additional_relay_keys: vec![],
 		collator_key,
 		//authoring_duration: Duration::from_millis(500),
 	};
