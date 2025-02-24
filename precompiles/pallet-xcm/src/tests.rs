@@ -430,7 +430,7 @@ fn test_transfer_assets_using_type_and_then_location_no_remote_reserve() {
 			let destination_asset_location = Location::new(1, [Parachain(2), PalletInstance(3)]);
 			let origin_asset_location = Location::new(0, [PalletInstance(1)]);
 
-			let message: Vec<u8> = xcm::VersionedXcm::<()>::V4(Xcm(vec![ClearOrigin])).encode();
+			let message: Vec<u8> = xcm::VersionedXcm::<()>::from(Xcm(vec![ClearOrigin])).encode();
 
 			precompiles()
 				.prepare_test(
@@ -472,7 +472,7 @@ fn test_transfer_assets_using_type_and_then_location_remote_reserve() {
 			let dest = Location::new(1, [Parachain(2)]);
 			let relay_asset_location = Location::parent();
 
-			let message: Vec<u8> = xcm::VersionedXcm::<()>::V4(Xcm(vec![ClearOrigin])).encode();
+			let message: Vec<u8> = xcm::VersionedXcm::<()>::from(Xcm(vec![ClearOrigin])).encode();
 
 			precompiles()
 				.prepare_test(
@@ -513,7 +513,7 @@ fn test_transfer_assets_using_type_and_then_address_no_remote_reserve() {
 			// We send the native currency of the origin chain and pay fees with it.
 			let pallet_balances_address = H160::from_low_u64_be(2050);
 
-			let message: Vec<u8> = xcm::VersionedXcm::<()>::V4(Xcm(vec![ClearOrigin])).encode();
+			let message: Vec<u8> = xcm::VersionedXcm::<()>::from(Xcm(vec![ClearOrigin])).encode();
 
 			precompiles()
 				.prepare_test(
@@ -557,7 +557,7 @@ fn test_transfer_assets_using_type_and_then_address_remote_reserve() {
 				H160::from_str("0xfFfFFFffFffFFFFffFFfFfffFfFFFFFfffFF0005").unwrap();
 
 			let dest = Location::new(1, [Parachain(2)]);
-			let message: Vec<u8> = xcm::VersionedXcm::<()>::V4(Xcm(vec![ClearOrigin])).encode();
+			let message: Vec<u8> = xcm::VersionedXcm::<()>::from(Xcm(vec![ClearOrigin])).encode();
 
 			precompiles()
 				.prepare_test(

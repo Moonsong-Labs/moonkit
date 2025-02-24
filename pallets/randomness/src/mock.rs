@@ -51,6 +51,7 @@ parameter_types! {
 	pub const SS58Prefix: u8 = 42;
 }
 impl frame_system::Config for Test {
+	type ExtensionsWeightInfo = ();
 	type BaseCallFilter = Everything;
 	type DbWeight = ();
 	type RuntimeOrigin = RuntimeOrigin;
@@ -99,6 +100,7 @@ impl pallet_balances::Config for Test {
 	type FreezeIdentifier = ();
 	type MaxFreezes = ();
 	type RuntimeFreezeReason = ();
+	type DoneSlashHandler = ();
 }
 
 parameter_types! {

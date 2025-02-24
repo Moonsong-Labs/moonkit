@@ -51,6 +51,7 @@ parameter_types! {
 }
 
 impl frame_system::Config for Runtime {
+	type ExtensionsWeightInfo = ();
 	type BaseCallFilter = Everything;
 	type DbWeight = ();
 	type RuntimeOrigin = RuntimeOrigin;
@@ -98,6 +99,7 @@ impl pallet_balances::Config for Runtime {
 	type FreezeIdentifier = ();
 	type MaxFreezes = ();
 	type RuntimeFreezeReason = ();
+	type DoneSlashHandler = ();
 }
 
 mock_account!(CallPermit, |_| MockAccount::from_u64(1));
@@ -139,7 +141,7 @@ impl pallet_evm::Config for Runtime {
 	type FindAuthor = ();
 	type OnCreate = ();
 	type GasLimitPovSizeRatio = ();
-	type SuicideQuickClearLimit = SuicideQuickClearLimit;
+	type GasLimitStorageGrowthRatio = ();
 	type Timestamp = Timestamp;
 	type WeightInfo = pallet_evm::weights::SubstrateWeight<Runtime>;
 }

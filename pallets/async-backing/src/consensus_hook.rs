@@ -29,9 +29,6 @@ use frame_support::pallet_prelude::*;
 use sp_consensus_slots::Slot;
 use sp_std::{marker::PhantomData, num::NonZeroU32};
 
-#[cfg(tests)]
-type RelayChainStateProof = crate::mock::FakeRelayChainStateProof;
-
 /// A consensus hook for a fixed block processing velocity and unincluded segment capacity.
 ///
 /// Relay chain slot duration must be provided in milliseconds.

@@ -18,7 +18,7 @@
 use super::*;
 use frame_support::{
 	construct_runtime, parameter_types,
-	traits::{ConstU32, EnsureOrigin, Everything, Nothing, OriginTrait, PalletInfo as _},
+	traits::{ConstU32, Everything, Nothing, OriginTrait, PalletInfo as _},
 	weights::{RuntimeDbWeight, Weight},
 };
 use pallet_evm::{EnsureAddressNever, EnsureAddressRoot, GasWeightMapping};
@@ -120,20 +120,6 @@ pub type LocationToAccountId = (
 	xcm_builder::AccountKey20Aliases<LocalNetworkId, AccountId>,
 );
 
-pub struct AccountIdToLocation;
-impl sp_runtime::traits::Convert<AccountId, Location> for AccountIdToLocation {
-	fn convert(account: AccountId) -> Location {
-		let as_h160: H160 = account.into();
-		Location::new(
-			0,
-			[AccountKey20 {
-				network: None,
-				key: as_h160.as_fixed_bytes().clone(),
-			}],
-		)
-	}
-}
-
 parameter_types! {
 	pub ParachainId: cumulus_primitives_core::ParaId = 100.into();
 	pub LocalNetworkId: Option<NetworkId> = None;
@@ -149,6 +135,7 @@ parameter_types! {
 }
 
 impl frame_system::Config for Runtime {
+	type ExtensionsWeightInfo = ();
 	type BaseCallFilter = Everything;
 	type DbWeight = MockDbWeight;
 	type RuntimeOrigin = RuntimeOrigin;
@@ -196,6 +183,7 @@ impl pallet_balances::Config for Runtime {
 	type FreezeIdentifier = ();
 	type MaxFreezes = ();
 	type RuntimeFreezeReason = ();
+	type DoneSlashHandler = ();
 }
 
 parameter_types! {
@@ -235,13 +223,13 @@ pub type Precompiles<R> = PrecompileSetBuilder<
 	(
 		PrecompileAt<
 			AddressU64<1>,
-			XcmUtilsPrecompile<R, XcmConfig>,
-			CallableByContract<AllExceptXcmExecute<R, XcmConfig>>,
+			XcmUtilsPrecompile<R, XcmConfig, ()>,
+			CallableByContract<AllExceptXcmExecute<R, XcmConfig, ()>>,
 		>,
 	),
 >;
 
-pub type PCall = XcmUtilsPrecompileCall<Runtime, XcmConfig>;
+pub type PCall = XcmUtilsPrecompileCall<Runtime, XcmConfig, ()>;
 
 const MAX_POV_SIZE: u64 = 5 * 1024 * 1024;
 
@@ -287,7 +275,7 @@ impl pallet_evm::Config for Runtime {
 	type FindAuthor = ();
 	type OnCreate = ();
 	type GasLimitPovSizeRatio = GasLimitPovSizeRatio;
-	type SuicideQuickClearLimit = ConstU32<0>;
+	type GasLimitStorageGrowthRatio = ();
 	type Timestamp = Timestamp;
 	type WeightInfo = pallet_evm::weights::SubstrateWeight<Runtime>;
 }
@@ -302,20 +290,6 @@ impl pallet_timestamp::Config for Runtime {
 	type WeightInfo = ();
 }
 pub type Barrier = AllowUnpaidExecutionFrom<Everything>;
-
-pub struct ConvertOriginToLocal;
-impl<Origin: OriginTrait> EnsureOrigin<Origin> for ConvertOriginToLocal {
-	type Success = Location;
-
-	fn try_origin(_: Origin) -> Result<Location, Origin> {
-		Ok(Location::here())
-	}
-
-	#[cfg(feature = "runtime-benchmarks")]
-	fn try_successful_origin() -> Result<Origin, ()> {
-		Ok(Origin::root())
-	}
-}
 
 use sp_std::cell::RefCell;
 use xcm::latest::opaque;

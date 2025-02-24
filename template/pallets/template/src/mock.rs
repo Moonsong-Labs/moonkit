@@ -24,6 +24,7 @@ parameter_types! {
 }
 
 impl system::Config for Test {
+	type ExtensionsWeightInfo = ();
 	type BaseCallFilter = Everything;
 	type BlockWeights = ();
 	type BlockLength = ();

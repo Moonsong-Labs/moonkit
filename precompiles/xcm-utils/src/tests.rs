@@ -86,7 +86,7 @@ fn test_get_account_sibling() {
 #[test]
 fn test_weight_message() {
 	ExtBuilder::default().build().execute_with(|| {
-		let message: Vec<u8> = xcm::VersionedXcm::<()>::V4(Xcm(vec![ClearOrigin])).encode();
+		let message: Vec<u8> = xcm::VersionedXcm::<()>::from(Xcm(vec![ClearOrigin])).encode();
 
 		let input = PCall::weight_message {
 			message: message.into(),
@@ -118,7 +118,7 @@ fn test_get_units_per_second() {
 #[test]
 fn test_executor_clear_origin() {
 	ExtBuilder::default().build().execute_with(|| {
-		let xcm_to_execute = VersionedXcm::<()>::V4(Xcm(vec![ClearOrigin])).encode();
+		let xcm_to_execute = VersionedXcm::<()>::from(Xcm(vec![ClearOrigin])).encode();
 
 		let input = PCall::xcm_execute {
 			message: xcm_to_execute.into(),
@@ -137,7 +137,7 @@ fn test_executor_clear_origin() {
 fn test_executor_send() {
 	ExtBuilder::default().build().execute_with(|| {
 		let withdrawn_asset: Asset = (Location::parent(), 1u128).into();
-		let xcm_to_execute = VersionedXcm::<()>::V4(Xcm(vec![
+		let xcm_to_execute = VersionedXcm::<()>::from(Xcm(vec![
 			WithdrawAsset(vec![withdrawn_asset].into()),
 			InitiateReserveWithdraw {
 				assets: AssetFilter::Wild(All),
@@ -184,9 +184,9 @@ fn test_executor_transact() {
 			}
 			.encode();
 			encoded.append(&mut call_bytes);
-			let xcm_to_execute = VersionedXcm::<()>::V4(Xcm(vec![Transact {
+			let xcm_to_execute = VersionedXcm::<()>::from(Xcm(vec![Transact {
 				origin_kind: OriginKind::SovereignAccount,
-				require_weight_at_most: Weight::from_parts(1_000_000_000u64, 5206u64),
+				fallback_max_weight: Some(Weight::from_parts(1_000_000_000u64, 5206u64)),
 				call: encoded.into(),
 			}]))
 			.encode();
@@ -198,7 +198,7 @@ fn test_executor_transact() {
 
 			precompiles()
 				.prepare_test(CryptoAlith, Precompile1, input)
-				.expect_cost(1100001001)
+				.expect_cost(276106001)
 				.expect_no_logs()
 				.execute_returns(());
 
@@ -211,7 +211,7 @@ fn test_executor_transact() {
 #[test]
 fn test_send_clear_origin() {
 	ExtBuilder::default().build().execute_with(|| {
-		let xcm_to_send = VersionedXcm::<()>::V4(Xcm(vec![ClearOrigin])).encode();
+		let xcm_to_send = VersionedXcm::<()>::from(Xcm(vec![ClearOrigin])).encode();
 
 		let input = PCall::xcm_send {
 			dest: Location::parent(),
@@ -242,9 +242,9 @@ fn execute_fails_if_called_by_smart_contract() {
 		.build()
 		.execute_with(|| {
 			// Set code to Alice address as it if was a smart contract.
-			pallet_evm::AccountCodes::<Runtime>::insert(H160::from(Alice), vec![10u8]);
+			pallet_evm::Pallet::<Runtime>::create_account(H160::from(Alice), vec![10u8]);
 
-			let xcm_to_execute = VersionedXcm::<()>::V4(Xcm(vec![ClearOrigin])).encode();
+			let xcm_to_execute = VersionedXcm::<()>::from(Xcm(vec![ClearOrigin])).encode();
 
 			let input = PCall::xcm_execute {
 				message: xcm_to_execute.into(),
