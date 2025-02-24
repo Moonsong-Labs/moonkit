@@ -175,6 +175,16 @@ where
 				.await
 			);
 
+			let allowed_pov_size = if cfg!(feature = "full-pov-size") {
+				validation_data.max_pov_size
+			} else {
+				// Set the block limit to 50% of the maximum PoV size.
+				//
+				// TODO: If we got benchmarking that includes the proof size,
+				// we should be able to use the maximum pov size.
+				validation_data.max_pov_size / 2
+			} as usize;
+
 			let maybe_collation = try_request!(
 				super::collate::<ADP, Block, BI, CS, Proposer>(
 					&additional_digests_provider,
@@ -186,11 +196,7 @@ where
 					&mut proposer,
 					inherent_data,
 					Duration::from_millis(500), //params.authoring_duration,
-					// Set the block limit to 50% of the maximum PoV size.
-					//
-					// TODO: If we got benchmarking that includes the proof size,
-					// we should be able to use the maximum pov size.
-					(validation_data.max_pov_size / 2) as usize,
+					allowed_pov_size,
 				)
 				.await
 			);
