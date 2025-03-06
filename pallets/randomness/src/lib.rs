@@ -52,6 +52,9 @@
 
 #![cfg_attr(not(feature = "std"), no_std)]
 
+extern crate alloc;
+
+use alloc::string::String;
 pub use crate::weights::WeightInfo;
 use frame_support::pallet;
 pub use pallet::*;
