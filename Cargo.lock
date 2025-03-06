@@ -3334,7 +3334,7 @@ dependencies = [
 [[package]]
 name = "fp-account"
 version = "1.0.0-dev"
-source = "git+https://github.com/moonbeam-foundation/frontier?branch=moonbeam-polkadot-stable2412-fix#ab8a69bdf955d5cb5612aa5242c75b5bca937e5d"
+source = "git+https://github.com/moonbeam-foundation/frontier?branch=moonbeam-polkadot-stable2412#c95fb9246e2331a9e57be97fa1b774082acd7e7a"
 dependencies = [
  "hex",
  "impl-serde 0.5.0",
@@ -3353,7 +3353,7 @@ dependencies = [
 [[package]]
 name = "fp-evm"
 version = "3.0.0-dev"
-source = "git+https://github.com/moonbeam-foundation/frontier?branch=moonbeam-polkadot-stable2412-fix#ab8a69bdf955d5cb5612aa5242c75b5bca937e5d"
+source = "git+https://github.com/moonbeam-foundation/frontier?branch=moonbeam-polkadot-stable2412#c95fb9246e2331a9e57be97fa1b774082acd7e7a"
 dependencies = [
  "environmental",
  "evm",
@@ -7658,7 +7658,7 @@ dependencies = [
 [[package]]
 name = "pallet-evm"
 version = "6.0.0-dev"
-source = "git+https://github.com/moonbeam-foundation/frontier?branch=moonbeam-polkadot-stable2412-fix#ab8a69bdf955d5cb5612aa5242c75b5bca937e5d"
+source = "git+https://github.com/moonbeam-foundation/frontier?branch=moonbeam-polkadot-stable2412#c95fb9246e2331a9e57be97fa1b774082acd7e7a"
 dependencies = [
  "cumulus-primitives-storage-weight-reclaim",
  "environmental",
@@ -10336,7 +10336,7 @@ dependencies = [
 [[package]]
 name = "precompile-utils"
 version = "0.1.0"
-source = "git+https://github.com/moonbeam-foundation/frontier?branch=moonbeam-polkadot-stable2412-fix#ab8a69bdf955d5cb5612aa5242c75b5bca937e5d"
+source = "git+https://github.com/moonbeam-foundation/frontier?branch=moonbeam-polkadot-stable2412#c95fb9246e2331a9e57be97fa1b774082acd7e7a"
 dependencies = [
  "derive_more 1.0.0",
  "environmental",
@@ -10365,7 +10365,7 @@ dependencies = [
 [[package]]
 name = "precompile-utils-macro"
 version = "0.1.0"
-source = "git+https://github.com/moonbeam-foundation/frontier?branch=moonbeam-polkadot-stable2412-fix#ab8a69bdf955d5cb5612aa5242c75b5bca937e5d"
+source = "git+https://github.com/moonbeam-foundation/frontier?branch=moonbeam-polkadot-stable2412#c95fb9246e2331a9e57be97fa1b774082acd7e7a"
 dependencies = [
  "case",
  "num_enum",
