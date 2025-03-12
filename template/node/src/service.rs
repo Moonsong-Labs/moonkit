@@ -348,7 +348,7 @@ where
 			overseer_handle,
 			announce_block,
 			force_authoring,
-			Default::default(),
+			true,
 		)?;
 	}
 
