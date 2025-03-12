@@ -46,7 +46,3 @@ futures = { workspace = true }
 log = { workspace = true }
 parking_lot = { workspace = true }
 tracing = { workspace = true }
-
-[features]
-# Allows collator to use full PoV size for block building
-full-pov-size = []

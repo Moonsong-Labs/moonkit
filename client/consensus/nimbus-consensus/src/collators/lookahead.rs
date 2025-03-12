@@ -65,6 +65,8 @@ pub struct Params<BI, CIDP, Client, Backend, RClient, CHP, SO, Proposer, CS, DP 
 	pub create_inherent_data_providers: CIDP,
 	/// Force production of the block even if the collator is not eligible
 	pub force_authoring: bool,
+	/// Allows the use of the full Proof of Validity budget
+	pub full_pov_size: bool,
 	/// The underlying keystore, which should contain Aura consensus keys.
 	pub keystore: KeystorePtr,
 	/// A handle to the relay-chain client's "Overseer" or task orchestrator.
@@ -366,7 +368,7 @@ where
 					Some(validation_code_hash) => validation_code_hash,
 				};
 
-				let allowed_pov_size = if cfg!(feature = "full-pov-size") {
+				let allowed_pov_size = if params.full_pov_size {
 					max_pov_size
 				} else {
 					// Set the block limit to 50% of the maximum PoV size.
