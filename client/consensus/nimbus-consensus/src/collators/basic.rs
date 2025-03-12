@@ -58,6 +58,8 @@ pub struct Params<Proposer, BI, ParaClient, RClient, CIDP, CS, ADP = ()> {
 	pub collator_key: CollatorPair,
 	/// Force production of the block even if the collator is not eligible
 	pub force_authoring: bool,
+	/// Allows the use of the full Proof of Validity budget
+	pub full_pov_size: bool,
 	/// A builder for inherent data builders.
 	pub create_inherent_data_providers: CIDP,
 	/// The collator service used for bundling proposals into collations and announcing
@@ -106,6 +108,7 @@ where
 			para_client,
 			relay_client,
 			force_authoring,
+			full_pov_size,
 			..
 		} = params;
 
@@ -175,7 +178,7 @@ where
 				.await
 			);
 
-			let allowed_pov_size = if cfg!(feature = "full-pov-size") {
+			let allowed_pov_size = if full_pov_size {
 				validation_data.max_pov_size
 			} else {
 				// Set the block limit to 50% of the maximum PoV size.
