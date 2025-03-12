@@ -339,6 +339,7 @@ where
 			overseer_handle,
 			announce_block,
 			force_authoring,
+			true,
 		)?;
 	}
 
@@ -361,6 +362,7 @@ fn start_consensus(
 	overseer_handle: OverseerHandle,
 	announce_block: Arc<dyn Fn(Hash, Option<Vec<u8>>) + Send + Sync>,
 	force_authoring: bool,
+	full_pov_size: bool,
 ) -> Result<(), sc_service::Error> {
 	let proposer_factory = sc_basic_authorship::ProposerFactory::with_proof_recording(
 		task_manager.spawn_handle(),
@@ -390,6 +392,7 @@ fn start_consensus(
 		keystore,
 		collator_service,
 		force_authoring,
+		full_pov_size,
 		additional_digests_provider: (),
 		additional_relay_keys: vec![],
 		collator_key,
