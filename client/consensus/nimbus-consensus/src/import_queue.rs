@@ -201,6 +201,7 @@ pub fn import_queue<Client, Block: BlockT, I, CIDP>(
 	spawner: &impl sp_core::traits::SpawnEssentialNamed,
 	registry: Option<&substrate_prometheus_endpoint::Registry>,
 	with_delayed_best_block: bool,
+	dont_create_gap: bool,
 ) -> ClientResult<BasicQueue<Block>>
 where
 	I: BlockImport<Block, Error = ConsensusError> + Send + Sync + 'static,
@@ -217,6 +218,7 @@ where
 	let block_import_for_queue = Box::new(NimbusBlockImport::new(
 		block_import,
 		with_delayed_best_block,
+		dont_create_gap,
 	));
 
 	Ok(BasicQueue::new(
@@ -240,14 +242,16 @@ where
 pub struct NimbusBlockImport<I> {
 	inner: I,
 	with_delayed_best_block: bool,
+	dont_create_gap: bool,
 }
 
 impl<I> NimbusBlockImport<I> {
 	/// Create a new instance.
-	pub fn new(inner: I, with_delayed_best_block: bool) -> Self {
+	pub fn new(inner: I, with_delayed_best_block: bool, dont_create_gap: bool) -> Self {
 		Self {
 			inner,
 			with_delayed_best_block,
+			dont_create_gap,
 		}
 	}
 }
@@ -278,6 +282,14 @@ where
 			block_import_params.fork_choice = Some(sc_consensus::ForkChoiceStrategy::Custom(
 				block_import_params.origin == sp_consensus::BlockOrigin::NetworkInitialSync,
 			));
+		}
+
+		// Disable block gap creation during initial network sync.
+		// This is to disable block history download after warp sync is complete.
+		if self.dont_create_gap
+			&& block_import_params.origin == sp_consensus::BlockOrigin::NetworkInitialSync
+		{
+			block_import_params.create_gap = false;
 		}
 
 		// Now continue on to the rest of the import pipeline.
