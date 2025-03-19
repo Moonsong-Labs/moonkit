@@ -17,6 +17,10 @@ on:
         description: set to pull_request number to execute on external pr
         required: false
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 env:
   NODE_OPTIONS: "--max-old-space-size=12288"
 
