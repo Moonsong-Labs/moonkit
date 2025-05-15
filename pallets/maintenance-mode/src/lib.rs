@@ -183,7 +183,7 @@ pub mod pallet {
 
 	impl<T: Config> Pallet<T> {
 		/// Internal function to force the chain into maintenance mode without an origin check.
-		pub fn force_enter_maintenance_mode() {
+		pub fn do_enter_maintenance_mode() {
 			// Write to storage
 			MaintenanceMode::<T>::put(true);
 
