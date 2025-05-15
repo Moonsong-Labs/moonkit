@@ -122,6 +122,30 @@ fn cannot_resume_normal_operation_while_already_operating_normally() {
 	})
 }
 
+#[test]
+fn can_force_enter_maintenance_mode() {
+	ExtBuilder::default()
+		.with_maintenance_mode(false)
+		.build()
+		.execute_with(|| {
+			MaintenanceMode::force_enter_maintenance_mode();
+			assert!(MaintenanceMode::maintenance_mode());
+			assert_eq!(events(), vec![Event::EnteredMaintenanceMode,]);
+		})
+}
+
+#[test]
+fn force_enter_maintenance_mode_when_already_in_it() {
+	ExtBuilder::default()
+		.with_maintenance_mode(true)
+		.build()
+		.execute_with(|| {
+			MaintenanceMode::force_enter_maintenance_mode();
+			assert!(MaintenanceMode::maintenance_mode());
+			assert_eq!(events(), vec![Event::EnteredMaintenanceMode,]);
+		})
+}
+
 #[cfg(feature = "xcm-support")]
 #[test]
 fn queue_pause_in_non_maintenance() {
