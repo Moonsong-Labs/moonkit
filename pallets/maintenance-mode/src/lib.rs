@@ -133,16 +133,7 @@ pub mod pallet {
 				Error::<T>::AlreadyInMaintenanceMode
 			);
 
-			// Write to storage
-			MaintenanceMode::<T>::put(true);
-			// Suspend XCM execution
-			#[cfg(feature = "xcm-support")]
-			if let Err(error) = T::XcmExecutionManager::suspend_xcm_execution() {
-				<Pallet<T>>::deposit_event(Event::FailedToSuspendIdleXcmExecution { error });
-			}
-
-			// Event
-			<Pallet<T>>::deposit_event(Event::EnteredMaintenanceMode);
+			<Pallet<T>>::do_enter_maintenance_mode();
 
 			Ok(().into())
 		}
@@ -181,6 +172,24 @@ pub mod pallet {
 		}
 	}
 
+	impl<T: Config> Pallet<T> {
+		/// Internal function to force the chain into maintenance mode without an origin check.
+		pub fn do_enter_maintenance_mode() {
+			// Write to storage
+			MaintenanceMode::<T>::put(true);
+
+			// Suspend XCM execution
+			#[cfg(feature = "xcm-support")]
+			if let Err(error) = T::XcmExecutionManager::suspend_xcm_execution() {
+				// Deposit event about failure but still return the error to the caller
+				<Pallet<T>>::deposit_event(Event::FailedToSuspendIdleXcmExecution { error });
+			}
+
+			// Event
+			<Pallet<T>>::deposit_event(Event::EnteredMaintenanceMode);
+		}
+	}
+
 	#[derive(frame_support::DefaultNoBound)]
 	#[pallet::genesis_config]
 	/// Genesis config for maintenance mode pallet
@@ -214,6 +223,24 @@ pub mod pallet {
 	impl<T: Config, Origin> QueuePausedQuery<Origin> for Pallet<T> {
 		fn is_paused(_origin: &Origin) -> bool {
 			MaintenanceMode::<T>::get()
+		}
+	}
+
+	impl<T: Config> frame_support::migrations::FailedMigrationHandler for Pallet<T> {
+		fn failed(migration: Option<u32>) -> frame_support::migrations::FailedMigrationHandling {
+			// Log information about the failed migration
+			log::error!(
+				target: "runtime::migrations",
+				"Migration {:?} failed - activating maintenance mode and continuing",
+				migration
+			);
+
+			// Enable maintenance mode using the internal function.
+			Pallet::<T>::do_enter_maintenance_mode();
+
+			// We choose to ignore the failed migration, allowing the chain to continue operating
+			// in maintenance mode rather than completely halting execution
+			frame_support::migrations::FailedMigrationHandling::ForceUnstuck
 		}
 	}
 }
