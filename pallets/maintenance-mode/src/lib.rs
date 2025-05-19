@@ -234,4 +234,22 @@ pub mod pallet {
 			MaintenanceMode::<T>::get()
 		}
 	}
+
+	impl<T: Config> frame_support::migrations::FailedMigrationHandler for Pallet<T> {
+		fn failed(migration: Option<u32>) -> frame_support::migrations::FailedMigrationHandling {
+			// Log information about the failed migration
+			log::error!(
+				target: "runtime::migrations",
+				"Migration {:?} failed - activating maintenance mode and continuing",
+				migration
+			);
+
+			// Enable maintenance mode using the internal function.
+			Pallet::<T>::do_enter_maintenance_mode();
+
+			// We choose to ignore the failed migration, allowing the chain to continue operating
+			// in maintenance mode rather than completely halting execution
+			frame_support::migrations::FailedMigrationHandling::ForceUnstuck
+		}
+	}
 }
