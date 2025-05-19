@@ -133,16 +133,7 @@ pub mod pallet {
 				Error::<T>::AlreadyInMaintenanceMode
 			);
 
-			// Write to storage
-			MaintenanceMode::<T>::put(true);
-			// Suspend XCM execution
-			#[cfg(feature = "xcm-support")]
-			if let Err(error) = T::XcmExecutionManager::suspend_xcm_execution() {
-				<Pallet<T>>::deposit_event(Event::FailedToSuspendIdleXcmExecution { error });
-			}
-
-			// Event
-			<Pallet<T>>::deposit_event(Event::EnteredMaintenanceMode);
+			<Pallet<T>>::do_enter_maintenance_mode();
 
 			Ok(().into())
 		}
