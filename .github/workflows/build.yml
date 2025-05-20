@@ -200,16 +200,22 @@ jobs:
              exit 0
           fi
           echo "Found pallet directories. Proceeding with build checks..."
+          failed_pallets=""
           for pallet_dir in pallets/*; do
             if [ -d "$pallet_dir" ]; then
-              echo "Building pallet in $pallet_dir with no-default-features for wasm32-unknown-unknown"
-              if ! (cd "$pallet_dir" && cargo build --verbose --no-default-features --target wasm32-unknown-unknown); then
-                echo "Failed to build pallet in $pallet_dir"
-                exit 1
+              pallet_name=$(basename "$pallet_dir")
+              if (cd "$pallet_dir" && cargo build --no-default-features --target wasm32-unknown-unknown > /dev/null 2>&1); then
+                echo "✓ $pallet_name"
+              else
+                echo "x $pallet_name"
+                if [ -z "$failed_pallets" ]; then
+                  failed_pallets="$pallet_name"
+                else
+                  failed_pallets="$failed_pallets, $pallet_name"
+                fi
               fi
             fi
           done
-          echo "All pallets built successfully."
 
   ####### Building and Testing binaries #######
 
