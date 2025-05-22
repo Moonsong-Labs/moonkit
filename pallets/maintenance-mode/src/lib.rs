@@ -181,25 +181,6 @@ pub mod pallet {
 		}
 	}
 
-	// Add the internal function here, outside the call block
-	impl<T: Config> Pallet<T> {
-		/// Internal function to force the chain into maintenance mode without an origin check.
-		pub fn force_enter_maintenance_mode() {
-			// Write to storage
-			MaintenanceMode::<T>::put(true);
-
-			// Suspend XCM execution
-			#[cfg(feature = "xcm-support")]
-			if let Err(error) = T::XcmExecutionManager::suspend_xcm_execution() {
-				// Deposit event about failure but still return the error to the caller
-				<Pallet<T>>::deposit_event(Event::FailedToSuspendIdleXcmExecution { error });
-			}
-
-			// Event
-			<Pallet<T>>::deposit_event(Event::EnteredMaintenanceMode);
-		}
-	}
-
 	#[derive(frame_support::DefaultNoBound)]
 	#[pallet::genesis_config]
 	/// Genesis config for maintenance mode pallet
