@@ -133,6 +133,7 @@ impl pallet_scheduler::Config for Runtime {
 	type WeightInfo = ();
 	type OriginPrivilegeCmp = EqualPrivilegeOnly; // TODO : Simplest type, maybe there is better ?
 	type Preimages = ();
+	type BlockNumberProvider = ();
 }
 
 parameter_types! {
