@@ -552,7 +552,7 @@ fn transfer_from() {
 				))
 				.execute_returns(true);
 
-			/*precompiles()
+			precompiles()
 				.prepare_test(
 					CryptoAlith,
 					ForeignAssetId(0u128),
@@ -586,7 +586,7 @@ fn transfer_from() {
 				)
 				.expect_cost(0) // TODO: Test db read/write costs
 				.expect_no_logs()
-				.execute_returns(U256::from(400));*/
+				.execute_returns(U256::from(400));
 		});
 }
 
