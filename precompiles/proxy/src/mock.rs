@@ -34,7 +34,7 @@ use sp_core::{H160, H256, U256};
 use sp_io;
 use sp_runtime::traits::{BlakeTwo256, IdentityLookup};
 use sp_runtime::{
-	codec::{Decode, Encode, MaxEncodedLen},
+	codec::{Decode, DecodeWithMemTracking, Encode, MaxEncodedLen},
 	BuildStorage,
 };
 
@@ -181,6 +181,8 @@ impl pallet_evm::Config for Runtime {
 	type GasLimitStorageGrowthRatio = ();
 	type Timestamp = Timestamp;
 	type WeightInfo = pallet_evm::weights::SubstrateWeight<Runtime>;
+	type CreateOriginFilter = ();
+	type CreateInnerOriginFilter = ();
 }
 
 parameter_types! {
@@ -195,7 +197,18 @@ impl pallet_timestamp::Config for Runtime {
 
 #[repr(u8)]
 #[derive(
-	Debug, Eq, PartialEq, Ord, PartialOrd, Decode, MaxEncodedLen, Encode, Clone, Copy, TypeInfo,
+	Debug,
+	Eq,
+	PartialEq,
+	Ord,
+	PartialOrd,
+	Decode,
+	MaxEncodedLen,
+	Encode,
+	DecodeWithMemTracking,
+	Clone,
+	Copy,
+	TypeInfo,
 )]
 pub enum ProxyType {
 	Any = 0,
@@ -253,6 +266,7 @@ impl pallet_proxy::Config for Runtime {
 	type CallHasher = BlakeTwo256;
 	type AnnouncementDepositBase = ();
 	type AnnouncementDepositFactor = ();
+	type BlockNumberProvider = ();
 }
 
 /// Build test externalities, prepopulated with data for testing democracy precompiles
@@ -282,6 +296,7 @@ impl ExtBuilder {
 
 		pallet_balances::GenesisConfig::<Runtime> {
 			balances: self.balances.clone(),
+			..Default::default()
 		}
 		.assimilate_storage(&mut t)
 		.expect("Pallet balances storage can be assimilated");

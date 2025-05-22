@@ -143,6 +143,8 @@ impl pallet_evm::Config for Runtime {
 	type GasLimitStorageGrowthRatio = ();
 	type Timestamp = Timestamp;
 	type WeightInfo = pallet_evm::weights::SubstrateWeight<Runtime>;
+	type CreateOriginFilter = ();
+	type CreateInnerOriginFilter = ();
 }
 
 // Configure a mock runtime to test the pallet.
@@ -205,6 +207,7 @@ impl ExtBuilder {
 
 		pallet_balances::GenesisConfig::<Runtime> {
 			balances: self.balances,
+			..Default::default()
 		}
 		.assimilate_storage(&mut t)
 		.expect("Pallet balances storage can be assimilated");
