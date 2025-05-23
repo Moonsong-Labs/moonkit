@@ -23,7 +23,6 @@ use crate::{
 };
 use frame_support::assert_ok;
 use pallet_evm::Call as EvmCall;
-use pallet_evm::CodeMetadata;
 use pallet_proxy::{
 	Call as ProxyCall, Event as ProxyEvent, Pallet as ProxyPallet, ProxyDefinition,
 };
