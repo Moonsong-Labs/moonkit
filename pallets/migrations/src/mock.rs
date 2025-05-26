@@ -126,7 +126,8 @@ parameter_types! {
 parameter_types! {
 	pub BlockWeights: frame_system::limits::BlockWeights =
 		frame_system::limits::BlockWeights::simple_max(
-			Weight::from_parts(2_000_000_000_000, u64::MAX),
+			Weight::from_parts(frame_support::weights::constants::WEIGHT_REF_TIME_PER_SECOND.saturating_mul(2),
+			cumulus_primitives_core::relay_chain::MAX_POV_SIZE as u64),
 		);
 }
 
