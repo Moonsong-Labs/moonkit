@@ -7899,6 +7899,7 @@ dependencies = [
 name = "pallet-migrations"
 version = "0.1.0"
 dependencies = [
+ "cumulus-primitives-core",
  "environmental",
  "frame-benchmarking",
  "frame-support",

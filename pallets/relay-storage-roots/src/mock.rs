@@ -183,6 +183,7 @@ impl ExtBuilder {
 
 		pallet_balances::GenesisConfig::<Test> {
 			balances: self.balances,
+			..Default::default()
 		}
 		.assimilate_storage(&mut t)
 		.expect("Pallet balances storage can be assimilated");

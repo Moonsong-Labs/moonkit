@@ -130,6 +130,7 @@ impl pallet_assets::Config for Test {
 	type CallbackHandle = ();
 	type WeightInfo = ();
 	type RemoveItemsLimit = ConstU32<1000>;
+	type Holder = ();
 	pallet_assets::runtime_benchmarks_enabled! {
 		type BenchmarkHelper = ();
 	}
@@ -237,6 +238,7 @@ impl ExtBuilder {
 
 		pallet_balances::GenesisConfig::<Test> {
 			balances: self.balances,
+			..Default::default()
 		}
 		.assimilate_storage(&mut t)
 		.expect("Pallet balances storage can be assimilated");

@@ -17,8 +17,8 @@
 use crate::{
 	assert_event_emitted, assert_event_not_emitted,
 	mock::{
-		AccountId, ExtBuilder, PCall, PrecompilesValue, ProxyType, Runtime, RuntimeCall,
-		RuntimeEvent, RuntimeOrigin,
+		AccountId, ExtBuilder, PCall, Precompiles, PrecompilesValue, ProxyType, Runtime,
+		RuntimeCall, RuntimeEvent, RuntimeOrigin,
 	},
 };
 use frame_support::assert_ok;
@@ -578,7 +578,11 @@ fn fails_if_called_by_smart_contract() {
 		.build()
 		.execute_with(|| {
 			// Set code to Alice address as it if was a smart contract.
-			pallet_evm::Pallet::<Runtime>::create_account(H160::from(Alice), vec![10u8]);
+			assert_ok!(pallet_evm::Pallet::<Runtime>::create_account(
+				H160::from(Alice),
+				vec![10u8],
+				None
+			));
 
 			PrecompilesValue::get()
 				.prepare_test(
@@ -596,19 +600,19 @@ fn fails_if_called_by_smart_contract() {
 
 #[test]
 fn succeed_if_called_by_precompile() {
+	let precompiles: Vec<H160> = Precompiles::<Runtime>::used_addresses_h160().collect();
+
 	ExtBuilder::default()
-		.with_balances(vec![(Alice.into(), 1000), (Bob.into(), 1000)])
+		.with_balances(vec![
+			(Alice.into(), 1000),
+			(Bob.into(), 1000),
+			(precompiles[1].into(), 1000),
+		])
 		.build()
 		.execute_with(|| {
-			// Set dummy code to Alice address as it if was a precompile.
-			pallet_evm::AccountCodes::<Runtime>::insert(
-				H160::from(Alice),
-				vec![0x60, 0x00, 0x60, 0x00, 0xfd],
-			);
-
 			PrecompilesValue::get()
 				.prepare_test(
-					Alice,
+					precompiles[1],
 					Precompile1,
 					PCall::add_proxy {
 						delegate: Address(Bob.into()),
@@ -776,9 +780,16 @@ fn proxy_proxy_should_fail_if_called_by_smart_contract_for_a_non_eoa_account() {
 		.build()
 		.execute_with(|| {
 			// Set code to Alice & Bob addresses as if they are smart contracts.
-			pallet_evm::Pallet::<Runtime>::create_account(H160::from(Alice), vec![10u8]);
-			pallet_evm::Pallet::<Runtime>::create_account(H160::from(Bob), vec![10u8]);
-
+			assert_ok!(pallet_evm::Pallet::<Runtime>::create_account(
+				H160::from(Alice),
+				vec![10u8],
+				None
+			));
+			assert_ok!(pallet_evm::Pallet::<Runtime>::create_account(
+				H160::from(Bob),
+				vec![10u8],
+				None
+			));
 			// Bob allows Alice to make calls on his behalf
 			assert_ok!(RuntimeCall::Proxy(ProxyCall::add_proxy {
 				delegate: Alice.into(),
