@@ -49,10 +49,12 @@
 //!
 //! `Config::BabeDataGetter` is responsible for reading the epoch index and epoch randomness
 //! from the relay chain state proof. The moonbeam `GetBabeData` implementation is in the runtime.
-
 #![cfg_attr(not(feature = "std"), no_std)]
 
+extern crate alloc;
+
 pub use crate::weights::WeightInfo;
+use alloc::string::String;
 use frame_support::pallet;
 pub use pallet::*;
 use sp_std::vec::Vec;

@@ -51,7 +51,6 @@ pub use pallet::*;
 
 #[pallet]
 pub mod pallet {
-	#[cfg(feature = "xcm-support")]
 	use frame_support::pallet_prelude::*;
 	use frame_support::traits::{BuildGenesisConfig, Contains, EnsureOrigin, QueuePausedQuery};
 	use frame_system::pallet_prelude::*;
