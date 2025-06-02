@@ -174,6 +174,59 @@ jobs:
       - name: Format code with rustfmt
         run: cargo fmt -- --check
 
+  check-pallets-build:
+    name: "Check Pallets Build (no-default-features, wasm)"
+    runs-on: ubuntu-latest
+    needs: ["set-tags"]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          ref: ${{ needs.set-tags.outputs.git_ref }}
+      - name: Install Protoc
+        uses: arduino/setup-protoc@v1
+      - name: Setup Rust toolchain
+        run: |
+          rustup show
+          rustup target add wasm32-unknown-unknown
+      - name: Build pallets
+        run: |
+          if [ ! -d "pallets" ]; then
+            echo "Pallets directory not found at 'pallets'. Skipping pallet build checks."
+            exit 0
+          fi
+          if [ -z "$(ls -A pallets/*/ 2>/dev/null)" ]; then
+             echo "No pallet subdirectories found in 'pallets'. Skipping pallet build checks."
+             exit 0
+          fi
+          echo "Found pallet directories. Proceeding with build checks..."
+          failed_pallets=""
+          build_summary=""
+          for pallet_dir in pallets/*; do
+            if [ -d "$pallet_dir" ]; then
+              pallet_name=$(basename "$pallet_dir")
+              if (cd "$pallet_dir" && cargo build --no-default-features --target wasm32-unknown-unknown > /dev/null 2>&1); then
+                build_summary="${build_summary}✓ ${pallet_name}\n"
+              else
+                build_summary="${build_summary}x ${pallet_name}\n"
+                if [ -z "$failed_pallets" ]; then
+                  failed_pallets="$pallet_name"
+                else
+                  failed_pallets="$failed_pallets, $pallet_name"
+                fi
+              fi
+            fi
+          done
+
+          echo -e "$build_summary"
+
+          if [ -z "$failed_pallets" ]; then
+            echo "All pallets built successfully."
+          else
+            echo "The following pallets failed to build: $failed_pallets"
+            exit 1
+          fi
+
   ####### Building and Testing binaries #######
 
   cargo-clippy:

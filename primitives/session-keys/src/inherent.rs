@@ -15,6 +15,7 @@
 // along with Moonkit.  If not, see <http://www.gnu.org/licenses/>.
 extern crate alloc;
 
+use alloc::borrow::Cow;
 use alloc::string::String;
 use parity_scale_codec::{Decode, Encode};
 use sp_inherents::{Error, InherentData, InherentIdentifier, IsFatalError};
@@ -22,7 +23,7 @@ use sp_inherents::{Error, InherentData, InherentIdentifier, IsFatalError};
 #[derive(Encode)]
 #[cfg_attr(feature = "std", derive(Debug, Decode))]
 pub enum InherentError {
-	Other(String),
+	Other(Cow<'static, str>),
 }
 
 impl IsFatalError for InherentError {
