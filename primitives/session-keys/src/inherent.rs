@@ -15,8 +15,8 @@
 // along with Moonkit.  If not, see <http://www.gnu.org/licenses/>.
 extern crate alloc;
 
-use alloc::string::String;
 use alloc::borrow::Cow;
+use alloc::string::String;
 use parity_scale_codec::{Decode, Encode};
 use sp_inherents::{Error, InherentData, InherentIdentifier, IsFatalError};
 
