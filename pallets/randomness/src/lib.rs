@@ -54,7 +54,7 @@
 extern crate alloc;
 
 pub use crate::weights::WeightInfo;
-use alloc::string::String;
+use alloc::borrow::Cow;
 use frame_support::pallet;
 pub use pallet::*;
 use sp_std::vec::Vec;
@@ -279,7 +279,7 @@ pub mod pallet {
 		fn is_inherent_required(_: &InherentData) -> Result<Option<Self::Error>, Self::Error> {
 			// Return Ok(Some(_)) unconditionally because this inherent is required in every block
 			// If it is not found, throw a VrfInherentRequired error.
-			Ok(Some(InherentError::Other(String::from(
+			Ok(Some(InherentError::Other(Cow::Borrowed(
 				"Inherent required to set babe randomness results",
 			))))
 		}
