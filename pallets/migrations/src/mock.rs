@@ -122,17 +122,31 @@ parameter_types! {
 	pub const InstantAllowed: bool = false;
 }
 
+// Taken from frame scheduller mock
+parameter_types! {
+	pub BlockWeights: frame_system::limits::BlockWeights =
+		frame_system::limits::BlockWeights::simple_max(
+			Weight::from_parts(frame_support::weights::constants::WEIGHT_REF_TIME_PER_SECOND.saturating_mul(2),
+			cumulus_primitives_core::relay_chain::MAX_POV_SIZE as u64),
+		);
+}
+
+parameter_types! {
+	pub MaximumSchedulerWeight: Weight = Perbill::from_percent(80) * BlockWeights::get().max_block;
+}
+
 impl pallet_scheduler::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type RuntimeOrigin = RuntimeOrigin;
 	type PalletsOrigin = OriginCaller;
 	type RuntimeCall = RuntimeCall;
-	type MaximumWeight = ();
+	type MaximumWeight = MaximumSchedulerWeight;
 	type ScheduleOrigin = EnsureRoot<AccountId>;
 	type MaxScheduledPerBlock = ();
-	type WeightInfo = ();
+	type WeightInfo = pallet_scheduler::weights::SubstrateWeight<Runtime>;
 	type OriginPrivilegeCmp = EqualPrivilegeOnly; // TODO : Simplest type, maybe there is better ?
 	type Preimages = ();
+	type BlockNumberProvider = ();
 }
 
 parameter_types! {

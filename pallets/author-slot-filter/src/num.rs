@@ -17,12 +17,24 @@
 //! Implements a [NonZeroU32] type that interplays nicely with the
 //! subtrate storage and the SCALE codec.
 
-use parity_scale_codec::{Decode, Encode, Error, Input};
+use parity_scale_codec::{Decode, DecodeWithMemTracking, Encode, Error, Input};
 use scale_info::TypeInfo;
 use serde::de::Error as DeserializeError;
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 
-#[derive(Clone, Debug, Default, TypeInfo, Encode, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[derive(
+	Clone,
+	Debug,
+	Default,
+	TypeInfo,
+	Encode,
+	DecodeWithMemTracking,
+	PartialEq,
+	Eq,
+	PartialOrd,
+	Ord,
+	Hash,
+)]
 pub struct NonZeroU32(u32);
 
 impl core::ops::Deref for NonZeroU32 {

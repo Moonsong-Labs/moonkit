@@ -15,13 +15,11 @@
 // along with Moonkit.  If not, see <http://www.gnu.org/licenses/>.
 
 use super::*;
-use frame_support::{
-	ensure,
-	traits::{Get, Time},
-};
+use frame_support::sp_runtime::traits::UniqueSaturatedInto;
+use frame_support::traits::Time;
+use frame_support::{ensure, traits::Get};
 use sp_core::H256;
 use sp_io::hashing::keccak_256;
-use sp_runtime::traits::UniqueSaturatedInto;
 use sp_std::vec::Vec;
 
 /// EIP2612 permit typehash.

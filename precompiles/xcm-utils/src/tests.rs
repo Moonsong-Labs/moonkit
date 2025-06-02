@@ -57,7 +57,7 @@ fn test_get_account_parent() {
 
 		precompiles()
 			.prepare_test(Alice, Precompile1, input)
-			.expect_cost(1)
+			.expect_cost(2)
 			.expect_no_logs()
 			.execute_returns(Address(expected_address));
 	});
@@ -77,7 +77,7 @@ fn test_get_account_sibling() {
 
 		precompiles()
 			.prepare_test(Alice, Precompile1, input)
-			.expect_cost(1)
+			.expect_cost(2)
 			.expect_no_logs()
 			.execute_returns(Address(expected_address));
 	});
@@ -94,7 +94,7 @@ fn test_weight_message() {
 
 		precompiles()
 			.prepare_test(Alice, Precompile1, input)
-			.expect_cost(0)
+			.expect_cost(1)
 			.expect_no_logs()
 			.execute_returns(1000u64);
 	});
@@ -109,7 +109,7 @@ fn test_get_units_per_second() {
 
 		precompiles()
 			.prepare_test(Alice, Precompile1, input)
-			.expect_cost(1)
+			.expect_cost(2)
 			.expect_no_logs()
 			.execute_returns(U256::from(1_000_000_000_000u128));
 	});
@@ -198,7 +198,7 @@ fn test_executor_transact() {
 
 			precompiles()
 				.prepare_test(CryptoAlith, Precompile1, input)
-				.expect_cost(276106001)
+				.expect_cost(273835001)
 				.expect_no_logs()
 				.execute_returns(());
 
@@ -221,7 +221,7 @@ fn test_send_clear_origin() {
 		precompiles()
 			.prepare_test(CryptoAlith, Precompile1, input)
 			// Only the cost of TestWeightInfo
-			.expect_cost(100000000)
+			.expect_cost(100000001)
 			.expect_no_logs()
 			.execute_returns(());
 
@@ -242,7 +242,8 @@ fn execute_fails_if_called_by_smart_contract() {
 		.build()
 		.execute_with(|| {
 			// Set code to Alice address as it if was a smart contract.
-			pallet_evm::Pallet::<Runtime>::create_account(H160::from(Alice), vec![10u8]);
+			let _ =
+				pallet_evm::Pallet::<Runtime>::create_account(H160::from(Alice), vec![10u8], None);
 
 			let xcm_to_execute = VersionedXcm::<()>::from(Xcm(vec![ClearOrigin])).encode();
 

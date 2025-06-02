@@ -155,6 +155,7 @@ fn testnet_genesis(
 				.cloned()
 				.map(|k| (k, 1 << 60))
 				.collect(),
+			dev_accounts: None,
 		},
 		parachain_info: moonkit_template_runtime::ParachainInfoConfig {
 			parachain_id: id,
