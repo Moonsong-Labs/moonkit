@@ -58,8 +58,8 @@ pub struct Params<Proposer, BI, ParaClient, RClient, CIDP, CS, ADP = ()> {
 	pub collator_key: CollatorPair,
 	/// Force production of the block even if the collator is not eligible
 	pub force_authoring: bool,
-	/// Allows the use of the full Proof of Validity budget
-	pub full_pov_size: bool,
+	/// Maximum percentage of POV size to use (0-85)
+	pub max_pov_percentage: u8,
 	/// A builder for inherent data builders.
 	pub create_inherent_data_providers: CIDP,
 	/// The collator service used for bundling proposals into collations and announcing
@@ -110,7 +110,7 @@ where
 			para_client,
 			relay_client,
 			force_authoring,
-			full_pov_size,
+			max_pov_percentage,
 			..
 		} = params;
 
@@ -181,15 +181,14 @@ where
 				.await
 			);
 
-			let allowed_pov_size = if full_pov_size {
-				validation_data.max_pov_size
-			} else {
-				// Set the block limit to 50% of the maximum PoV size.
-				//
-				// TODO: If we got benchmarking that includes the proof size,
-				// we should be able to use the maximum pov size.
-				validation_data.max_pov_size / 2
-			} as usize;
+			let allowed_pov_size = {
+				// Cap the percentage at 85% (see https://github.com/paritytech/polkadot-sdk/issues/6020)
+				let capped_percentage = max_pov_percentage.min(85);
+				// Calculate the allowed POV size based on the percentage
+				(validation_data.max_pov_size as u128)
+					.saturating_mul(capped_percentage as u128)
+					.saturating_div(100) as usize
+			};
 
 			let maybe_collation = try_request!(
 				super::collate::<ADP, Block, BI, CS, Proposer>(

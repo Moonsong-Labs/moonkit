@@ -276,10 +276,19 @@ pub fn run() -> Result<()> {
 					}
 				);
 
-				crate::service::start_parachain_node(config, polkadot_config, collator_options, id)
-					.await
-					.map(|r| r.0)
-					.map_err(Into::into)
+				// Convert full_pov_size to max_pov_percentage=100 if used
+				let max_pov_percentage = if cli.full_pov_size { 100 } else { cli.max_pov_percentage };
+
+				crate::service::start_parachain_node(
+					config,
+					polkadot_config,
+					collator_options,
+					id,
+					max_pov_percentage,
+				)
+				.await
+				.map(|r| r.0)
+				.map_err(Into::into)
 			})
 		}
 	}

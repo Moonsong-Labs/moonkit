@@ -67,8 +67,8 @@ pub struct Params<BI, CIDP, Client, Backend, RClient, CHP, SO, Proposer, CS, DP 
 	pub create_inherent_data_providers: CIDP,
 	/// Force production of the block even if the collator is not eligible
 	pub force_authoring: bool,
-	/// Allows the use of the full Proof of Validity budget
-	pub full_pov_size: bool,
+	/// Maximum percentage of POV size to use (0-85)
+	pub max_pov_percentage: u8,
 	/// The underlying keystore, which should contain Aura consensus keys.
 	pub keystore: KeystorePtr,
 	/// A handle to the relay-chain client's "Overseer" or task orchestrator.
@@ -371,15 +371,14 @@ where
 					Some(validation_code_hash) => validation_code_hash,
 				};
 
-				let allowed_pov_size = if params.full_pov_size {
-					max_pov_size
-				} else {
-					// Set the block limit to 50% of the maximum PoV size.
-					//
-					// TODO: If we got benchmarking that includes the proof size,
-					// we should be able to use the maximum pov size.
-					max_pov_size / 2
-				} as usize;
+				let allowed_pov_size = {
+					// Cap the percentage at 85% (see https://github.com/paritytech/polkadot-sdk/issues/6020)
+					let capped_percentage = params.max_pov_percentage.min(85);
+					// Calculate the allowed POV size based on the percentage
+					(max_pov_size as u128)
+						.saturating_mul(capped_percentage as u128)
+						.saturating_div(100) as usize
+				};
 
 				match super::collate(
 					&params.additional_digests_provider,
