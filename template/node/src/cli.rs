@@ -50,6 +50,14 @@ pub struct Cli {
 	#[command(flatten)]
 	pub run: cumulus_client_cli::RunCmd,
 
+	/// Maximum percentage of POV size to use (0-85)
+	#[arg(long, default_value = "50", conflicts_with = "full_pov_size")]
+	pub max_pov_percentage: u8,
+
+	/// Allows the use of the full Proof of Validity budget (deprecated, use --max-pov-percentage instead)
+	#[arg(long, hide = true)]
+	pub full_pov_size: bool,
+
 	/// Relaychain arguments
 	#[arg(raw = true, value_parser)]
 	pub relay_chain_args: Vec<String>,
