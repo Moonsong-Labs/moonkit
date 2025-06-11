@@ -217,6 +217,7 @@ async fn start_node_impl<N>(
 	polkadot_config: Configuration,
 	collator_options: CollatorOptions,
 	para_id: ParaId,
+	max_pov_percentage: u8,
 ) -> sc_service::error::Result<(TaskManager, Arc<ParachainClient>)>
 where
 	N: sc_network::NetworkBackend<Block, <Block as BlockT>::Hash>,
@@ -349,7 +350,7 @@ where
 			overseer_handle,
 			announce_block,
 			force_authoring,
-			true,
+			max_pov_percentage,
 		)?;
 	}
 
@@ -370,7 +371,7 @@ fn start_consensus(
 	overseer_handle: OverseerHandle,
 	announce_block: Arc<dyn Fn(Hash, Option<Vec<u8>>) + Send + Sync>,
 	force_authoring: bool,
-	full_pov_size: bool,
+	max_pov_percentage: u8,
 ) -> Result<(), sc_service::Error> {
 	let proposer_factory = sc_basic_authorship::ProposerFactory::with_proof_recording(
 		task_manager.spawn_handle(),
@@ -400,7 +401,7 @@ fn start_consensus(
 		keystore,
 		collator_service,
 		force_authoring,
-		full_pov_size,
+		max_pov_percentage,
 		additional_digests_provider: (),
 		collator_key,
 		//authoring_duration: Duration::from_millis(500),
@@ -423,6 +424,7 @@ pub async fn start_parachain_node(
 	polkadot_config: Configuration,
 	collator_options: CollatorOptions,
 	para_id: ParaId,
+	max_pov_percentage: u8,
 ) -> sc_service::error::Result<(
 	TaskManager,
 	Arc<TFullClient<Block, RuntimeApi, NativeElseWasmExecutor<TemplateRuntimeExecutor>>>,
@@ -432,6 +434,7 @@ pub async fn start_parachain_node(
 		polkadot_config,
 		collator_options,
 		para_id,
+		max_pov_percentage,
 	)
 	.await
 }
