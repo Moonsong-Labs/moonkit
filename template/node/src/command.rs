@@ -277,7 +277,11 @@ pub fn run() -> Result<()> {
 				);
 
 				// Convert full_pov_size to max_pov_percentage=100 if used
-				let max_pov_percentage = if cli.full_pov_size { 100 } else { cli.max_pov_percentage };
+				let max_pov_percentage = if cli.full_pov_size {
+					100
+				} else {
+					cli.max_pov_percentage
+				};
 
 				crate::service::start_parachain_node(
 					config,
