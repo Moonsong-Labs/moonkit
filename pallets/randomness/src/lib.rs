@@ -54,8 +54,8 @@
 
 extern crate alloc;
 
-use alloc::string::String;
 pub use crate::weights::WeightInfo;
+use alloc::string::String;
 use frame_support::pallet;
 pub use pallet::*;
 use sp_std::vec::Vec;
