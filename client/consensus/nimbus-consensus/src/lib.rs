@@ -48,21 +48,6 @@ use std::error::Error;
 
 const LOG_TARGET: &str = "filtering-consensus";
 
-/*impl<Block, BI, Client, RClient, Proposer, CS, DP>
-	NimbusConsensus<Block, BI, Client, RClient, Proposer, CS, DP>
-where
-	Block: BlockT,
-	BI: BlockImport<Block> + ParachainBlockImportMarker + Send + Sync + 'static,
-	CS: CollatorServiceInterface<Block>,
-	Client: ProvideRuntimeApi<Block> + 'static,
-	Client::Api: sp_api::Core<Block> + NimbusApi<Block>,
-	DP: DigestsProvider<NimbusId, <Block as BlockT>::Hash> + 'static,
-	Proposer: ProposerInterface<Block> + Send + Sync + 'static,
-	RClient: RelayChainInterface + Send + Clone + 'static,
-{
-
-}*/
-
 /// Attempt to claim a slot derived from the given relay-parent header's slot.
 pub(crate) async fn claim_slot<Block, Client>(
 	keystore: &KeystorePtr,
@@ -76,24 +61,7 @@ where
 	Client: ProvideRuntimeApi<Block>,
 	Client::Api: NimbusApi<Block>,
 {
-	// Determine if runtime change
-	let runtime_upgraded = if *parent.number() > sp_runtime::traits::Zero::zero() {
-		use sp_api::Core as _;
-		let previous_runtime_version: sp_version::RuntimeVersion = para_client
-			.runtime_api()
-			.version(parent.hash())
-			.map_err(Box::new)?;
-		let runtime_version: sp_version::RuntimeVersion = para_client
-			.runtime_api()
-			.version(parent.hash())
-			.map_err(Box::new)?;
-
-		previous_runtime_version != runtime_version
-	} else {
-		false
-	};
-
-	let maybe_key = if skip_prediction || runtime_upgraded {
+	let maybe_key = if skip_prediction {
 		first_available_key(keystore)
 	} else {
 		first_eligible_key::<Block, Client>(
