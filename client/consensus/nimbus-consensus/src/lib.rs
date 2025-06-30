@@ -61,7 +61,24 @@ where
 	Client: ProvideRuntimeApi<Block>,
 	Client::Api: NimbusApi<Block>,
 {
-	let maybe_key = if skip_prediction {
+	// Determine if runtime change
+	let runtime_upgraded = if *parent.number() > sp_runtime::traits::Zero::zero() {
+		use sp_api::Core as _;
+		let previous_runtime_version: sp_version::RuntimeVersion = para_client
+			.runtime_api()
+			.version(*parent.parent_hash())
+			.map_err(Box::new)?;
+		let runtime_version: sp_version::RuntimeVersion = para_client
+			.runtime_api()
+			.version(parent.hash())
+			.map_err(Box::new)?;
+
+		previous_runtime_version != runtime_version
+	} else {
+		false
+	};
+
+	let maybe_key = if skip_prediction || runtime_upgraded {
 		first_available_key(keystore)
 	} else {
 		first_eligible_key::<Block, Client>(
