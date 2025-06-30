@@ -48,21 +48,6 @@ use std::error::Error;
 
 const LOG_TARGET: &str = "filtering-consensus";
 
-/*impl<Block, BI, Client, RClient, Proposer, CS, DP>
-	NimbusConsensus<Block, BI, Client, RClient, Proposer, CS, DP>
-where
-	Block: BlockT,
-	BI: BlockImport<Block> + ParachainBlockImportMarker + Send + Sync + 'static,
-	CS: CollatorServiceInterface<Block>,
-	Client: ProvideRuntimeApi<Block> + 'static,
-	Client::Api: sp_api::Core<Block> + NimbusApi<Block>,
-	DP: DigestsProvider<NimbusId, <Block as BlockT>::Hash> + 'static,
-	Proposer: ProposerInterface<Block> + Send + Sync + 'static,
-	RClient: RelayChainInterface + Send + Clone + 'static,
-{
-
-}*/
-
 /// Attempt to claim a slot derived from the given relay-parent header's slot.
 pub(crate) async fn claim_slot<Block, Client>(
 	keystore: &KeystorePtr,
@@ -81,7 +66,7 @@ where
 		use sp_api::Core as _;
 		let previous_runtime_version: sp_version::RuntimeVersion = para_client
 			.runtime_api()
-			.version(parent.hash())
+			.version(*parent.parent_hash())
 			.map_err(Box::new)?;
 		let runtime_version: sp_version::RuntimeVersion = para_client
 			.runtime_api()
