@@ -213,7 +213,7 @@ pallet-evm = { git = "https://github.com/polkadot-evm/frontier", branch = "stabl
 precompile-utils = { git = "https://github.com/polkadot-evm/frontier", branch = "stable2503", default-features = false }
 
 # EVM
-evm = { git = "https://github.com/rust-ethereum/evm", branch = "v0.x", default-features = false }
+evm = { version = "0.43.4", default-features = false }
 
 # Local (wasm)
 pallet-evm-precompile-balances-erc20 = { path = "precompiles/balances-erc20", default-features = false }
