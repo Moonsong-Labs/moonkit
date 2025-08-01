@@ -124,7 +124,7 @@ fn valid_permit_returns() {
 					// Called on the behalf of the permit maker.
 					assert_eq!(context.caller, CryptoAlith.into());
 					assert_eq!(address, Bob.into());
-					assert_eq!(is_static, false);
+					assert!(!is_static);
 					assert_eq!(target_gas, Some(100_000), "forward requested gas");
 
 					let transfer = transfer.expect("there is a transfer");
@@ -223,7 +223,7 @@ fn valid_permit_reverts() {
 					// Called on the behalf of the permit maker.
 					assert_eq!(context.caller, CryptoAlith.into());
 					assert_eq!(address, Bob.into());
-					assert_eq!(is_static, false);
+					assert!(!is_static);
 					assert_eq!(target_gas, Some(100_000), "forward requested gas");
 
 					let transfer = transfer.expect("there is a transfer");
@@ -643,7 +643,7 @@ fn valid_permit_returns_with_metamask_signed_data() {
 					// Called on the behalf of the permit maker.
 					assert_eq!(context.caller, CryptoAlith.into());
 					assert_eq!(address, Bob.into());
-					assert_eq!(is_static, false);
+					assert!(!is_static);
 					assert_eq!(target_gas, Some(100_000), "forward requested gas");
 
 					let transfer = transfer.expect("there is a transfer");

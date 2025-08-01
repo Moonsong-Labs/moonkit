@@ -335,10 +335,10 @@ fn transfer_not_enough_funds() {
 					},
 				)
 				.execute_reverts(|output| {
-					from_utf8(&output)
+					from_utf8(output)
 						.unwrap()
 						.contains("Dispatched call failed with error: ")
-						&& from_utf8(&output).unwrap().contains("FundsUnavailable")
+						&& from_utf8(output).unwrap().contains("FundsUnavailable")
 				});
 		});
 }
@@ -881,7 +881,7 @@ fn permit_valid() {
 					SELECTOR_LOG_APPROVAL,
 					CryptoAlith,
 					Bob,
-					solidity::encode_event_data(U256::from(value)),
+					solidity::encode_event_data(value),
 				))
 				.execute_returns(());
 

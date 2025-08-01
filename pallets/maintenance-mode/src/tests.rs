@@ -153,10 +153,7 @@ fn queue_pause_in_non_maintenance() {
 		.with_maintenance_mode(false)
 		.build()
 		.execute_with(|| {
-			assert_eq!(
-				MaintenanceMode::is_paused(&AggregateMessageOrigin::Here),
-				false
-			);
+			assert!(!MaintenanceMode::is_paused(&AggregateMessageOrigin::Here));
 		})
 }
 

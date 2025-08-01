@@ -481,10 +481,10 @@ fn transfer_not_enough_founds() {
 					},
 				)
 				.execute_reverts(|output| {
-					from_utf8(&output)
+					from_utf8(output)
 						.unwrap()
 						.contains("Dispatched call failed with error: ")
-						&& from_utf8(&output).unwrap().contains("BalanceLow")
+						&& from_utf8(output).unwrap().contains("BalanceLow")
 				});
 		});
 }

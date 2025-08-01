@@ -74,7 +74,7 @@ fn cannot_make_request_with_less_than_deposit() {
 		.build()
 		.execute_with(|| {
 			let total_issuance = Balances::total_issuance();
-			assert!(total_issuance.gt(&Balances::free_balance(ALICE).into()));
+			assert!(total_issuance.gt(&Balances::free_balance(ALICE)));
 
 			let request = build_default_request(RequestType::BabeEpoch(16));
 			assert_noop!(
@@ -98,7 +98,7 @@ fn cannot_make_request_with_less_than_deposit_plus_fee() {
 		.build()
 		.execute_with(|| {
 			let total_issuance = Balances::total_issuance();
-			assert!(total_issuance.gt(&Balances::free_balance(ALICE).into()));
+			assert!(total_issuance.gt(&Balances::free_balance(ALICE)));
 
 			let request = build_default_request(RequestType::BabeEpoch(16));
 			assert_noop!(
@@ -120,15 +120,15 @@ fn request_reserves_deposit_and_fee() {
 		.build()
 		.execute_with(|| {
 			assert_eq!(Randomness::total_locked(), 0);
-			assert_eq!(Balances::free_balance(&ALICE), 30);
+			assert_eq!(Balances::free_balance(ALICE), 30);
 			let request = build_default_request(RequestType::BabeEpoch(16));
 			assert_ok!(Randomness::request_randomness(request));
 			assert_eq!(Randomness::total_locked(), 15);
-			assert_eq!(Balances::free_balance(&ALICE), 15);
+			assert_eq!(Balances::free_balance(ALICE), 15);
 			let request = build_default_request(RequestType::Local(16));
 			assert_ok!(Randomness::request_randomness(request));
 			assert_eq!(Randomness::total_locked(), 30);
-			assert_eq!(Balances::free_balance(&ALICE), 0);
+			assert_eq!(Balances::free_balance(ALICE), 0);
 		});
 }
 
@@ -186,8 +186,8 @@ fn request_babe_one_epoch_ago_randomness_emits_event() {
 		.build()
 		.execute_with(|| {
 			let request = Request {
-				refund_address: BOB.into(),
-				contract_address: ALICE.into(),
+				refund_address: BOB,
+				contract_address: ALICE,
 				fee: 5,
 				gas_limit: 100u64,
 				num_words: 1u8,
@@ -197,8 +197,8 @@ fn request_babe_one_epoch_ago_randomness_emits_event() {
 			assert_ok!(Randomness::request_randomness(request));
 			assert_event_emitted!(crate::Event::RandomnessRequestedBabeEpoch {
 				id: 0,
-				refund_address: BOB.into(),
-				contract_address: ALICE.into(),
+				refund_address: BOB,
+				contract_address: ALICE,
 				fee: 5,
 				gas_limit: 100u64,
 				num_words: 1u8,
@@ -215,8 +215,8 @@ fn request_local_randomness_emits_event() {
 		.build()
 		.execute_with(|| {
 			let request = Request {
-				refund_address: BOB.into(),
-				contract_address: ALICE.into(),
+				refund_address: BOB,
+				contract_address: ALICE,
 				fee: 5,
 				gas_limit: 100u64,
 				num_words: 1u8,
@@ -226,8 +226,8 @@ fn request_local_randomness_emits_event() {
 			assert_ok!(Randomness::request_randomness(request));
 			assert_event_emitted!(crate::Event::RandomnessRequestedLocal {
 				id: 0,
-				refund_address: BOB.into(),
-				contract_address: ALICE.into(),
+				refund_address: BOB,
+				contract_address: ALICE,
 				fee: 5,
 				gas_limit: 100u64,
 				num_words: 1u8,
@@ -244,8 +244,8 @@ fn request_randomness_adds_new_randomness_result() {
 		.build()
 		.execute_with(|| {
 			let request = Request {
-				refund_address: BOB.into(),
-				contract_address: ALICE.into(),
+				refund_address: BOB,
+				contract_address: ALICE,
 				fee: 5,
 				gas_limit: 100u64,
 				num_words: 1u8,
@@ -266,8 +266,8 @@ fn request_randomness_increments_randomness_result() {
 		.build()
 		.execute_with(|| {
 			let request = Request {
-				refund_address: BOB.into(),
-				contract_address: ALICE.into(),
+				refund_address: BOB,
+				contract_address: ALICE,
 				fee: 5,
 				gas_limit: 100u64,
 				num_words: 1u8,
@@ -291,8 +291,8 @@ fn prepare_fulfillment_for_local_works() {
 		.build()
 		.execute_with(|| {
 			let request = Request {
-				refund_address: BOB.into(),
-				contract_address: ALICE.into(),
+				refund_address: BOB,
+				contract_address: ALICE,
 				fee: 5,
 				gas_limit: 100u64,
 				num_words: 1u8,
@@ -316,8 +316,8 @@ fn prepare_fulfillment_fails_before_can_be_fulfilled() {
 		.build()
 		.execute_with(|| {
 			let request = Request {
-				refund_address: BOB.into(),
-				contract_address: ALICE.into(),
+				refund_address: BOB,
+				contract_address: ALICE,
 				fee: 5,
 				gas_limit: 100u64,
 				num_words: 1u8,
@@ -350,8 +350,8 @@ fn prepare_fulfillment_uses_randomness_result_without_updating_count() {
 		.build()
 		.execute_with(|| {
 			let request = Request {
-				refund_address: BOB.into(),
-				contract_address: ALICE.into(),
+				refund_address: BOB,
+				contract_address: ALICE,
 				fee: 5,
 				gas_limit: 100u64,
 				num_words: 1u8,
@@ -380,8 +380,8 @@ fn finish_fulfillment_removes_request_from_storage() {
 		.build()
 		.execute_with(|| {
 			let request = Request {
-				refund_address: BOB.into(),
-				contract_address: ALICE.into(),
+				refund_address: BOB,
+				contract_address: ALICE,
 				fee: 5,
 				gas_limit: 100u64,
 				num_words: 1u8,
@@ -414,8 +414,8 @@ fn finish_fulfillment_refunds_refund_address_with_excess_and_caller_with_cost_of
 		.build()
 		.execute_with(|| {
 			let request = Request {
-				refund_address: BOB.into(),
-				contract_address: ALICE.into(),
+				refund_address: BOB,
+				contract_address: ALICE,
 				fee: 5,
 				gas_limit: 100u64,
 				num_words: 1u8,
@@ -437,9 +437,9 @@ fn finish_fulfillment_refunds_refund_address_with_excess_and_caller_with_cost_of
 				3,
 			);
 			// 30 - ( deposit = 10 + fee = 5) + cost_of_execution_refund_for_caller = 3 == 18
-			assert_eq!(Balances::free_balance(&ALICE), 18);
+			assert_eq!(Balances::free_balance(ALICE), 18);
 			// 0 + deposit = 10 + fee = 5 - cost_of_execution = 3 == 12
-			assert_eq!(Balances::free_balance(&BOB), 12);
+			assert_eq!(Balances::free_balance(BOB), 12);
 		});
 }
 
@@ -450,8 +450,8 @@ fn finish_fulfillment_decrements_randomness_result_and_keeps_in_storage_if_not_l
 		.build()
 		.execute_with(|| {
 			let request = Request {
-				refund_address: BOB.into(),
-				contract_address: ALICE.into(),
+				refund_address: BOB,
+				contract_address: ALICE,
 				fee: 5,
 				gas_limit: 100u64,
 				num_words: 1u8,
@@ -495,8 +495,8 @@ fn finish_fulfillment_decrements_randomness_result_and_removes_from_storage_if_l
 		.build()
 		.execute_with(|| {
 			let request = Request {
-				refund_address: BOB.into(),
-				contract_address: ALICE.into(),
+				refund_address: BOB,
+				contract_address: ALICE,
 				fee: 5,
 				gas_limit: 100u64,
 				num_words: 1u8,
@@ -546,8 +546,8 @@ fn non_requester_cannot_increase_fee() {
 		.build()
 		.execute_with(|| {
 			let request = Request {
-				refund_address: BOB.into(),
-				contract_address: ALICE.into(),
+				refund_address: BOB,
+				contract_address: ALICE,
 				fee: 5,
 				gas_limit: 100u64,
 				num_words: 1u8,
@@ -569,8 +569,8 @@ fn increase_request_fee_transfers_from_caller_and_updates_request_state_fee() {
 		.build()
 		.execute_with(|| {
 			let request = Request {
-				refund_address: BOB.into(),
-				contract_address: ALICE.into(),
+				refund_address: BOB,
+				contract_address: ALICE,
 				fee: 5,
 				gas_limit: 100u64,
 				num_words: 1u8,
@@ -582,7 +582,7 @@ fn increase_request_fee_transfers_from_caller_and_updates_request_state_fee() {
 			// initial_fee = 5 + fee_increase = 6 == 11
 			assert_eq!(Randomness::requests(0u64).unwrap().request.fee, 11);
 			// initial_balance = 30 - deposit = 10 - initial_fee = 5 - fee_increase = 6 == 9
-			assert_eq!(Balances::free_balance(&ALICE), 9);
+			assert_eq!(Balances::free_balance(ALICE), 9);
 		});
 }
 
@@ -593,8 +593,8 @@ fn increase_request_fee_fails_if_insufficient_balance() {
 		.build()
 		.execute_with(|| {
 			let request = Request {
-				refund_address: BOB.into(),
-				contract_address: ALICE.into(),
+				refund_address: BOB,
+				contract_address: ALICE,
 				fee: 5,
 				gas_limit: 100u64,
 				num_words: 1u8,
@@ -685,8 +685,8 @@ fn execute_request_expiration_returns_deposit_to_contract_address_and_fees_to_ca
 			crate::pallet::RelayEpoch::<Test>::put(20u64);
 			assert_ok!(Randomness::execute_request_expiration(&BOB, 0u64));
 			// fee returned to BOB (caller)
-			assert_eq!(Balances::free_balance(&BOB), 5);
+			assert_eq!(Balances::free_balance(BOB), 5);
 			// deposit returned to ALICE (contract_address)
-			assert_eq!(Balances::free_balance(&ALICE), 25);
+			assert_eq!(Balances::free_balance(ALICE), 25);
 		});
 }

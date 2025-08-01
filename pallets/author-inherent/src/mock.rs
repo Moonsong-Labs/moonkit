@@ -90,7 +90,7 @@ impl AccountLookup<u64> for MockAccountLookup {
 	fn lookup_account(nimbus_id: &NimbusId) -> Option<u64> {
 		let nimbus_id_bytes: &[u8] = nimbus_id.as_ref();
 
-		if nimbus_id_bytes == &ALICE_NIMBUS {
+		if nimbus_id_bytes == ALICE_NIMBUS {
 			Some(ALICE)
 		} else {
 			None

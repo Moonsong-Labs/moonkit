@@ -163,7 +163,7 @@ pub fn new_partial(
 			Ok((time,))
 		},
 		&task_manager.spawn_essential_handle(),
-		config.prometheus_registry().clone(),
+		config.prometheus_registry(),
 		false,
 		false,
 	)?;
@@ -523,7 +523,7 @@ where
 	};
 	let para_id = crate::chain_spec::Extensions::try_get(&*config.chain_spec)
 		.map(|e| e.para_id)
-		.ok_or_else(|| "Could not find parachain ID in chain-spec.")?;
+		.ok_or("Could not find parachain ID in chain-spec.")?;
 
 	sc_service::spawn_tasks(sc_service::SpawnTasksParams {
 		network,

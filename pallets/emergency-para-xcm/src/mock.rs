@@ -99,6 +99,7 @@ impl cumulus_pallet_parachain_system::Config for Test {
 	type WeightInfo = ();
 	type ConsensusHook = cumulus_pallet_parachain_system::ExpectParentIncluded;
 	type SelectCore = cumulus_pallet_parachain_system::DefaultCoreSelector<Test>;
+	type RelayParentOffset = ConstU32<0>;
 }
 
 parameter_types! {

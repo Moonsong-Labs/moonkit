@@ -149,7 +149,7 @@ where
 
 			let sub_context = Context {
 				caller: handle.context().caller,
-				address: address,
+				address,
 				apparent_value: value,
 			};
 

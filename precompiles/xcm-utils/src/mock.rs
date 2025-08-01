@@ -28,7 +28,6 @@ use precompile_utils::{
 	testing::{AddressInPrefixedSet, MockAccount},
 };
 use sp_core::{H256, U256};
-use sp_io;
 use sp_runtime::traits::{BlakeTwo256, IdentityLookup, TryConvert};
 use sp_runtime::BuildStorage;
 use xcm::latest::{Error as XcmError, WildAsset::All};
@@ -252,7 +251,7 @@ impl GasWeightMapping for MockGasWeightMapping {
 		Weight::from_parts(gas, 1)
 	}
 	fn weight_to_gas(weight: Weight) -> u64 {
-		weight.ref_time().into()
+		weight.ref_time()
 	}
 }
 
@@ -265,7 +264,6 @@ impl pallet_evm::Config for Runtime {
 	type WithdrawOrigin = EnsureAddressNever<AccountId>;
 	type AddressMapping = AccountId;
 	type Currency = Balances;
-	type RuntimeEvent = RuntimeEvent;
 	type Runner = pallet_evm::runner::stack::Runner<Self>;
 	type PrecompilesValue = PrecompilesValue;
 	type PrecompilesType = Precompiles<Self>;
@@ -298,7 +296,7 @@ use sp_std::cell::RefCell;
 use xcm::latest::opaque;
 // Simulates sending a XCM message
 thread_local! {
-	pub static SENT_XCM: RefCell<Vec<(Location, opaque::Xcm)>> = RefCell::new(Vec::new());
+	pub static SENT_XCM: RefCell<Vec<(Location, opaque::Xcm)>> = const { RefCell::new(Vec::new()) };
 }
 pub fn sent_xcm() -> Vec<(Location, opaque::Xcm)> {
 	SENT_XCM.with(|q| (*q.borrow()).clone())
@@ -377,7 +375,7 @@ parameter_types! {
 
 	pub UniversalLocation: InteriorLocation = Here;
 	pub Ancestry: InteriorLocation =
-		[GlobalConsensus(RelayNetwork::get()), Parachain(ParachainId::get().into()).into()].into();
+		[GlobalConsensus(RelayNetwork::get()), Parachain(ParachainId::get().into())].into();
 
 	pub const MaxAssetsIntoHolding: u32 = 64;
 
@@ -425,15 +423,10 @@ impl xcm_executor::Config for XcmConfig {
 	type XcmEventEmitter = ();
 }
 
+#[derive(Default)]
 pub(crate) struct ExtBuilder {
 	// endowed accounts with balances
 	balances: Vec<(AccountId, Balance)>,
-}
-
-impl Default for ExtBuilder {
-	fn default() -> ExtBuilder {
-		ExtBuilder { balances: vec![] }
-	}
 }
 
 impl ExtBuilder {

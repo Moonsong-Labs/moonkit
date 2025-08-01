@@ -187,13 +187,11 @@ impl pallet_assets::Config for Runtime {
 	type WeightInfo = ();
 	type RemoveItemsLimit = ConstU32<1000>;
 	type Holder = ();
-	pallet_assets::runtime_benchmarks_enabled! {
-		type BenchmarkHelper = ();
-	}
+	#[cfg(feature = "runtime-benchmarks")]
+	type BenchmarkHelper = ();
 }
 
 impl pallet_foreign_asset_creator::Config for Runtime {
-	type RuntimeEvent = RuntimeEvent;
 	type ForeignAsset = Location;
 	type ForeignAssetCreatorOrigin = EnsureRoot<AccountId>;
 	type ForeignAssetModifierOrigin = EnsureRoot<AccountId>;
@@ -263,7 +261,6 @@ impl pallet_evm::Config for Runtime {
 	type WithdrawOrigin = EnsureAddressNever<AccountId>;
 	type AddressMapping = AccountId;
 	type Currency = Balances;
-	type RuntimeEvent = RuntimeEvent;
 	type Runner = pallet_evm::runner::stack::Runner<Self>;
 	type PrecompilesValue = PrecompilesValue;
 	type PrecompilesType = Precompiles<Self, (SingleAddressMatch, ForeignAssetMatch)>;

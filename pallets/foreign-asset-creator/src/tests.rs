@@ -25,7 +25,7 @@ fn creating_foreign_works() {
 		assert_ok!(ForeignAssetCreator::create_foreign_asset(
 			RuntimeOrigin::root(),
 			Location::parent(),
-			1u32.into(),
+			1u32,
 			1u32.into(),
 			true,
 			1u64,
@@ -59,7 +59,7 @@ fn test_asset_exists_error() {
 		assert_ok!(ForeignAssetCreator::create_foreign_asset(
 			RuntimeOrigin::root(),
 			Location::parent(),
-			1u32.into(),
+			1u32,
 			1u32.into(),
 			true,
 			1u64,
@@ -72,7 +72,7 @@ fn test_asset_exists_error() {
 			ForeignAssetCreator::create_foreign_asset(
 				RuntimeOrigin::root(),
 				Location::parent(),
-				1u32.into(),
+				1u32,
 				1u32.into(),
 				true,
 				1u64,
@@ -89,7 +89,7 @@ fn test_regular_user_cannot_call_extrinsics() {
 			ForeignAssetCreator::create_foreign_asset(
 				RuntimeOrigin::signed(1),
 				Location::parent(),
-				1u32.into(),
+				1u32,
 				1u32.into(),
 				true,
 				1u64,
@@ -114,7 +114,7 @@ fn test_root_can_change_foreign_asset_for_asset_id() {
 		assert_ok!(ForeignAssetCreator::create_foreign_asset(
 			RuntimeOrigin::root(),
 			Location::parent(),
-			1u32.into(),
+			1u32,
 			1u32.into(),
 			true,
 			1u64,
@@ -172,7 +172,7 @@ fn test_root_can_remove_asset_association() {
 		assert_ok!(ForeignAssetCreator::create_foreign_asset(
 			RuntimeOrigin::root(),
 			Location::parent(),
-			1u32.into(),
+			1u32,
 			1u32.into(),
 			true,
 			1u64,
@@ -206,7 +206,7 @@ fn test_destroy_foreign_asset_also_removes_everything() {
 		assert_ok!(ForeignAssetCreator::create_foreign_asset(
 			RuntimeOrigin::root(),
 			Location::parent(),
-			1u32.into(),
+			1u32,
 			1u32.into(),
 			true,
 			1u64,
