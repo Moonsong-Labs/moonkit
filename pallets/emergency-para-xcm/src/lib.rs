@@ -80,9 +80,6 @@ pub mod pallet {
 		+ cumulus_pallet_parachain_system::Config<CheckAssociatedRelayNumber = Pallet<Self>>
 		+ pallet_message_queue::Config<QueuePausedQuery = Pallet<Self>>
 	{
-		/// Overarching event type
-		type RuntimeEvent: From<Event> + IsType<<Self as frame_system::Config>::RuntimeEvent>;
-
 		/// Used before check associated relay block number. It should be what would be passed to
 		/// `cumulus_pallet_parachain_system` if this pallet was not being used.
 		type CheckAssociatedRelayNumber: CheckAssociatedRelayNumber;

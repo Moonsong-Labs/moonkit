@@ -118,6 +118,7 @@ where
 		relay_client,
 		validation_data,
 		para_id,
+		vec![],
 	)
 	.await;
 

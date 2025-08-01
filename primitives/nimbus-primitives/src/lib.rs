@@ -171,3 +171,13 @@ sp_api::decl_runtime_apis! {
 		fn can_author(author: NimbusId, relay_parent: u32, parent_header: &Block::Header) -> bool;
 	}
 }
+
+#[test]
+fn test() {
+	use sp_core::{crypto::Ss58Codec, sr25519};
+	let k = sr25519::Public::from(sp_core::hex2array!(
+		"e4843428e3cae5e7df57e719f3e70ebe8270b18961f4c48a7c3ead7b3defcf24"
+	));
+
+	dbg!(k.to_ss58check());
+}

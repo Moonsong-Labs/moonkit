@@ -105,8 +105,6 @@ pub mod pallet {
 	/// Configuration trait of this pallet.
 	#[pallet::config]
 	pub trait Config: frame_system::Config {
-		/// Overarching event type
-		type RuntimeEvent: From<Event<Self>> + IsType<<Self as frame_system::Config>::RuntimeEvent>;
 		/// Address mapping to convert from H160 to AccountId
 		type AddressMapping: Convert<H160, Self::AccountId>;
 		/// Currency in which the security deposit will be taken.

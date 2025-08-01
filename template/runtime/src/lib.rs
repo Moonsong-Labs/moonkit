@@ -423,6 +423,7 @@ impl cumulus_pallet_parachain_system::Config for Runtime {
 		cumulus_pallet_parachain_system::RelayNumberMonotonicallyIncreases;
 	type ConsensusHook = ConsensusHook;
 	type SelectCore = cumulus_pallet_parachain_system::DefaultCoreSelector<Runtime>;
+	type RelayParentOffset = ConstU32<0>;
 }
 
 pub const RELAY_CHAIN_SLOT_DURATION_MILLIS: u32 = 6000;
@@ -684,9 +685,7 @@ parameter_types! {
 impl pallet_account_set::Config for Runtime {}
 
 /// Configure the pallet template in pallets/template.
-impl pallet_template::Config for Runtime {
-	type RuntimeEvent = RuntimeEvent;
-}
+impl pallet_template::Config for Runtime {}
 
 // Create the runtime by composing the FRAME pallets that were previously configured.
 construct_runtime!(

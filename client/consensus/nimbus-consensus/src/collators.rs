@@ -36,7 +36,7 @@ use polkadot_node_primitives::{Collation, MaybeCompressedPoV};
 use sc_consensus::{BlockImport, BlockImportParams};
 use sp_application_crypto::ByteArray;
 use sp_consensus::{BlockOrigin, Proposal};
-use sp_core::{crypto::CryptoTypeId, sr25519, Encode};
+use sp_core::{crypto::CryptoTypeId, sr25519};
 use sp_inherents::InherentData;
 use sp_keystore::Keystore;
 use sp_runtime::{
@@ -66,10 +66,7 @@ pub(crate) async fn collate<ADP, Block, BI, CS, Proposer>(
 	inherent_data: (ParachainInherentData, InherentData),
 	proposal_duration: Duration,
 	max_pov_size: usize,
-) -> Result<
-	Option<(Collation, ParachainBlockData<Block>, Block::Hash)>,
-	Box<dyn Error + Send + 'static>,
->
+) -> Result<Option<(Collation, ParachainBlockData<Block>)>, Box<dyn Error + Send + 'static>>
 where
 	ADP: DigestsProvider<NimbusId, <Block as BlockT>::Hash> + 'static,
 	Block: BlockT,
@@ -127,7 +124,7 @@ where
 	info!(
 		"🔖 Sealed block for proposal at {}. Hash now {:?}, previously {:?}.",
 		*header.number(),
-		block_import_params.post_hash(),
+		&post_hash,
 		header.hash(),
 	);
 
@@ -149,13 +146,7 @@ where
 			proof: proof,
 		},
 	) {
-		tracing::info!(
-			target: crate::LOG_TARGET,
-			"PoV size {{ header: {}kb, extrinsics: {}kb, storage_proof: {}kb }}",
-			block_data.header().encode().len() as f64 / 1024f64,
-			block_data.extrinsics().encode().len() as f64 / 1024f64,
-			block_data.storage_proof().encode().len() as f64 / 1024f64,
-		);
+		block_data.log_size_info();
 
 		if let MaybeCompressedPoV::Compressed(ref pov) = collation.proof_of_validity {
 			tracing::info!(
@@ -165,7 +156,7 @@ where
 			);
 		}
 
-		Ok(Some((collation, block_data, post_hash)))
+		Ok(Some((collation, block_data)))
 	} else {
 		Err(
 			Box::<dyn Error + Send + Sync>::from("Unable to produce collation")

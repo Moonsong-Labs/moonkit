@@ -65,8 +65,6 @@ pub mod pallet {
 	/// Configuration trait of this pallet.
 	#[pallet::config]
 	pub trait Config: frame_system::Config {
-		/// Overarching event type
-		type RuntimeEvent: From<Event> + IsType<<Self as frame_system::Config>::RuntimeEvent>;
 		/// The base call filter to be used in normal operating mode
 		/// (When we aren't in the middle of a migration)
 		type NormalCallFilter: Contains<Self::RuntimeCall>;

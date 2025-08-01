@@ -40,7 +40,10 @@ use sc_consensus_manual_seal::{run_instant_seal, InstantSealParams};
 use sc_executor::{
 	HeapAllocStrategy, NativeElseWasmExecutor, WasmExecutor, DEFAULT_HEAP_ALLOC_STRATEGY,
 };
-use sc_network::{config::FullNetworkConfiguration, NetworkBlock};
+use sc_network::{
+	config::FullNetworkConfiguration, request_responses::IncomingRequest as GenericIncomingRequest,
+	service::traits::NetworkService, NetworkBlock,
+};
 use sc_service::{Configuration, PartialComponents, TFullBackend, TFullClient, TaskManager};
 use sc_telemetry::{Telemetry, TelemetryHandle, TelemetryWorker, TelemetryWorkerHandle};
 use sp_api::ProvideRuntimeApi;
@@ -186,6 +189,8 @@ async fn build_relay_chain_interface(
 ) -> RelayChainResult<(
 	Arc<(dyn RelayChainInterface + 'static)>,
 	Option<CollatorPair>,
+	Arc<dyn NetworkService>,
+	async_channel::Receiver<GenericIncomingRequest>,
 )> {
 	if let cumulus_client_cli::RelayChainMode::ExternalRpc(rpc_target_urls) =
 		collator_options.relay_chain_mode
@@ -231,7 +236,7 @@ where
 	let backend = params.backend.clone();
 	let mut task_manager = params.task_manager;
 
-	let (relay_chain_interface, collator_key) = build_relay_chain_interface(
+	let (relay_chain_interface, collator_key, _, _) = build_relay_chain_interface(
 		polkadot_config,
 		&parachain_config,
 		telemetry_worker_handle,
@@ -333,6 +338,7 @@ where
 		relay_chain_slot_duration,
 		recovery_handle: Box::new(overseer_handle.clone()),
 		sync_service: sync_service.clone(),
+		prometheus_registry: Default::default(), // TODO
 	})?;
 
 	if validator {

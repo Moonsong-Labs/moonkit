@@ -203,8 +203,11 @@ where
 				.await
 			);
 
-			if let Some((collation, _, post_hash)) = maybe_collation {
-				let result_sender = Some(collator_service.announce_with_barrier(post_hash));
+			if let Some((collation, block_data)) = maybe_collation {
+				let Some(block_hash) = block_data.blocks().first().map(|b| b.hash()) else {
+					continue;
+				};
+				let result_sender = Some(collator_service.announce_with_barrier(block_hash));
 				request.complete(Some(CollationResult {
 					collation,
 					result_sender,
