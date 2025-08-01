@@ -376,7 +376,7 @@ fn test_transfer_assets_to_relay_foreign_asset() {
 	ExtBuilder::default()
 		.with_balances(vec![(Alice.into(), 1000)])
 		.with_xcm_assets(vec![XcmAssetDetails {
-			location: Location::parent(),
+			location: Location::new(1, [Parachain(1000)]), // Asset Hub Dot
 			admin: Alice.into(),
 			asset_id: 5u16,
 			is_sufficient: true,
