@@ -99,7 +99,7 @@ benchmarks! {
 		let new_foreign_asset = T::ForeignAsset::default();
 		let asset_type_to_be_changed: T::ForeignAsset = Location::new(
 			0,
-			[GeneralIndex((0) as u128)]
+			[GeneralIndex(0)]
 		).into();
 		let asset_id_to_be_changed: AssetId<T> = (0u16).into();
 	}: _(RawOrigin::Root, asset_id_to_be_changed.clone(), new_foreign_asset.clone())

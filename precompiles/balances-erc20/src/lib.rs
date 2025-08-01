@@ -292,7 +292,7 @@ where
 				Some(origin).into(),
 				pallet_balances::Call::<Runtime, Instance>::transfer_allow_death {
 					dest: Runtime::Lookup::unlookup(to),
-					value: value,
+					value,
 				},
 				StorageGrowth::get(),
 			)?;
@@ -358,7 +358,7 @@ where
 				Some(from).into(),
 				pallet_balances::Call::<Runtime, Instance>::transfer_allow_death {
 					dest: Runtime::Lookup::unlookup(to),
-					value: value,
+					value,
 				},
 				StorageGrowth::get(),
 			)?;

@@ -31,10 +31,7 @@ pub use pallet::*;
 #[cfg(feature = "try-runtime")]
 extern crate alloc;
 #[cfg(feature = "try-runtime")]
-use alloc::{
-	format,
-	string::{String, ToString},
-};
+use alloc::string::{String, ToString};
 
 #[cfg(test)]
 #[macro_use]
@@ -236,8 +233,8 @@ pub mod pallet {
 				// unconditionally set it to true, so we read a hint from temp storage which was
 				// left for us by pre_upgrade()
 
-				match state_map.get(&migration_name.to_string()) {
-					Some(value) => assert!(value.clone(), "our dummy value might as well be true"),
+				match state_map.get(migration_name) {
+					Some(value) => assert!(*value, "our dummy value might as well be true"),
 					None => continue,
 				}
 
@@ -246,7 +243,7 @@ pub mod pallet {
 					"invoking post_upgrade() on migration {}", migration_name
 				);
 
-				if let Some(state) = migration_states_map.get(&migration_name.to_string()) {
+				if let Some(state) = migration_states_map.get(migration_name) {
 					let result = migration.post_upgrade(state.clone());
 					match result {
 						Ok(()) => {
@@ -363,7 +360,7 @@ pub mod pallet {
 				let consumed_weight = migration.migrate(available_for_step);
 				<Pallet<T>>::deposit_event(Event::MigrationCompleted {
 					migration_name: migration_name_as_bytes.into(),
-					consumed_weight: consumed_weight,
+					consumed_weight,
 				});
 				<MigrationState<T>>::insert(migration_name_as_bytes, true);
 

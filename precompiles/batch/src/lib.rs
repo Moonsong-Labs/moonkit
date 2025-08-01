@@ -121,10 +121,7 @@ where
 		gas_limit: BoundedVec<u64, GetArrayLimit>,
 	) -> EvmResult {
 		let addresses = Vec::from(to).into_iter().enumerate();
-		let values = Vec::from(value)
-			.into_iter()
-			.map(|x| Some(x))
-			.chain(repeat(None));
+		let values = Vec::from(value).into_iter().map(Some).chain(repeat(None));
 		let calls_data = Vec::from(call_data)
 			.into_iter()
 			.map(|x| Some(x.into()))
@@ -152,7 +149,7 @@ where
 
 			let sub_context = Context {
 				caller: handle.context().caller,
-				address: address.clone(),
+				address: address,
 				apparent_value: value,
 			};
 
@@ -161,7 +158,7 @@ where
 			} else {
 				Some(Transfer {
 					source: handle.context().caller,
-					target: address.clone(),
+					target: address,
 					value,
 				})
 			};

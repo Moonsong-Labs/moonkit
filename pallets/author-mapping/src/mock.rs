@@ -23,30 +23,25 @@ use scale_info::TypeInfo;
 #[cfg(feature = "std")]
 use serde::{Deserialize, Serialize};
 use sp_core::{ByteArray, H256};
-use sp_io;
 use sp_runtime::{
 	traits::{BlakeTwo256, IdentityLookup},
 	BuildStorage, Perbill, RuntimeDebug,
 };
 
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
-#[derive(Eq, PartialEq, Clone, Copy, Encode, Decode, RuntimeDebug, TypeInfo)]
+#[derive(Eq, PartialEq, Clone, Copy, Encode, Decode, RuntimeDebug, TypeInfo, Default)]
 pub enum TestAuthor {
+	#[default]
 	Alice,
 	Bob,
 	Charlie,
 }
-impl Default for TestAuthor {
-	fn default() -> TestAuthor {
-		TestAuthor::Alice
-	}
-}
-impl Into<NimbusId> for TestAuthor {
-	fn into(self) -> NimbusId {
-		match self {
-			Self::Alice => NimbusId::from_slice(&[0u8; 32]),
-			Self::Bob => NimbusId::from_slice(&[1u8; 32]),
-			Self::Charlie => NimbusId::from_slice(&[2u8; 32]),
+impl From<TestAuthor> for NimbusId {
+	fn from(val: TestAuthor) -> Self {
+		match val {
+			TestAuthor::Alice => NimbusId::from_slice(&[0u8; 32]),
+			TestAuthor::Bob => NimbusId::from_slice(&[1u8; 32]),
+			TestAuthor::Charlie => NimbusId::from_slice(&[2u8; 32]),
 		}
 		.expect("valid ids")
 	}
@@ -129,7 +124,6 @@ parameter_types! {
 	pub const DepositAmount: Balance = 100;
 }
 impl pallet_author_mapping::Config for Runtime {
-	type RuntimeEvent = RuntimeEvent;
 	type DepositCurrency = Balances;
 	type DepositAmount = DepositAmount;
 	type Keys = NimbusId;
@@ -138,20 +132,12 @@ impl pallet_author_mapping::Config for Runtime {
 
 /// Externality builder for pallet author mapping's mock runtime
 /// Allows configuring balances and initial mappings
+#[derive(Default)]
 pub(crate) struct ExtBuilder {
 	/// Accounts endowed with balances
 	balances: Vec<(AccountId, Balance)>,
 	/// AuthorId -> AccoutId mappings
 	mappings: Vec<(NimbusId, AccountId)>,
-}
-
-impl Default for ExtBuilder {
-	fn default() -> ExtBuilder {
-		ExtBuilder {
-			balances: vec![],
-			mappings: vec![],
-		}
-	}
 }
 
 impl ExtBuilder {

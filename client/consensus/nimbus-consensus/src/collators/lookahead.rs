@@ -170,7 +170,7 @@ where
 				&mut params.relay_client,
 			)
 			.await
-			.get(0)
+			.first()
 			{
 				*core_index
 			} else {
@@ -306,7 +306,7 @@ where
 					&relay_parent_header,
 					included_block,
 					para_client,
-					&keystore,
+					keystore,
 					params.force_authoring,
 				)
 				.await

@@ -81,7 +81,7 @@ where
 
 	let maybe_proposal = proposer
 		.propose(
-			&parent_header,
+			parent_header,
 			&inherent_data.0,
 			inherent_data.1,
 			sp_runtime::generic::Digest { logs },
@@ -143,7 +143,7 @@ where
 		post_hash,
 		ParachainCandidate {
 			block: post_block,
-			proof: proof,
+			proof,
 		},
 	) {
 		block_data.log_size_info();

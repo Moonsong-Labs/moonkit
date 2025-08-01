@@ -109,7 +109,7 @@ benchmarks! {
 		}
 		fn decode_pre_digest(input: String) -> PreDigest {
 			let output = hex::decode(input).expect("expect to decode input");
-			const PRE_DIGEST_BYTE_LEN: usize = size_of::<PreDigest>() as usize;
+			const PRE_DIGEST_BYTE_LEN: usize = size_of::<PreDigest>();
 			let mut ret: [u8; PRE_DIGEST_BYTE_LEN] = [0u8; PRE_DIGEST_BYTE_LEN];
 			ret.copy_from_slice(&output[0..PRE_DIGEST_BYTE_LEN]);
 			Decode::decode(&mut ret.as_slice()).expect("expect to decode predigest")
@@ -128,8 +128,7 @@ benchmarks! {
 		let vrf_id: VrfId = decode_key(raw_vrf_id).into();
 		let vrf_input: [u8; 32] = decode_32_bytes(raw_vrf_input);
 		let vrf_pre_digest = decode_pre_digest(raw_vrf_pre_digest);
-		let last_vrf_output: T::Hash = Decode::decode(&mut vrf_input.as_slice()).ok()
-			.expect("decode into same type");
+		let last_vrf_output: T::Hash = Decode::decode(&mut vrf_input.as_slice()).expect("decode into same type");
 		LocalVrfOutput::<T>::put(Some(last_vrf_output));
 		NotFirstBlock::<T>::put(());
 		let block_num = frame_system::Pallet::<T>::block_number() + 100u32.into();
@@ -163,11 +162,9 @@ benchmarks! {
 			.0
 			.attach_input_hash(&pubkey, transcript.0.clone())
 			.ok()
-			.map(|inout| inout.make_bytes(&session_keys_primitives::VRF_INOUT_CONTEXT))
+			.map(|inout| inout.make_bytes(session_keys_primitives::VRF_INOUT_CONTEXT))
 			.expect("VRF output encoded in pre-runtime digest must be valid");
-		let randomness_output = T::Hash::decode(&mut &vrf_output[..])
-			.ok()
-			.expect("VRF output bytes can be decode into T::Hash");
+		let randomness_output = T::Hash::decode(&mut &vrf_output[..]).expect("VRF output bytes can be decode into T::Hash");
 		// convert vrf output and check if it matches as expected
 		assert_eq!(LocalVrfOutput::<T>::get(), Some(randomness_output));
 		assert_eq!(
@@ -195,8 +192,8 @@ benchmarks! {
 		assert!(result.is_ok(), "Request Randomness Failed");
 	}
 	verify {
-		assert!(Pallet::<T>::requests(&0u64).is_some());
-		assert!(Pallet::<T>::requests(&1u64).is_none());
+		assert!(Pallet::<T>::requests(0u64).is_some());
+		assert!(Pallet::<T>::requests(1u64).is_none());
 	}
 
 	prepare_fulfillment {
@@ -251,7 +248,7 @@ benchmarks! {
 		let result = Pallet::<T>::prepare_fulfillment(0u64);
 		assert!(result.is_ok(), "Prepare Fulfillment Failed");
 	}: {
-		let result = Pallet::<T>::finish_fulfillment(0u64, Request {
+		Pallet::<T>::finish_fulfillment(0u64, Request {
 			refund_address: H160::default(),
 			contract_address: H160::default(),
 			fee: BalanceOf::<T>::zero(),
@@ -280,7 +277,7 @@ benchmarks! {
 			gas_limit: 100u64,
 			num_words: 100u8,
 			salt: H256::default(),
-			info: RequestType::Local(10u32.into()).into()
+			info: RequestType::Local(10u32.into())
 		});
 	}: {
 		let result = Pallet::<T>::increase_request_fee(

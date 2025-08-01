@@ -113,8 +113,7 @@ fn bounded_vec_limit_higher_than_max_storage_roots() {
 			};
 			set_current_relay_chain_state(relay_state);
 			// Create a bounded vec with a limit higher than `MaxStorageRoots`
-			let vec1: BoundedVec<u8, ConstU32<20>> =
-				BoundedVec::truncate_from((0u8..30).into_iter().collect());
+			let vec1: BoundedVec<u8, ConstU32<20>> = BoundedVec::truncate_from((0u8..30).collect());
 			let bytes = vec1.encode();
 			let raw_key = frame_support::storage::storage_prefix(
 				b"RelayStorageRoots",

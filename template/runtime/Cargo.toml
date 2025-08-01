@@ -156,4 +156,6 @@ try-runtime = [
 	"frame-support/try-runtime",
 	"pallet-author-slot-filter/try-runtime",
 	"pallet-message-queue/try-runtime",
+	"polkadot-runtime-common/try-runtime",
+	"pallet-xcm/try-runtime"
 ]

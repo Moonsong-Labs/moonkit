@@ -256,7 +256,7 @@ fn test_remove_proxy_fails_if_proxy_not_exist() {
 						delay: 0,
 					},
 				)
-				.execute_reverts(|output| from_utf8(&output).unwrap().contains("NotFound"));
+				.execute_reverts(|output| from_utf8(output).unwrap().contains("NotFound"));
 		})
 }
 
@@ -546,7 +546,7 @@ fn test_nested_evm_bypass_proxy_should_allow_elevating_proxy_type() {
 				target: Precompile1.into(),
 				input: add_proxy_precompile,
 				value: U256::zero(),
-				gas_limit: u64::max_value(),
+				gas_limit: u64::MAX,
 				max_fee_per_gas: 0.into(),
 				max_priority_fee_per_gas: Some(U256::zero()),
 				nonce: None,
@@ -744,7 +744,7 @@ fn proxy_proxy_should_succeed_if_called_by_smart_contract() {
 
 					assert_eq!(context.caller, Bob.into());
 					assert_eq!(address, Charlie.into());
-					assert_eq!(is_static, false);
+					assert!(!is_static);
 
 					assert!(transfer.is_none());
 
@@ -825,7 +825,7 @@ fn proxy_proxy_should_fail_if_called_by_smart_contract_for_a_non_eoa_account() {
 
 					assert_eq!(context.caller, Bob.into());
 					assert_eq!(address, Charlie.into());
-					assert_eq!(is_static, false);
+					assert!(!is_static);
 
 					assert!(transfer.is_none());
 

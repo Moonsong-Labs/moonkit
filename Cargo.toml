@@ -45,7 +45,7 @@ tracing = "0.1.22"
 num_enum = { version = "0.7.2", default-features = false }
 paste = "1.0.14"
 slices = "0.2.0"
-libsecp256k1 = { version = "0.7.1", default-features = false }
+libsecp256k1 = { version = "0.7.2", default-features = false }
 sha3 = { version = "0.10.8", default-features = false }
 primitive-types = { version = "0.13.1", default-features = false }
 

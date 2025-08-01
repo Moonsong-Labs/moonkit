@@ -19,7 +19,7 @@
 //! This pallet provides access to 2 sources of randomness:
 //! 1. local VRF, produced by collators per block
 //! 2. relay chain BABE one epoch ago randomness, produced by the relay chain per relay chain epoch
-//! These options are represented as `type::RequestType`.
+//!	These options are represented as `type::RequestType`.
 //!
 //! There are no extrinsics for this pallet. Instead, public functions on `Pallet<T: Config>` expose
 //! user actions for the precompile i.e. `request_randomness`.
@@ -443,7 +443,7 @@ pub mod pallet {
 		/// does NOT try to fulfill the request
 		pub fn execute_request_expiration(caller: &H160, id: RequestId) -> DispatchResult {
 			let request = <Requests<T>>::get(id).ok_or(Error::<T>::RequestDNE)?;
-			let caller = T::AddressMapping::convert(caller.clone());
+			let caller = T::AddressMapping::convert(*caller);
 			request.execute_expiration(&caller)?;
 			let info_key: RequestType<T> = request.request.info.into();
 			if let Some(result) = RandomnessResults::<T>::take(&info_key) {

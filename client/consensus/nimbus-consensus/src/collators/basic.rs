@@ -68,10 +68,9 @@ pub struct Params<Proposer, BI, ParaClient, RClient, CIDP, CS, ADP = ()> {
 }
 
 /// Run bare Nimbus consensus as a relay-chain-driven collator.
-pub fn run<Block, BI, CIDP, Backend, Client, RClient, Proposer, CS, ADP>(
+pub async fn run<Block, BI, CIDP, Backend, Client, RClient, Proposer, CS, ADP>(
 	params: Params<Proposer, BI, Client, RClient, CIDP, CS, ADP>,
-) -> impl Future<Output = ()> + Send + 'static
-where
+) where
 	Block: BlockT + Send,
 	CIDP: CreateInherentDataProviders<Block, (PHash, PersistedValidationData, NimbusId)> + 'static,
 	CIDP::InherentDataProviders: Send,
@@ -89,133 +88,131 @@ where
 	CS: CollatorServiceInterface<Block> + Send + Sync + 'static,
 	ADP: DigestsProvider<NimbusId, <Block as BlockT>::Hash> + Send + Sync + 'static,
 {
-	async move {
-		let mut collation_requests = cumulus_client_collator::relay_chain_driven::init(
-			params.collator_key,
-			params.para_id,
-			params.overseer_handle,
-		)
-		.await;
+	let mut collation_requests = cumulus_client_collator::relay_chain_driven::init(
+		params.collator_key,
+		params.para_id,
+		params.overseer_handle,
+	)
+	.await;
 
-		let Params {
-			additional_digests_provider,
-			mut block_import,
-			collator_service,
-			create_inherent_data_providers,
-			keystore,
-			para_id,
-			mut proposer,
-			para_client,
-			relay_client,
-			force_authoring,
-			max_pov_percentage,
-			..
-		} = params;
+	let Params {
+		additional_digests_provider,
+		mut block_import,
+		collator_service,
+		create_inherent_data_providers,
+		keystore,
+		para_id,
+		mut proposer,
+		para_client,
+		relay_client,
+		force_authoring,
+		max_pov_percentage,
+		..
+	} = params;
 
-		while let Some(request) = collation_requests.next().await {
-			macro_rules! reject_with_error {
-				($err:expr) => {{
-					request.complete(None);
-					tracing::error!(target: crate::LOG_TARGET, err = ?{ $err });
-					continue;
-				}};
-			}
-
-			macro_rules! try_request {
-				($x:expr) => {{
-					match $x {
-						Ok(x) => x,
-						Err(e) => reject_with_error!(e),
-					}
-				}};
-			}
-
-			let validation_data = request.persisted_validation_data();
-
-			let parent_header = try_request!(Block::Header::decode(
-				&mut &validation_data.parent_head.0[..]
-			));
-
-			let parent_hash = parent_header.hash();
-
-			if !collator_service.check_block_status(parent_hash, &parent_header) {
+	while let Some(request) = collation_requests.next().await {
+		macro_rules! reject_with_error {
+			($err:expr) => {{
+				request.complete(None);
+				tracing::error!(target: crate::LOG_TARGET, err = ?{ $err });
 				continue;
-			}
+			}};
+		}
 
-			let relay_parent_header = match relay_client
-				.header(RBlockId::hash(*request.relay_parent()))
-				.await
-			{
-				Err(e) => reject_with_error!(e),
-				Ok(None) => continue, // sanity: would be inconsistent to get `None` here
-				Ok(Some(h)) => h,
-			};
+		macro_rules! try_request {
+			($x:expr) => {{
+				match $x {
+					Ok(x) => x,
+					Err(e) => reject_with_error!(e),
+				}
+			}};
+		}
 
-			let nimbus_id = match claim_slot::<Block, Client>(
-				&keystore,
-				&para_client,
-				&parent_header,
-				&relay_parent_header,
-				force_authoring,
+		let validation_data = request.persisted_validation_data();
+
+		let parent_header = try_request!(Block::Header::decode(
+			&mut &validation_data.parent_head.0[..]
+		));
+
+		let parent_hash = parent_header.hash();
+
+		if !collator_service.check_block_status(parent_hash, &parent_header) {
+			continue;
+		}
+
+		let relay_parent_header = match relay_client
+			.header(RBlockId::hash(*request.relay_parent()))
+			.await
+		{
+			Err(e) => reject_with_error!(e),
+			Ok(None) => continue, // sanity: would be inconsistent to get `None` here
+			Ok(Some(h)) => h,
+		};
+
+		let nimbus_id = match claim_slot::<Block, Client>(
+			&keystore,
+			&para_client,
+			&parent_header,
+			&relay_parent_header,
+			force_authoring,
+		)
+		.await
+		{
+			Ok(None) => continue,
+			Ok(Some(nimbus_id)) => nimbus_id,
+			Err(e) => reject_with_error!(e),
+		};
+
+		let inherent_data = try_request!(
+			create_inherent_data(
+				&create_inherent_data_providers,
+				para_id,
+				parent_header.hash(),
+				validation_data,
+				&relay_client,
+				*request.relay_parent(),
+				nimbus_id.clone(),
 			)
 			.await
-			{
-				Ok(None) => continue,
-				Ok(Some(nimbus_id)) => nimbus_id,
-				Err(e) => reject_with_error!(e),
+		);
+
+		let allowed_pov_size = {
+			// Cap the percentage at 85% (see https://github.com/paritytech/polkadot-sdk/issues/6020)
+			let capped_percentage = max_pov_percentage.min(85);
+			// Calculate the allowed POV size based on the percentage
+			(validation_data.max_pov_size as u128)
+				.saturating_mul(capped_percentage as u128)
+				.saturating_div(100) as usize
+		};
+
+		let maybe_collation = try_request!(
+			super::collate::<ADP, Block, BI, CS, Proposer>(
+				&additional_digests_provider,
+				nimbus_id,
+				&mut block_import,
+				&collator_service,
+				&*keystore,
+				&parent_header,
+				&mut proposer,
+				inherent_data,
+				Duration::from_millis(500), //params.authoring_duration,
+				allowed_pov_size,
+			)
+			.await
+		);
+
+		if let Some((collation, block_data)) = maybe_collation {
+			let Some(block_hash) = block_data.blocks().first().map(|b| b.hash()) else {
+				continue;
 			};
-
-			let inherent_data = try_request!(
-				create_inherent_data(
-					&create_inherent_data_providers,
-					para_id,
-					parent_header.hash(),
-					&validation_data,
-					&relay_client,
-					*request.relay_parent(),
-					nimbus_id.clone(),
-				)
-				.await
-			);
-
-			let allowed_pov_size = {
-				// Cap the percentage at 85% (see https://github.com/paritytech/polkadot-sdk/issues/6020)
-				let capped_percentage = max_pov_percentage.min(85);
-				// Calculate the allowed POV size based on the percentage
-				(validation_data.max_pov_size as u128)
-					.saturating_mul(capped_percentage as u128)
-					.saturating_div(100) as usize
-			};
-
-			let maybe_collation = try_request!(
-				super::collate::<ADP, Block, BI, CS, Proposer>(
-					&additional_digests_provider,
-					nimbus_id,
-					&mut block_import,
-					&collator_service,
-					&*keystore,
-					&parent_header,
-					&mut proposer,
-					inherent_data,
-					Duration::from_millis(500), //params.authoring_duration,
-					allowed_pov_size,
-				)
-				.await
-			);
-
-			if let Some((collation, block_data)) = maybe_collation {
-				let Some(block_hash) = block_data.blocks().first().map(|b| b.hash()) else {
-					continue;
-				};
-				let result_sender = Some(collator_service.announce_with_barrier(block_hash));
-				request.complete(Some(CollationResult {
-					collation,
-					result_sender,
-				}));
-			} else {
-				request.complete(None);
-				tracing::debug!(target: crate::LOG_TARGET, "No block proposal");
-			}
+			let result_sender = Some(collator_service.announce_with_barrier(block_hash));
+			request.complete(Some(CollationResult {
+				collation,
+				result_sender,
+			}));
+		} else {
+			request.complete(None);
+			tracing::debug!(target: crate::LOG_TARGET, "No block proposal");
 		}
 	}
 }

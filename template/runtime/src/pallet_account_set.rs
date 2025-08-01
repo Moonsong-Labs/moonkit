@@ -79,7 +79,7 @@ pub mod pallet {
 
 	impl<T: Config> AccountLookup<T::AccountId> for Pallet<T> {
 		fn lookup_account(author: &NimbusId) -> Option<T::AccountId> {
-			Mapping::<T>::get(&author)
+			Mapping::<T>::get(author)
 		}
 	}
 }

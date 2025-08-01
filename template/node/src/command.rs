@@ -217,8 +217,8 @@ pub fn run() -> Result<()> {
 					let partials = new_partial(&config)?;
 					let db = partials.backend.expose_db();
 					let storage = partials.backend.expose_storage();
-
-					cmd.run(config, partials.client.clone(), db, storage)
+					let shared_cache = partials.backend.expose_shared_trie_cache();
+					cmd.run(config, partials.client.clone(), db, storage, shared_cache)
 				}),
 				BenchmarkCmd::Overhead(_) => Err("Unsupported benchmarking command".into()),
 				BenchmarkCmd::Extrinsic(_) => Err("Unsupported benchmarking command".into()),

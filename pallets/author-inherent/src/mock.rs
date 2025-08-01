@@ -18,7 +18,6 @@ use crate::{self as pallet_testing, AccountLookup, NimbusId};
 use frame_support::parameter_types;
 use frame_support::traits::ConstU32;
 use frame_support::weights::RuntimeDbWeight;
-use frame_system;
 use sp_core::H256;
 use sp_runtime::{
 	traits::{BlakeTwo256, IdentityLookup},

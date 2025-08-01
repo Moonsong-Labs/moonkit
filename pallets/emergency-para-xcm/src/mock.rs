@@ -124,7 +124,6 @@ impl pallet_message_queue::Config for Test {
 pub(crate) const PAUSED_THRESHOLD: u32 = 5;
 
 impl Config for Test {
-	type RuntimeEvent = RuntimeEvent;
 	type CheckAssociatedRelayNumber = cumulus_pallet_parachain_system::AnyRelayNumber;
 	type QueuePausedQuery = ();
 	type PausedThreshold = ConstU32<PAUSED_THRESHOLD>;
