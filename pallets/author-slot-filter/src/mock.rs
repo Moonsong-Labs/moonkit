@@ -78,7 +78,6 @@ impl frame_system::Config for Test {
 }
 
 impl pallet_testing::Config for Test {
-	type RuntimeEvent = RuntimeEvent;
 	type RandomnessSource = TestRandomness<Self>;
 	type PotentialAuthors = Authors;
 	type WeightInfo = ();

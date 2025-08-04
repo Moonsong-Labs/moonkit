@@ -18,7 +18,6 @@ use crate::{self as async_backing, RelaySlot};
 use frame_support::parameter_types;
 use frame_support::traits::{ConstU32, ConstU64};
 use frame_support::weights::RuntimeDbWeight;
-use frame_system;
 use sp_core::H256;
 use sp_runtime::{
 	traits::{BlakeTwo256, IdentityLookup},

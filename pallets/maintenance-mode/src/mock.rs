@@ -92,7 +92,6 @@ impl Contains<RuntimeCall> for MaintenanceCallFilter {
 }
 
 impl Config for Test {
-	type RuntimeEvent = RuntimeEvent;
 	type NormalCallFilter = Everything;
 	type MaintenanceCallFilter = MaintenanceCallFilter;
 	type MaintenanceOrigin = EnsureRoot<AccountId>;
@@ -101,16 +100,9 @@ impl Config for Test {
 }
 
 /// Externality builder for pallet maintenance mode's mock runtime
+#[derive(Default)]
 pub(crate) struct ExtBuilder {
 	maintenance_mode: bool,
-}
-
-impl Default for ExtBuilder {
-	fn default() -> ExtBuilder {
-		ExtBuilder {
-			maintenance_mode: false,
-		}
-	}
 }
 
 impl ExtBuilder {

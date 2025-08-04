@@ -18,7 +18,6 @@ use crate::{self as pallet_testing, AccountLookup, NimbusId};
 use frame_support::parameter_types;
 use frame_support::traits::ConstU32;
 use frame_support::weights::RuntimeDbWeight;
-use frame_system;
 use sp_core::H256;
 use sp_runtime::{
 	traits::{BlakeTwo256, IdentityLookup},
@@ -91,7 +90,7 @@ impl AccountLookup<u64> for MockAccountLookup {
 	fn lookup_account(nimbus_id: &NimbusId) -> Option<u64> {
 		let nimbus_id_bytes: &[u8] = nimbus_id.as_ref();
 
-		if nimbus_id_bytes == &ALICE_NIMBUS {
+		if nimbus_id_bytes == ALICE_NIMBUS {
 			Some(ALICE)
 		} else {
 			None

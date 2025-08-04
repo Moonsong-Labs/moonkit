@@ -208,7 +208,6 @@ impl<ForeignAsset: Encode, AssetId: Encode, AssetBalance>
 }
 
 impl Config for Test {
-	type RuntimeEvent = RuntimeEvent;
 	type ForeignAsset = Location;
 	type ForeignAssetCreatorOrigin = EnsureRoot<AccountId>;
 	type ForeignAssetModifierOrigin = EnsureRoot<AccountId>;
@@ -219,15 +218,10 @@ impl Config for Test {
 	type OnForeignAssetDestroyed = NoteDownHook<Location, AssetId, Balance>;
 }
 
+#[derive(Default)]
 pub(crate) struct ExtBuilder {
 	// endowed accounts with balances
 	balances: Vec<(AccountId, Balance)>,
-}
-
-impl Default for ExtBuilder {
-	fn default() -> ExtBuilder {
-		ExtBuilder { balances: vec![] }
-	}
 }
 
 impl ExtBuilder {

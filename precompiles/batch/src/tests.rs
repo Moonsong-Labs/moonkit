@@ -40,7 +40,7 @@ fn evm_call(from: impl Into<H160>, input: Vec<u8>) -> EvmCall<Runtime> {
 		target: Batch.into(),
 		input,
 		value: U256::zero(), // No value sent in EVM
-		gas_limit: u64::max_value(),
+		gas_limit: u64::MAX,
 		max_fee_per_gas: 0.into(),
 		max_priority_fee_per_gas: Some(U256::zero()),
 		nonce: None, // Use the next nonce
@@ -175,7 +175,7 @@ fn batch_returns(
 
 			// Called from the precompile caller.
 			assert_eq!(context.caller, Alice.into());
-			assert_eq!(is_static, false);
+			assert!(!is_static);
 
 			match address {
 				a if a == Bob.into() => {
@@ -301,7 +301,7 @@ fn batch_out_of_gas(
 
 			// Called from the precompile caller.
 			assert_eq!(context.caller, Alice.into());
-			assert_eq!(is_static, false);
+			assert!(!is_static);
 
 			match address {
 				a if a == Bob.into() => {
@@ -392,7 +392,7 @@ fn batch_incomplete(
 
 			// Called from the precompile caller.
 			assert_eq!(context.caller, Alice.into());
-			assert_eq!(is_static, false);
+			assert!(!is_static);
 
 			match address {
 				a if a == Bob.into() => {
@@ -984,10 +984,10 @@ fn evm_batch_recursion_over_limit() {
 						vec![Address(Bob.into())],
 						vec![1000_u32.into()],
 						vec![],
-						vec![].into(),
+						vec![],
 					)
 					.into()],
-					vec![].into(),
+					vec![],
 				)
 				.into()],
 				vec![],

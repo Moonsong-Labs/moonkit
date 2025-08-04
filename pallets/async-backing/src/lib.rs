@@ -35,13 +35,13 @@ pub const INHERENT_IDENTIFIER: InherentIdentifier = *b"nimb-ext";
 /// If you don't need to have slots at parachain level, you can use the `RelaySlot` implementation.
 pub trait GetAndVerifySlot {
 	/// Get the current slot
-	fn get_and_verify_slot(relay_chain_slot: &Slot) -> Result<Slot, ()>;
+	fn get_and_verify_slot(relay_chain_slot: &Slot) -> Result<Slot, sp_runtime::DispatchError>;
 }
 
 /// Parachain slot implementation that use the relay chain slot directly
 pub struct RelaySlot;
 impl GetAndVerifySlot for RelaySlot {
-	fn get_and_verify_slot(relay_chain_slot: &Slot) -> Result<Slot, ()> {
+	fn get_and_verify_slot(relay_chain_slot: &Slot) -> Result<Slot, sp_runtime::DispatchError> {
 		Ok(*relay_chain_slot)
 	}
 }
@@ -56,7 +56,7 @@ impl<const RELAY_CHAIN_SLOT_DURATION_MILLIS: u32, SlotProvider> GetAndVerifySlot
 where
 	SlotProvider: Get<(Slot, SlotDuration)>,
 {
-	fn get_and_verify_slot(relay_chain_slot: &Slot) -> Result<Slot, ()> {
+	fn get_and_verify_slot(relay_chain_slot: &Slot) -> Result<Slot, sp_runtime::DispatchError> {
 		// Convert relay chain timestamp.
 		let relay_chain_timestamp =
 			u64::from(RELAY_CHAIN_SLOT_DURATION_MILLIS).saturating_mul((*relay_chain_slot).into());
@@ -69,7 +69,7 @@ where
 		if new_slot == para_slot_from_relay {
 			Ok(new_slot)
 		} else {
-			Err(())
+			Err("Unexpected slot".into())
 		}
 	}
 }

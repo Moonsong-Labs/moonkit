@@ -99,6 +99,7 @@ impl cumulus_pallet_parachain_system::Config for Test {
 	type WeightInfo = ();
 	type ConsensusHook = cumulus_pallet_parachain_system::ExpectParentIncluded;
 	type SelectCore = cumulus_pallet_parachain_system::DefaultCoreSelector<Test>;
+	type RelayParentOffset = ConstU32<0>;
 }
 
 parameter_types! {
@@ -124,7 +125,6 @@ impl pallet_message_queue::Config for Test {
 pub(crate) const PAUSED_THRESHOLD: u32 = 5;
 
 impl Config for Test {
-	type RuntimeEvent = RuntimeEvent;
 	type CheckAssociatedRelayNumber = cumulus_pallet_parachain_system::AnyRelayNumber;
 	type QueuePausedQuery = ();
 	type PausedThreshold = ConstU32<PAUSED_THRESHOLD>;

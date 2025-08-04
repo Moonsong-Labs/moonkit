@@ -75,7 +75,7 @@ where
 }
 
 fn percent_of_num(percent: Percent, num: u32) -> u32 {
-	percent.mul_ceil(num as u32)
+	percent.mul_ceil(num)
 }
 
 #[cfg(test)]

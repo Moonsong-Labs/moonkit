@@ -56,9 +56,7 @@ impl system::Config for Test {
 	type PostTransactions = ();
 }
 
-impl pallet_template::Config for Test {
-	type RuntimeEvent = RuntimeEvent;
-}
+impl pallet_template::Config for Test {}
 
 // Build genesis storage according to the mock runtime.
 pub fn new_test_ext() -> sp_io::TestExternalities {

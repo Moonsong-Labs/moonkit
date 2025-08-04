@@ -170,7 +170,7 @@ where
 				&mut params.relay_client,
 			)
 			.await
-			.get(0)
+			.first()
 			{
 				*core_index
 			} else {
@@ -306,7 +306,7 @@ where
 					&relay_parent_header,
 					included_block,
 					para_client,
-					&keystore,
+					keystore,
 					params.force_authoring,
 				)
 				.await
@@ -391,10 +391,21 @@ where
 				)
 				.await
 				{
-					Ok(Some((collation, block_data, new_block_hash))) => {
+					Ok(Some((collation, block_data))) => {
+						let Some(new_block_header) =
+							block_data.blocks().first().map(|b| b.header().clone())
+						else {
+							tracing::error!(target: crate::LOG_TARGET,  "Produced PoV doesn't contain any blocks");
+							break;
+						};
+
+						let new_block_hash = new_block_header.hash();
+
 						// Here we are assuming that the import logic protects against equivocations
 						// and provides sybil-resistance, as it should.
 						params.collator_service.announce_block(new_block_hash, None);
+
+						// TODO: Add PoV export functionality
 
 						// Send a submit-collation message to the collation generation subsystem,
 						// which then distributes this to validators.
@@ -418,7 +429,7 @@ where
 							.await;
 
 						parent_hash = new_block_hash;
-						parent_header = block_data.into_header();
+						parent_header = new_block_header;
 					}
 					Ok(None) => {
 						tracing::debug!(target: crate::LOG_TARGET, "No block proposal");

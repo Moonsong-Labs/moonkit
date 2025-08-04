@@ -118,6 +118,7 @@ where
 		relay_client,
 		validation_data,
 		para_id,
+		vec![],
 	)
 	.await;
 
@@ -197,7 +198,7 @@ where
 	let maybe_key = available_keys.into_iter().find(|type_public_pair| {
 		// Have to convert to a typed NimbusId to pass to the runtime API. Maybe this is a clue
 		// That I should be passing Vec<u8> across the wasm boundary?
-		if let Ok(nimbus_id) = NimbusId::from_slice(&type_public_pair) {
+		if let Ok(nimbus_id) = NimbusId::from_slice(type_public_pair) {
 			NimbusApi::can_author(
 				&*client.runtime_api(),
 				parent.hash(),

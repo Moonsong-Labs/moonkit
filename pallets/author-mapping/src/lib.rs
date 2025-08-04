@@ -70,7 +70,7 @@ pub mod pallet {
 
 	/// Size of NimbusId + T::Keys to check size of `set_keys` input before trying to decode
 	pub fn keys_size<T: Config>() -> usize {
-		size_of::<NimbusId>() as usize + size_of::<T::Keys>() as usize
+		size_of::<NimbusId>() + size_of::<T::Keys>()
 	}
 
 	#[pallet::pallet]
@@ -80,8 +80,6 @@ pub mod pallet {
 	/// Configuration trait of this pallet
 	#[pallet::config]
 	pub trait Config: frame_system::Config {
-		/// Overarching event type
-		type RuntimeEvent: From<Event<Self>> + IsType<<Self as frame_system::Config>::RuntimeEvent>;
 		/// Currency in which the security deposit will be taken.
 		type DepositCurrency: Currency<Self::AccountId> + ReservableCurrency<Self::AccountId>;
 		/// The amount that should be taken as a security deposit when registering a NimbusId.
@@ -346,11 +344,9 @@ pub mod pallet {
 	impl<T: Config> BuildGenesisConfig for GenesisConfig<T> {
 		fn build(&self) {
 			for (nimbus_id, account_id) in &self.mappings {
-				if let Err(e) = Pallet::<T>::enact_registration(
-					&nimbus_id,
-					&account_id,
-					nimbus_id.clone().into(),
-				) {
+				if let Err(e) =
+					Pallet::<T>::enact_registration(nimbus_id, account_id, nimbus_id.clone().into())
+				{
 					log::warn!("Error with genesis author mapping registration: {:?}", e);
 				}
 			}

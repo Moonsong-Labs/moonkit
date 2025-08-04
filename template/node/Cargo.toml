@@ -33,6 +33,7 @@ serde = { workspace = true, features = [ "derive" ] }
 serde_json = { workspace = true }
 jsonrpsee = { workspace = true, features = [ "macros", "server" ] }
 futures = { workspace = true }
+async-channel = { workspace = true }
 
 # Substrate Dependencies
 frame-benchmarking = { workspace = true }

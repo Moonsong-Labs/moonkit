@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with Moonkit.  If not, see <http://www.gnu.org/licenses/>.
 
-use sp_inherents::{InherentData, InherentIdentifier};
+use sp_inherents::InherentIdentifier;
 
 /// The InherentIdentifier for nimbus's author inherent
 pub const INHERENT_IDENTIFIER: InherentIdentifier = *b"author__";
@@ -29,7 +29,7 @@ pub struct InherentDataProvider;
 impl sp_inherents::InherentDataProvider for InherentDataProvider {
 	async fn provide_inherent_data(
 		&self,
-		inherent_data: &mut InherentData,
+		inherent_data: &mut sp_inherents::InherentData,
 	) -> Result<(), sp_inherents::Error> {
 		inherent_data.put_data(INHERENT_IDENTIFIER, &())
 	}

@@ -31,7 +31,6 @@ use precompile_utils::{
 };
 use scale_info::TypeInfo;
 use sp_core::{H160, H256, U256};
-use sp_io;
 use sp_runtime::traits::{BlakeTwo256, IdentityLookup};
 use sp_runtime::{
 	codec::{Decode, DecodeWithMemTracking, Encode, MaxEncodedLen},
@@ -167,7 +166,6 @@ impl pallet_evm::Config for Runtime {
 	type WithdrawOrigin = EnsureAddressNever<AccountId>;
 	type AddressMapping = AccountId;
 	type Currency = Balances;
-	type RuntimeEvent = RuntimeEvent;
 	type Runner = pallet_evm::runner::stack::Runner<Self>;
 	type PrecompilesType = Precompiles<Self>;
 	type PrecompilesValue = PrecompilesValue;
@@ -209,17 +207,13 @@ impl pallet_timestamp::Config for Runtime {
 	Clone,
 	Copy,
 	TypeInfo,
+	Default,
 )]
 pub enum ProxyType {
+	#[default]
 	Any = 0,
 	Something = 1,
 	Nothing = 2,
-}
-
-impl std::default::Default for ProxyType {
-	fn default() -> Self {
-		ProxyType::Any
-	}
 }
 
 impl crate::EvmProxyCallFilter for ProxyType {
@@ -270,15 +264,10 @@ impl pallet_proxy::Config for Runtime {
 }
 
 /// Build test externalities, prepopulated with data for testing democracy precompiles
+#[derive(Default)]
 pub(crate) struct ExtBuilder {
 	/// Endowed accounts with balances
 	balances: Vec<(AccountId, Balance)>,
-}
-
-impl Default for ExtBuilder {
-	fn default() -> ExtBuilder {
-		ExtBuilder { balances: vec![] }
-	}
 }
 
 impl ExtBuilder {

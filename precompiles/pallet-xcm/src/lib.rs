@@ -526,9 +526,9 @@ where
 		.map_err(|_| RevertReason::custom("Failed decoding value for TransferTypeHelper"))?;
 
 		match transfer_type_helper {
-			TransferTypeHelper::Teleport => return Ok(TransferType::Teleport),
-			TransferTypeHelper::LocalReserve => return Ok(TransferType::LocalReserve),
-			TransferTypeHelper::DestinationReserve => return Ok(TransferType::DestinationReserve),
+			TransferTypeHelper::Teleport => Ok(TransferType::Teleport),
+			TransferTypeHelper::LocalReserve => Ok(TransferType::LocalReserve),
+			TransferTypeHelper::DestinationReserve => Ok(TransferType::DestinationReserve),
 		}
 	}
 }

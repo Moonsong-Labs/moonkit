@@ -80,6 +80,12 @@ pub struct RandomnessResult<Hash> {
 	pub request_count: u64,
 }
 
+impl<Hash: Clone> Default for RandomnessResult<Hash> {
+	fn default() -> Self {
+		Self::new()
+	}
+}
+
 impl<Hash: Clone> RandomnessResult<Hash> {
 	pub fn new() -> RandomnessResult<Hash> {
 		RandomnessResult {
@@ -180,25 +186,22 @@ impl<T: Config> Request<BalanceOf<T>, RequestInfo<T>> {
 			Error::<T>::CannotRequestMoreWordsThanMax
 		);
 		ensure!(self.num_words >= 1u8, Error::<T>::MustRequestAtLeastOneWord);
-		match self.info {
-			RequestInfo::Local(block_due, _) => {
-				let current_block = frame_system::Pallet::<T>::block_number();
-				ensure!(
-					block_due
-						<= current_block
-							.checked_add(&T::MaxBlockDelay::get())
-							.ok_or(Error::<T>::CannotRequestRandomnessAfterMaxDelay)?,
-					Error::<T>::CannotRequestRandomnessAfterMaxDelay
-				);
-				ensure!(
-					block_due
-						>= current_block
-							.checked_add(&T::MinBlockDelay::get())
-							.ok_or(Error::<T>::CannotRequestRandomnessBeforeMinDelay)?,
-					Error::<T>::CannotRequestRandomnessBeforeMinDelay
-				);
-			}
-			_ => (), // not necessary because epoch delay is not an input to precompile
+		if let RequestInfo::Local(block_due, _) = self.info {
+			let current_block = frame_system::Pallet::<T>::block_number();
+			ensure!(
+				block_due
+					<= current_block
+						.checked_add(&T::MaxBlockDelay::get())
+						.ok_or(Error::<T>::CannotRequestRandomnessAfterMaxDelay)?,
+				Error::<T>::CannotRequestRandomnessAfterMaxDelay
+			);
+			ensure!(
+				block_due
+					>= current_block
+						.checked_add(&T::MinBlockDelay::get())
+						.ok_or(Error::<T>::CannotRequestRandomnessBeforeMinDelay)?,
+				Error::<T>::CannotRequestRandomnessBeforeMinDelay
+			);
 		}
 		Ok(())
 	}
@@ -237,8 +240,8 @@ impl<T: Config> Request<BalanceOf<T>, RequestInfo<T>> {
 		let event = match self.info {
 			RequestInfo::BabeEpoch(index, _) => Event::<T>::RandomnessRequestedBabeEpoch {
 				id,
-				refund_address: self.refund_address.clone(),
-				contract_address: self.contract_address.clone(),
+				refund_address: self.refund_address,
+				contract_address: self.contract_address,
 				fee: self.fee,
 				gas_limit: self.gas_limit,
 				num_words: self.num_words,
@@ -247,8 +250,8 @@ impl<T: Config> Request<BalanceOf<T>, RequestInfo<T>> {
 			},
 			RequestInfo::Local(block, _) => Event::<T>::RandomnessRequestedLocal {
 				id,
-				refund_address: self.refund_address.clone(),
-				contract_address: self.contract_address.clone(),
+				refund_address: self.refund_address,
+				contract_address: self.contract_address,
 				fee: self.fee,
 				gas_limit: self.gas_limit,
 				num_words: self.num_words,
@@ -295,7 +298,7 @@ impl<T: Config> Request<BalanceOf<T>, RequestInfo<T>> {
 		// refund cost_of_execution to caller of `fulfill`
 		try_transfer_or_log_error(
 			&Pallet::<T>::account_id(),
-			&T::AddressMapping::convert(caller.clone()),
+			&T::AddressMapping::convert(*caller),
 			cost_of_execution,
 		);
 	}
@@ -360,7 +363,7 @@ impl<T: Config> RequestState<T> {
 			.fee
 			.checked_add(&fee_increase)
 			.ok_or(Error::<T>::RequestFeeOverflowed)?;
-		let caller = T::AddressMapping::convert(caller.clone());
+		let caller = T::AddressMapping::convert(*caller);
 		T::Currency::transfer(&caller, &Pallet::<T>::account_id(), fee_increase, KeepAlive)?;
 		self.request.fee = new_fee;
 		Ok(new_fee)
@@ -369,7 +372,7 @@ impl<T: Config> RequestState<T> {
 	/// Transfer fee to caller
 	pub fn execute_expiration(&self, caller: &T::AccountId) -> DispatchResult {
 		ensure!(self.request.is_expired(), Error::<T>::RequestHasNotExpired);
-		let contract_address = T::AddressMapping::convert(self.request.contract_address.clone());
+		let contract_address = T::AddressMapping::convert(self.request.contract_address);
 		if caller == &contract_address {
 			// If caller == contract_address, then transfer deposit + fee to contract_address
 			T::Currency::transfer(

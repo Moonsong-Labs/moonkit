@@ -423,6 +423,7 @@ impl cumulus_pallet_parachain_system::Config for Runtime {
 		cumulus_pallet_parachain_system::RelayNumberMonotonicallyIncreases;
 	type ConsensusHook = ConsensusHook;
 	type SelectCore = cumulus_pallet_parachain_system::DefaultCoreSelector<Runtime>;
+	type RelayParentOffset = ConstU32<0>;
 }
 
 pub const RELAY_CHAIN_SLOT_DURATION_MILLIS: u32 = 6000;
@@ -660,7 +661,6 @@ impl pallet_author_inherent::Config for Runtime {
 }
 
 impl pallet_author_slot_filter::Config for Runtime {
-	type RuntimeEvent = RuntimeEvent;
 	type RandomnessSource = RandomnessCollectiveFlip;
 	type PotentialAuthors = PotentialAuthorSet;
 	type WeightInfo = ();
@@ -684,9 +684,7 @@ parameter_types! {
 impl pallet_account_set::Config for Runtime {}
 
 /// Configure the pallet template in pallets/template.
-impl pallet_template::Config for Runtime {
-	type RuntimeEvent = RuntimeEvent;
-}
+impl pallet_template::Config for Runtime {}
 
 // Create the runtime by composing the FRAME pallets that were previously configured.
 construct_runtime!(
@@ -874,7 +872,7 @@ impl_runtime_apis! {
 			Vec<frame_benchmarking::BenchmarkList>,
 			Vec<frame_support::traits::StorageInfo>,
 		) {
-			use frame_benchmarking::{list_benchmark, Benchmarking, BenchmarkList};
+			use frame_benchmarking::{list_benchmark, BenchmarkList};
 			use frame_support::traits::StorageInfoTrait;
 
 			let mut list = Vec::<BenchmarkList>::new();
@@ -884,13 +882,13 @@ impl_runtime_apis! {
 
 			let storage_info = AllPalletsWithSystem::storage_info();
 
-			return (list, storage_info)
+			(list, storage_info)
 		}
 
 		fn dispatch_benchmark(
 			config: frame_benchmarking::BenchmarkConfig
 		) -> Result<Vec<frame_benchmarking::BenchmarkBatch>, sp_runtime::RuntimeString> {
-			use frame_benchmarking::{Benchmarking, BenchmarkBatch, add_benchmark};
+			use frame_benchmarking::{BenchmarkBatch, add_benchmark};
 			use frame_support::traits::TrackedStorageKey;
 
 			let whitelist: Vec<TrackedStorageKey> = vec![

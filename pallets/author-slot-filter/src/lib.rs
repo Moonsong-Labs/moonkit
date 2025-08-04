@@ -64,8 +64,6 @@ pub mod pallet {
 	/// Configuration trait of this pallet.
 	#[pallet::config]
 	pub trait Config: frame_system::Config {
-		/// The overarching event type
-		type RuntimeEvent: From<Event> + IsType<<Self as frame_system::Config>::RuntimeEvent>;
 		/// Deterministic on-chain pseudo-randomness used to do the filtering
 		type RandomnessSource: Randomness<H256, BlockNumberFor<Self>>;
 		//TODO introduce a new trait for exhaustive sets and use it here.
@@ -97,13 +95,13 @@ pub mod pallet {
 			// 1. Constant string *b"filter" - to identify this pallet
 			// 2. First 2 bytes of index.to_le_bytes when selecting the ith eligible author
 			// 3. First 4 bytes of seed.to_be_bytes
-			let mut first_two_bytes_of_index = &i.to_le_bytes()[..2];
-			let mut first_four_bytes_of_seed = &seed.to_be_bytes()[..4];
+			let first_two_bytes_of_index = &i.to_le_bytes()[..2];
+			let first_four_bytes_of_seed = &seed.to_be_bytes()[..4];
 			let mut constant_string: [u8; 6] = [b'f', b'i', b'l', b't', b'e', b'r'];
 			let mut subject: [u8; 12] = [0u8; 12];
 			subject[..6].copy_from_slice(&mut constant_string);
-			subject[6..8].copy_from_slice(&mut first_two_bytes_of_index);
-			subject[8..].copy_from_slice(&mut first_four_bytes_of_seed);
+			subject[6..8].copy_from_slice(first_two_bytes_of_index);
+			subject[8..].copy_from_slice(first_four_bytes_of_seed);
 			let (randomness, _) = T::RandomnessSource::random(&subject);
 			debug!(target: "author-filter", "🎲Randomness sample {}: {:?}", i, &randomness);
 

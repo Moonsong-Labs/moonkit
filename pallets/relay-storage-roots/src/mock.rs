@@ -135,10 +135,10 @@ macro_rules! assert_event_emitted {
 		match &$event {
 			e => {
 				assert!(
-					crate::mock::events().iter().find(|x| *x == e).is_some(),
+					$crate::mock::events().iter().find(|x| *x == e).is_some(),
 					"Event {:?} was not found in events: \n {:?}",
 					e,
-					crate::mock::events()
+					$crate::mock::events()
 				);
 			}
 		}
@@ -146,20 +146,12 @@ macro_rules! assert_event_emitted {
 }
 
 /// Externality builder for pallet randomness mock runtime
+#[derive(Default)]
 pub(crate) struct ExtBuilder {
 	/// Balance amounts per AccountId
 	balances: Vec<(AccountId, Balance)>,
 	/// AuthorId -> AccountId mappings
 	mappings: Vec<(NimbusId, AccountId)>,
-}
-
-impl Default for ExtBuilder {
-	fn default() -> ExtBuilder {
-		ExtBuilder {
-			balances: Vec::new(),
-			mappings: Vec::new(),
-		}
-	}
 }
 
 impl ExtBuilder {

@@ -107,9 +107,7 @@ fn get_and_verify_randomness<T: Config>() -> T::Hash {
 		.0
 		.attach_input_hash(&block_author_vrf_id, vrf_input_transcript.0.clone())
 		.ok()
-		.map(|inout| inout.make_bytes(&VRF_INOUT_CONTEXT))
+		.map(|inout| inout.make_bytes(VRF_INOUT_CONTEXT))
 		.expect("Transforming VrfOutput into randomness bytes failed");
-	T::Hash::decode(&mut &randomness[..])
-		.ok()
-		.expect("Bytes can be decoded into T::Hash")
+	T::Hash::decode(&mut &randomness[..]).expect("Bytes can be decoded into T::Hash")
 }
