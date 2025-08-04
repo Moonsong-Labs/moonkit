@@ -3850,7 +3850,7 @@ dependencies = [
 [[package]]
 name = "fp-account"
 version = "1.0.0-dev"
-source = "git+https://github.com/polkadot-evm/frontier?branch=rq%2Fpolkadot-sdk-stable2506#41232dc43d312ba144d901c4d40f193f4e1756dd"
+source = "git+https://github.com/polkadot-evm/frontier?branch=stable2506#b70f725a84c1b6b7e56c9e7381d35863829a7a3c"
 dependencies = [
  "hex",
  "impl-serde",
@@ -3868,7 +3868,7 @@ dependencies = [
 [[package]]
 name = "fp-evm"
 version = "3.0.0-dev"
-source = "git+https://github.com/polkadot-evm/frontier?branch=rq%2Fpolkadot-sdk-stable2506#41232dc43d312ba144d901c4d40f193f4e1756dd"
+source = "git+https://github.com/polkadot-evm/frontier?branch=stable2506#b70f725a84c1b6b7e56c9e7381d35863829a7a3c"
 dependencies = [
  "environmental",
  "evm",
@@ -8032,7 +8032,7 @@ dependencies = [
 [[package]]
 name = "pallet-evm"
 version = "6.0.0-dev"
-source = "git+https://github.com/polkadot-evm/frontier?branch=rq%2Fpolkadot-sdk-stable2506#41232dc43d312ba144d901c4d40f193f4e1756dd"
+source = "git+https://github.com/polkadot-evm/frontier?branch=stable2506#b70f725a84c1b6b7e56c9e7381d35863829a7a3c"
 dependencies = [
  "cumulus-primitives-storage-weight-reclaim",
  "environmental",
@@ -10874,7 +10874,7 @@ dependencies = [
 [[package]]
 name = "precompile-utils"
 version = "0.1.0"
-source = "git+https://github.com/polkadot-evm/frontier?branch=rq%2Fpolkadot-sdk-stable2506#41232dc43d312ba144d901c4d40f193f4e1756dd"
+source = "git+https://github.com/polkadot-evm/frontier?branch=stable2506#b70f725a84c1b6b7e56c9e7381d35863829a7a3c"
 dependencies = [
  "derive_more 1.0.0",
  "environmental",
@@ -10903,7 +10903,7 @@ dependencies = [
 [[package]]
 name = "precompile-utils-macro"
 version = "0.1.0"
-source = "git+https://github.com/polkadot-evm/frontier?branch=rq%2Fpolkadot-sdk-stable2506#41232dc43d312ba144d901c4d40f193f4e1756dd"
+source = "git+https://github.com/polkadot-evm/frontier?branch=stable2506#b70f725a84c1b6b7e56c9e7381d35863829a7a3c"
 dependencies = [
  "case",
  "num_enum",
