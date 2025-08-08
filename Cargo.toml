@@ -208,9 +208,9 @@ westend-runtime = { git = "https://github.com/moonbeam-foundation/polkadot-sdk",
 xcm-simulator = { git = "https://github.com/moonbeam-foundation/polkadot-sdk", branch = "moonbeam-polkadot-stable2503" }
 
 # Frontier (wasm)
-fp-evm = { git = "https://github.com/moonbeam-foundation/frontier", branch = "moonbeam-polkadot-stable2503", default-features = false }
-pallet-evm = { git = "https://github.com/moonbeam-foundation/frontier", branch = "moonbeam-polkadot-stable2503", default-features = false }
-precompile-utils = { git = "https://github.com/moonbeam-foundation/frontier", branch = "moonbeam-polkadot-stable2503", default-features = false }
+fp-evm = { git = "https://github.com/moonbeam-foundation/frontier", branch = "moonbeam-polkadot-stable2503-no-7702", default-features = false }
+pallet-evm = { git = "https://github.com/moonbeam-foundation/frontier", branch = "moonbeam-polkadot-stable2503-no-7702", default-features = false }
+precompile-utils = { git = "https://github.com/moonbeam-foundation/frontier", branch = "moonbeam-polkadot-stable2503-no-7702", default-features = false }
 
 # EVM
 evm = { git = "https://github.com/moonbeam-foundation/evm", branch = "moonbeam-polkadot-stable2503", default-features = false }
