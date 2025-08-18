@@ -10,6 +10,7 @@ version = "0.9.0"
 parity-scale-codec = { workspace = true }
 frame-support = { workspace = true }
 frame-system = { workspace = true }
+pallet-timestamp = { workspace = true }
 log = { workspace = true }
 nimbus-primitives = { workspace = true }
 scale-info = { workspace = true }
@@ -18,6 +19,7 @@ sp-application-crypto = { workspace = true }
 sp-inherents = { workspace = true }
 sp-runtime = { workspace = true }
 sp-std = { workspace = true }
+sp-consensus-slots = { workspace = true }
 
 # Benchmarks
 frame-benchmarking = { workspace = true, optional = true }
@@ -33,6 +35,7 @@ std = [
 	"frame-benchmarking/std",
 	"frame-support/std",
 	"frame-system/std",
+	"pallet-timestamp/std",
 	"log/std",
 	"nimbus-primitives/std",
 	"parity-scale-codec/std",
@@ -42,11 +45,17 @@ std = [
 	"sp-inherents/std",
 	"sp-runtime/std",
 	"sp-std/std",
+	"sp-consensus-slots/std",
 ]
 
 runtime-benchmarks = [
 	"frame-benchmarking",
 	"nimbus-primitives/runtime-benchmarks",
+	"pallet-timestamp/runtime-benchmarks",
 ]
 
-try-runtime = [ "frame-support/try-runtime", "nimbus-primitives/try-runtime" ]
+try-runtime = [
+	"frame-support/try-runtime",
+	"nimbus-primitives/try-runtime",
+	"pallet-timestamp/try-runtime",
+]

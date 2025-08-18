@@ -195,8 +195,6 @@ pub mod opaque {
 
 impl_opaque_keys! {
 	pub struct SessionKeys {
-		//TODO this was called author_inherent in the old runtime.
-		// Can I just rename it like this?
 		pub nimbus: AuthorInherent,
 	}
 }
@@ -357,7 +355,7 @@ parameter_types! {
 impl pallet_timestamp::Config for Runtime {
 	/// A timestamp: milliseconds since the unix epoch.
 	type Moment = u64;
-	type OnTimestampSet = ();
+	type OnTimestampSet = AuthorInherent;
 	type MinimumPeriod = MinimumPeriod;
 	type WeightInfo = ();
 }
@@ -648,12 +646,17 @@ impl pallet_message_queue::Config for Runtime {
 	type IdleMaxServiceWeight = MessageQueueServiceWeight;
 }
 
+parameter_types! {
+	pub const SlotDuration: u64 = MILLISECS_PER_BLOCK;
+}
+
 impl pallet_author_inherent::Config for Runtime {
 	type AuthorId = AccountId;
 	// We start a new slot each time we see a new relay block.
 	type SlotBeacon = cumulus_pallet_parachain_system::RelaychainDataProvider<Self>;
 	type AccountLookup = PotentialAuthorSet;
 	type CanAuthor = AuthorFilter;
+	type SlotDuration = SlotDuration;
 	type WeightInfo = ();
 }
 
@@ -664,14 +667,10 @@ impl pallet_author_slot_filter::Config for Runtime {
 	type WeightInfo = ();
 }
 
-parameter_types! {
-	pub const ExpectedBlockTime: u64 = MILLISECS_PER_BLOCK;
-}
-
 impl pallet_async_backing::Config for Runtime {
 	type AllowMultipleBlocksPerSlot = ConstBool<false>;
 	type GetAndVerifySlot = pallet_async_backing::RelaySlot;
-	type ExpectedBlockTime = ExpectedBlockTime;
+	type ExpectedBlockTime = SlotDuration;
 }
 
 parameter_types! {

@@ -88,8 +88,18 @@ pub mod pallet {
 	/// The configuration trait.
 	#[pallet::config]
 	pub trait Config: pallet_timestamp::Config + frame_system::Config {
-		/// Whether or not to allow more than one block per slot.
-		/// Setting it to 'true' will enable async-backing compatibility.
+		/// Whether to allow block authors to create multiple blocks per slot.
+		///
+		/// If this is `true`, the pallet will allow slots to stay the same across sequential
+		/// blocks. If this is `false`, the pallet will require that subsequent blocks always have
+		/// higher slots than previous ones.
+		///
+		/// Regardless of the setting of this storage value, the pallet will always enforce the
+		/// invariant that slots don't move backwards as the chain progresses.
+		///
+		/// The typical value for this should be 'false' unless this pallet is being augmented by
+		/// another pallet which enforces some limitation on the number of blocks authors can create
+		/// using the same slot.
 		type AllowMultipleBlocksPerSlot: Get<bool>;
 
 		/// A way to get the current parachain slot and verify it's validity against the relay slot.
@@ -103,7 +113,10 @@ pub mod pallet {
 
 	/// First tuple element is the highest slot that has been seen in the history of this chain.
 	/// Second tuple element is the number of authored blocks so far.
-	/// This is a strictly-increasing value if T::AllowMultipleBlocksPerSlot = false.
+	/// Current relay chain slot paired with a number of authored blocks.
+	///
+	/// This is updated in [`FixedVelocityConsensusHook::on_state_proof`] with the current relay
+	/// chain slot as provided by the relay chain state proof.
 	#[pallet::storage]
 	#[pallet::getter(fn slot_info)]
 	pub type SlotInfo<T: Config> = StorageValue<_, (Slot, u32), OptionQuery>;

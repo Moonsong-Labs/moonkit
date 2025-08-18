@@ -23,13 +23,14 @@
 extern crate alloc;
 
 use alloc::string::String;
-use frame_support::traits::{FindAuthor, Get};
+use frame_support::pallet_prelude::Zero;
+use frame_support::traits::{FindAuthor, Get, OnTimestampSet};
 use nimbus_primitives::{
 	AccountLookup, CanAuthor, NimbusId, SlotBeacon, INHERENT_IDENTIFIER, NIMBUS_ENGINE_ID,
 };
 use parity_scale_codec::{Decode, Encode, FullCodec};
 use sp_inherents::{InherentIdentifier, IsFatalError};
-use sp_runtime::ConsensusEngineId;
+use sp_runtime::{ConsensusEngineId, SaturatedConversion};
 
 pub use crate::weights::WeightInfo;
 pub use exec::BlockExecutor;
@@ -58,7 +59,7 @@ pub mod pallet {
 	pub struct Pallet<T>(PhantomData<T>);
 
 	#[pallet::config]
-	pub trait Config: frame_system::Config {
+	pub trait Config: frame_system::Config + pallet_timestamp::Config {
 		/// Type used to refer to a block author.
 		type AuthorId: sp_std::fmt::Debug + PartialEq + Clone + FullCodec + TypeInfo + MaxEncodedLen;
 
@@ -76,6 +77,11 @@ pub mod pallet {
 
 		/// Some way of determining the current slot for purposes of verifying the author's eligibility
 		type SlotBeacon: SlotBeacon;
+
+		/// The slot duration Nimbus should run with, expressed in milliseconds.
+		/// The effective value of this type should not change while the chain is running.
+		#[pallet::constant]
+		type SlotDuration: Get<<Self as pallet_timestamp::Config>::Moment>;
 
 		type WeightInfo: WeightInfo;
 	}
@@ -135,7 +141,7 @@ pub mod pallet {
 		// This should go into on_post_inherents when it is ready https://github.com/paritytech/substrate/pull/10128
 		// TODO better weight. For now we just set a somewhat conservative fudge factor
 		#[pallet::call_index(0)]
-		#[pallet::weight((T::WeightInfo::kick_off_authorship_validation(), DispatchClass::Mandatory))]
+		#[pallet::weight((<T as Config>::WeightInfo::kick_off_authorship_validation(), DispatchClass::Mandatory))]
 		pub fn kick_off_authorship_validation(origin: OriginFor<T>) -> DispatchResultWithPostInfo {
 			ensure_none(origin)?;
 
@@ -253,5 +259,24 @@ impl InherentError {
 		} else {
 			None
 		}
+	}
+}
+
+impl<T: Config> OnTimestampSet<T::Moment> for Pallet<T> {
+	fn on_timestamp_set(moment: T::Moment) {
+		let slot_duration = T::SlotDuration::get();
+		assert!(!slot_duration.is_zero(), "Slot duration cannot be zero.");
+
+		let timestamp_slot = moment / slot_duration;
+		let timestamp_slot = timestamp_slot.saturated_into::<u64>();
+
+		let current_slot = T::SlotBeacon::slot() as u64;
+
+		assert_eq!(
+			current_slot,
+			timestamp_slot,
+			"`timestamp_slot` must match `current_slot`. This likely means that the configured block \
+			time in the node and/or rest of the runtime is not compatible with Nimbus's `SlotDuration`",
+		);
 	}
 }
