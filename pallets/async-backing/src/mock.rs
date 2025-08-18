@@ -91,7 +91,7 @@ parameter_types! {
 impl async_backing::Config for Test {
 	type AllowMultipleBlocksPerSlot = AllowMultipleBlocksPerSlot;
 	type GetAndVerifySlot = RelaySlot;
-	type ExpectedBlockTime = ConstU64<1>;
+	type SlotDuration = ConstU64<1>;
 }
 
 /// Build genesis storage according to the mock runtime.
