@@ -213,7 +213,7 @@ pallet-evm = { git = "https://github.com/moonbeam-foundation/frontier", branch =
 precompile-utils = { git = "https://github.com/moonbeam-foundation/frontier", branch = "moonbeam-polkadot-stable2503-no-7702", default-features = false }
 
 # EVM
-evm = { git = "https://github.com/moonbeam-foundation/evm", branch = "moonbeam-polkadot-stable2503", default-features = false }
+evm = { git = "https://github.com/moonbeam-foundation/evm", branch = "moonbeam-polkadot-stable2503-no-7702", default-features = false }
 
 # Local (wasm)
 pallet-evm-precompile-balances-erc20 = { path = "precompiles/balances-erc20", default-features = false }
