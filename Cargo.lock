@@ -2627,7 +2627,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "8d162beedaa69905488a8da94f5ac3edb4dd4788b732fadb7bd120b2625c1976"
 dependencies = [
  "data-encoding",
- "syn 2.0.101",
+ "syn 1.0.109",
 ]
 
 [[package]]
@@ -3207,7 +3207,7 @@ dependencies = [
 [[package]]
 name = "evm"
 version = "0.43.4"
-source = "git+https://github.com/moonbeam-foundation/evm?branch=moonbeam-polkadot-stable2503#57843f91cdd8694c2b01785e6940b1e64f93d424"
+source = "git+https://github.com/moonbeam-foundation/evm?branch=moonbeam-polkadot-stable2503#b3d5b09d5136f76a7e63fae94674f194542e6144"
 dependencies = [
  "auto_impl",
  "environmental",
@@ -3227,7 +3227,7 @@ dependencies = [
 [[package]]
 name = "evm-core"
 version = "0.43.0"
-source = "git+https://github.com/moonbeam-foundation/evm?branch=moonbeam-polkadot-stable2503#57843f91cdd8694c2b01785e6940b1e64f93d424"
+source = "git+https://github.com/moonbeam-foundation/evm?branch=moonbeam-polkadot-stable2503#b3d5b09d5136f76a7e63fae94674f194542e6144"
 dependencies = [
  "parity-scale-codec",
  "primitive-types",
@@ -3238,7 +3238,7 @@ dependencies = [
 [[package]]
 name = "evm-gasometer"
 version = "0.43.0"
-source = "git+https://github.com/moonbeam-foundation/evm?branch=moonbeam-polkadot-stable2503#57843f91cdd8694c2b01785e6940b1e64f93d424"
+source = "git+https://github.com/moonbeam-foundation/evm?branch=moonbeam-polkadot-stable2503#b3d5b09d5136f76a7e63fae94674f194542e6144"
 dependencies = [
  "environmental",
  "evm-core",
@@ -3249,7 +3249,7 @@ dependencies = [
 [[package]]
 name = "evm-runtime"
 version = "0.43.0"
-source = "git+https://github.com/moonbeam-foundation/evm?branch=moonbeam-polkadot-stable2503#57843f91cdd8694c2b01785e6940b1e64f93d424"
+source = "git+https://github.com/moonbeam-foundation/evm?branch=moonbeam-polkadot-stable2503#b3d5b09d5136f76a7e63fae94674f194542e6144"
 dependencies = [
  "auto_impl",
  "environmental",
@@ -6988,7 +6988,7 @@ version = "0.7.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "af1844ef2428cc3e1cb900be36181049ef3d3193c63e43026cfe202983b27a56"
 dependencies = [
- "proc-macro-crate 3.3.0",
+ "proc-macro-crate 1.1.3",
  "proc-macro2",
  "quote",
  "syn 2.0.101",
