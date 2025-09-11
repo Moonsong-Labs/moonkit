@@ -357,7 +357,7 @@ parameter_types! {
 impl pallet_timestamp::Config for Runtime {
 	/// A timestamp: milliseconds since the unix epoch.
 	type Moment = u64;
-	type OnTimestampSet = ();
+	type OnTimestampSet = NimbusAsyncBacking;
 	type MinimumPeriod = MinimumPeriod;
 	type WeightInfo = ();
 }
@@ -667,13 +667,13 @@ impl pallet_author_slot_filter::Config for Runtime {
 }
 
 parameter_types! {
-	pub const ExpectedBlockTime: u64 = MILLISECS_PER_BLOCK;
+	pub const SlotDuration: u64 = MILLISECS_PER_BLOCK;
 }
 
 impl pallet_async_backing::Config for Runtime {
 	type AllowMultipleBlocksPerSlot = ConstBool<false>;
 	type GetAndVerifySlot = pallet_async_backing::RelaySlot;
-	type ExpectedBlockTime = ExpectedBlockTime;
+	type SlotDuration = SlotDuration;
 }
 
 parameter_types! {

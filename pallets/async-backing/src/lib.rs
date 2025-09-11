@@ -25,8 +25,9 @@ mod tests;
 
 pub use pallet::*;
 
-use frame_support::pallet_prelude::*;
+use frame_support::{pallet_prelude::*, traits::OnTimestampSet};
 use sp_consensus_slots::{Slot, SlotDuration};
+use sp_runtime::SaturatedConversion;
 
 /// The InherentIdentifier for nimbus's extension inherent
 pub const INHERENT_IDENTIFIER: InherentIdentifier = *b"nimb-ext";
@@ -98,7 +99,7 @@ pub mod pallet {
 		/// Purely informative, but used by mocking tools like chospticks to allow knowing how to mock
 		/// blocks
 		#[pallet::constant]
-		type ExpectedBlockTime: Get<Self::Moment>;
+		type SlotDuration: Get<Self::Moment>;
 	}
 
 	/// First tuple element is the highest slot that has been seen in the history of this chain.
@@ -107,4 +108,33 @@ pub mod pallet {
 	#[pallet::storage]
 	#[pallet::getter(fn slot_info)]
 	pub type SlotInfo<T: Config> = StorageValue<_, (Slot, u32), OptionQuery>;
+
+	impl<T: Config> Pallet<T> {
+		/// Determine the slot-duration based on the Timestamp module configuration.
+		pub fn slot_duration() -> T::Moment {
+			T::SlotDuration::get()
+		}
+	}
+}
+
+impl<T: Config> OnTimestampSet<T::Moment> for Pallet<T> {
+	fn on_timestamp_set(moment: T::Moment) {
+		let slot_duration = Self::slot_duration();
+		assert!(!slot_duration.is_zero(), "Slot duration cannot be zero.");
+
+		let timestamp_slot = moment / slot_duration;
+		let timestamp_slot = Slot::from(timestamp_slot.saturated_into::<u64>());
+
+		let Some((current_slot, _)) = SlotInfo::<T>::get() else {
+			unreachable!("`SlotInfo` should exist at this point; qed");
+		};
+
+		assert_eq!(
+			current_slot,
+			timestamp_slot,
+			"`timestamp_slot` must match `current_slot`. This likely means that the configured block \
+			time in the node and/or rest of the runtime is not compatible with Nimbus's Async backing \
+			`SlotDuration`",
+		);
+	}
 }
