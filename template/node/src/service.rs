@@ -410,7 +410,7 @@ fn start_consensus(
 		max_pov_percentage,
 		additional_digests_provider: (),
 		collator_key,
-		//authoring_duration: Duration::from_millis(500),
+		authoring_duration: Duration::from_millis(500),
 	};
 
 	let fut = nimbus_consensus::collators::basic::run::<Block, _, _, ParachainBackend, _, _, _, _, _>(
