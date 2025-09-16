@@ -195,7 +195,7 @@ pub async fn run<Block, BI, CIDP, Backend, Client, RClient, Proposer, CS, ADP>(
 				&parent_header,
 				&mut proposer,
 				inherent_data,
-				Duration::from_millis(500), //params.authoring_duration,
+				params.authoring_duration,
 				allowed_pov_size,
 			)
 			.await
