@@ -27,12 +27,16 @@ use crate::*;
 use cumulus_client_collator::service::ServiceInterface as CollatorServiceInterface;
 use cumulus_client_consensus_common::{ParachainBlockImportMarker, ParachainCandidate};
 use cumulus_client_consensus_proposer::ProposerInterface;
-use cumulus_primitives_core::ParachainBlockData;
+use cumulus_primitives_core::{
+	relay_chain::{OccupiedCoreAssumption, ValidationCodeHash},
+	ParachainBlockData,
+};
 use cumulus_primitives_parachain_inherent::ParachainInherentData;
 use futures::prelude::*;
 use log::{debug, info};
 use nimbus_primitives::{CompatibleDigestItem, DigestsProvider, NimbusId, NIMBUS_KEY_ID};
 use polkadot_node_primitives::{Collation, MaybeCompressedPoV};
+use polkadot_primitives::Hash as RelayHash;
 use sc_consensus::{BlockImport, BlockImportParams};
 use sp_application_crypto::ByteArray;
 use sp_consensus::{BlockOrigin, Proposal};
@@ -203,4 +207,55 @@ where
 		.expect("signature bytes produced by keystore should be right length");
 
 	<DigestItem as CompatibleDigestItem>::nimbus_seal(signature)
+}
+
+/// Check the `local_validation_code_hash` against the validation code hash in the relay chain
+/// state.
+///
+/// If the code hashes do not match, it prints a warning.
+async fn check_validation_code_or_log(
+	local_validation_code_hash: &ValidationCodeHash,
+	para_id: ParaId,
+	relay_client: &impl RelayChainInterface,
+	relay_parent: RelayHash,
+) {
+	let state_validation_code_hash = match relay_client
+		.validation_code_hash(relay_parent, para_id, OccupiedCoreAssumption::Included)
+		.await
+	{
+		Ok(hash) => hash,
+		Err(error) => {
+			tracing::debug!(
+				target: super::LOG_TARGET,
+				%error,
+				?relay_parent,
+				%para_id,
+				"Failed to fetch validation code hash",
+			);
+			return;
+		}
+	};
+
+	match state_validation_code_hash {
+		Some(state) => {
+			if state != *local_validation_code_hash {
+				tracing::warn!(
+					target: super::LOG_TARGET,
+					%para_id,
+					?relay_parent,
+					?local_validation_code_hash,
+					relay_validation_code_hash = ?state,
+					"Parachain code doesn't match validation code stored in the relay chain state.",
+				);
+			}
+		}
+		None => {
+			tracing::warn!(
+				target: super::LOG_TARGET,
+				%para_id,
+				?relay_parent,
+				"Could not find validation code for parachain in the relay chain state.",
+			);
+		}
+	}
 }
