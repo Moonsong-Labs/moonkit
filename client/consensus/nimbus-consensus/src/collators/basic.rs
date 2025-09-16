@@ -65,6 +65,8 @@ pub struct Params<Proposer, BI, ParaClient, RClient, CIDP, CS, ADP = ()> {
 	/// The collator service used for bundling proposals into collations and announcing
 	/// to the network.
 	pub collator_service: CS,
+	/// The amount of time to spend authoring each block.
+	pub authoring_duration: Duration,
 }
 
 /// Run bare Nimbus consensus as a relay-chain-driven collator.
