@@ -207,7 +207,7 @@ where
 			};
 
 			// Determine which is the current slot
-			let slot_now = match consensus_common::relay_slot_and_timestamp(
+			let (slot_now, timestamp) = match consensus_common::relay_slot_and_timestamp(
 				&relay_parent_header,
 				params.relay_chain_slot_duration,
 			) {
@@ -236,7 +236,7 @@ where
 						relay_chain_slot_duration = ?params.relay_chain_slot_duration,
 						"Adjusted relay-chain slot to parachain slot"
 					);
-					our_slot
+					(our_slot, relay_timestamp)
 				}
 			};
 
@@ -343,6 +343,7 @@ where
 						&params.relay_client,
 						relay_parent,
 						author_id.clone(),
+						Some(timestamp),
 					)
 					.await
 					{
