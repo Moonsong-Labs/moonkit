@@ -6883,6 +6883,7 @@ dependencies = [
  "sp-api",
  "sp-block-builder",
  "sp-blockchain",
+ "sp-consensus-slots",
  "sp-core",
  "sp-inherents",
  "sp-keystore",

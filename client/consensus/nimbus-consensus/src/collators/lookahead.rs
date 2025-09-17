@@ -356,18 +356,20 @@ where
 
 				// Compute the hash of the parachain runtime bytecode that we using to build the block.
 				// The hash will be send to relay validators alongside the candidate.
-				let validation_code_hash = match params.code_hash_provider.code_hash_at(parent_hash)
-				{
-					None => {
-						tracing::error!(
-							target: crate::LOG_TARGET,
-							?parent_hash,
-							"Could not fetch validation code hash"
-						);
-						break;
-					}
-					Some(validation_code_hash) => validation_code_hash,
+				let Some(validation_code_hash) =
+					params.code_hash_provider.code_hash_at(parent_hash)
+				else {
+					tracing::error!(target: crate::LOG_TARGET, ?parent_hash, "Could not fetch validation code hash");
+					break;
 				};
+
+				super::check_validation_code_or_log(
+					&validation_code_hash,
+					params.para_id,
+					&params.relay_client,
+					relay_parent,
+				)
+				.await;
 
 				let allowed_pov_size = {
 					// Cap the percentage at 85% (see https://github.com/paritytech/polkadot-sdk/issues/6020)

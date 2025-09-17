@@ -16,10 +16,10 @@
 
 use crate::*;
 use cumulus_client_collator::service::ServiceInterface as CollatorServiceInterface;
-use cumulus_client_consensus_common::ParachainBlockImportMarker;
+use cumulus_client_consensus_common::{self as consensus_common, ParachainBlockImportMarker};
 use cumulus_client_consensus_proposer::ProposerInterface;
 use cumulus_primitives_core::{
-	relay_chain::{BlockId as RBlockId, Hash as PHash},
+	relay_chain::{BlockId as RBlockId, Hash as PHash, ValidationCode},
 	CollectCollationInfo, ParaId, PersistedValidationData,
 };
 use cumulus_relay_chain_interface::{OverseerHandle, RelayChainInterface};
@@ -27,9 +27,10 @@ use futures::prelude::*;
 use nimbus_primitives::{DigestsProvider, NimbusApi, NimbusId};
 use polkadot_node_primitives::CollationResult;
 use polkadot_primitives::CollatorPair;
-use sc_client_api::{BlockBackend, BlockOf};
-use sp_api::ProvideRuntimeApi;
+use sc_client_api::{AuxStore, BlockBackend, BlockOf, StateBackend};
+use sp_api::{CallApiAt, ProvideRuntimeApi};
 use sp_blockchain::HeaderBackend;
+use sp_consensus_slots::{Slot, SlotDuration};
 use sp_core::Decode;
 use sp_inherents::CreateInherentDataProviders;
 use sp_keystore::KeystorePtr;
@@ -44,6 +45,11 @@ pub struct Params<Proposer, BI, ParaClient, RClient, CIDP, CS, ADP = ()> {
 	pub para_id: ParaId,
 	/// A handle to the relay-chain client's "Overseer" or task orchestrator.
 	pub overseer_handle: OverseerHandle,
+	/// The length of slots in the relay chain.
+	pub relay_chain_slot_duration: Duration,
+	/// The length of slots in this parachain.
+	/// If the parachain doesn't have slot and rely only on relay slots, set it to None.
+	pub slot_duration: Option<SlotDuration>,
 	/// The underlying block proposer this should call into.
 	pub proposer: Proposer,
 	/// The block import handle.
@@ -79,8 +85,10 @@ pub async fn run<Block, BI, CIDP, Backend, Client, RClient, Proposer, CS, ADP>(
 	BI: BlockImport<Block> + ParachainBlockImportMarker + Send + Sync + 'static,
 	Client: ProvideRuntimeApi<Block>
 		+ BlockOf
+		+ AuxStore
 		+ HeaderBackend<Block>
 		+ BlockBackend<Block>
+		+ CallApiAt<Block>
 		+ Send
 		+ Sync
 		+ 'static,
@@ -112,6 +120,9 @@ pub async fn run<Block, BI, CIDP, Backend, Client, RClient, Proposer, CS, ADP>(
 		..
 	} = params;
 
+	let mut last_processed_slot = 0;
+	let mut last_relay_chain_block = Default::default();
+
 	while let Some(request) = collation_requests.next().await {
 		macro_rules! reject_with_error {
 			($err:expr) => {{
@@ -142,6 +153,25 @@ pub async fn run<Block, BI, CIDP, Backend, Client, RClient, Proposer, CS, ADP>(
 			continue;
 		}
 
+		let Ok(Some(code)) = para_client
+			.state_at(parent_hash)
+			.map_err(drop)
+			.and_then(|s| {
+				s.storage(&sp_core::storage::well_known_keys::CODE)
+					.map_err(drop)
+			})
+		else {
+			continue;
+		};
+
+		super::check_validation_code_or_log(
+			&ValidationCode::from(code).hash(),
+			para_id,
+			&relay_client,
+			*request.relay_parent(),
+		)
+		.await;
+
 		let relay_parent_header = match relay_client
 			.header(RBlockId::hash(*request.relay_parent()))
 			.await
@@ -165,6 +195,54 @@ pub async fn run<Block, BI, CIDP, Backend, Client, RClient, Proposer, CS, ADP>(
 			Err(e) => reject_with_error!(e),
 		};
 
+		// Determine which is the current slot
+		let (slot_now, timestamp) = match consensus_common::relay_slot_and_timestamp(
+			&relay_parent_header,
+			params.relay_chain_slot_duration,
+		) {
+			None => {
+				tracing::trace!(
+					target: crate::LOG_TARGET,
+					relay_parent = ?relay_parent_header,
+					relay_chain_slot_duration = ?params.relay_chain_slot_duration,
+					"Fail to get the relay slot for this relay block!"
+				);
+				continue;
+			}
+			Some((relay_slot, relay_timestamp)) => {
+				let our_slot = if let Some(slot_duration) = params.slot_duration {
+					Slot::from_timestamp(relay_timestamp, slot_duration)
+				} else {
+					// If there is no slot duration, we assume that the parachain use the relay slot directly
+					relay_slot
+				};
+				tracing::debug!(
+					target: crate::LOG_TARGET,
+					?relay_slot,
+					para_slot = ?our_slot,
+					?relay_timestamp,
+					slot_duration = ?params.slot_duration,
+					relay_chain_slot_duration = ?params.relay_chain_slot_duration,
+					"Adjusted relay-chain slot to parachain slot"
+				);
+				(our_slot, relay_timestamp)
+			}
+		};
+
+		// With async backing this function will be called every relay chain block.
+		//
+		// Most parachains currently run with 12 seconds slots and thus, they would try to
+		// produce multiple blocks per slot which very likely would fail on chain. Thus, we have
+		// this "hack" to only produce one block per slot per relay chain fork.
+		//
+		// With https://github.com/paritytech/polkadot-sdk/issues/3168 this implementation will be
+		// obsolete and also the underlying issue will be fixed.
+		if last_processed_slot >= *slot_now
+			&& last_relay_chain_block < *relay_parent_header.number()
+		{
+			continue;
+		}
+
 		let inherent_data = try_request!(
 			create_inherent_data(
 				&create_inherent_data_providers,
@@ -174,7 +252,7 @@ pub async fn run<Block, BI, CIDP, Backend, Client, RClient, Proposer, CS, ADP>(
 				&relay_client,
 				*request.relay_parent(),
 				nimbus_id.clone(),
-				None
+				Some(timestamp)
 			)
 			.await
 		);
@@ -217,5 +295,8 @@ pub async fn run<Block, BI, CIDP, Backend, Client, RClient, Proposer, CS, ADP>(
 			request.complete(None);
 			tracing::debug!(target: crate::LOG_TARGET, "No block proposal");
 		}
+
+		last_processed_slot = *slot_now;
+		last_relay_chain_block = *relay_parent_header.number();
 	}
 }
