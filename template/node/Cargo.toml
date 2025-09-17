@@ -75,6 +75,7 @@ sp-runtime = { workspace = true }
 sp-session = { workspace = true }
 sp-timestamp = { workspace = true }
 sp-transaction-pool = { workspace = true }
+sp-consensus-slots = { workspace = true }
 
 # Cumulus dependencies
 cumulus-client-cli = { workspace = true }

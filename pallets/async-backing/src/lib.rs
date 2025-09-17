@@ -27,6 +27,7 @@ pub use pallet::*;
 
 use frame_support::pallet_prelude::*;
 use sp_consensus_slots::{Slot, SlotDuration};
+use sp_runtime::SaturatedConversion;
 
 /// The InherentIdentifier for nimbus's extension inherent
 pub const INHERENT_IDENTIFIER: InherentIdentifier = *b"nimb-ext";
@@ -95,16 +96,48 @@ pub mod pallet {
 		/// A way to get the current parachain slot and verify it's validity against the relay slot.
 		type GetAndVerifySlot: GetAndVerifySlot;
 
+		/// The slot duration Nimbus should run with, expressed in milliseconds.
+		/// The effective value of this type should not change while the chain is running.
+		#[pallet::constant]
+		type SlotDuration: Get<Self::Moment>;
+
+		/// TODO: Remove this constant once chopsticks has been updated
+		/// - https://github.com/AcalaNetwork/chopsticks/blob/1a84b55097d2efdfaee64964b4b36af7c741d854/packages/core/src/utils/index.ts#L132
+		///
 		/// Purely informative, but used by mocking tools like chospticks to allow knowing how to mock
 		/// blocks
 		#[pallet::constant]
 		type ExpectedBlockTime: Get<Self::Moment>;
 	}
 
-	/// First tuple element is the highest slot that has been seen in the history of this chain.
-	/// Second tuple element is the number of authored blocks so far.
-	/// This is a strictly-increasing value if T::AllowMultipleBlocksPerSlot = false.
+	/// Current relay chain slot paired with a number of authored blocks.
+	///
+	/// This is updated in [`FixedVelocityConsensusHook::on_state_proof`] with the current relay
+	/// chain slot as provided by the relay chain state proof.
 	#[pallet::storage]
 	#[pallet::getter(fn slot_info)]
 	pub type SlotInfo<T: Config> = StorageValue<_, (Slot, u32), OptionQuery>;
+}
+
+impl<T: Config> frame_support::traits::PostInherents for Pallet<T> {
+	fn post_inherents() {
+		let slot_duration = T::SlotDuration::get();
+		assert!(
+			!slot_duration.is_zero(),
+			"Nimbus slot duration cannot be zero."
+		);
+		// Get the parachain slot
+		let now = pallet_timestamp::Now::<T>::get();
+		let timestamp_slot = now / slot_duration;
+		let timestamp_slot = Slot::from(timestamp_slot.saturated_into::<u64>());
+
+		// Get the relay chain slot
+		let (current_slot, _) = SlotInfo::<T>::get().expect("Relay slot to exist");
+
+		assert_eq!(
+			current_slot, timestamp_slot,
+			"The parachain timestamp slot must match the relay chain slot. This likely means that the configured block \
+			time in the node and/or rest of the runtime is not compatible with Nimbus's `SlotDuration`",
+		);
+	}
 }
