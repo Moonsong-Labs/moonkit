@@ -98,7 +98,13 @@ where
 		let velocity = V.max(1);
 
 		let (relay_chain_slot, authored_in_relay) = match pallet::SlotInfo::<T>::get() {
-			Some((slot, authored)) if slot == relay_chain_slot => (slot, authored),
+			Some((slot, authored)) if slot == relay_chain_slot => {
+				if !T::AllowMultipleBlocksPerSlot::get() {
+					panic!("Block invalid; Supplied slot number is not high enough");
+				}
+
+				(slot, authored)
+			}
 			Some((slot, _)) if slot < relay_chain_slot => (relay_chain_slot, 0),
 			Some((slot, _)) => {
 				panic!("Slot moved backwards: stored_slot={slot:?}, relay_chain_slot={relay_chain_slot:?}")
