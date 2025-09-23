@@ -18,7 +18,7 @@ use crate::consensus_hook::FixedVelocityConsensusHook;
 use crate::mock::*;
 use std::ops::Deref;
 
-type ConsensusHook = FixedVelocityConsensusHook<Test, 1, 1>;
+type ConsensusHook = FixedVelocityConsensusHook<Test, 6_000, 1, 1>;
 
 fn assert_slot_info_eq(slot_number: u64, authored: u32) {
 	assert_eq!(AsyncBacking::slot_info().unwrap().0.deref(), &slot_number);

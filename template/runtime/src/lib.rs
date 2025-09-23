@@ -195,8 +195,6 @@ pub mod opaque {
 
 impl_opaque_keys! {
 	pub struct SessionKeys {
-		//TODO this was called author_inherent in the old runtime.
-		// Can I just rename it like this?
 		pub nimbus: AuthorInherent,
 	}
 }
@@ -219,7 +217,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 /// up by `pallet_aura` to implement `fn slot_duration()`.
 ///
 /// Change this to adjust the block time.
-pub const MILLISECS_PER_BLOCK: u64 = 12000;
+pub const MILLISECS_PER_BLOCK: u64 = 6000;
 
 // NOTE: Currently it is not possible to change the slot duration after the chain has started.
 //       Attempting to do so will brick block production.
@@ -345,7 +343,10 @@ impl frame_system::Config for Runtime {
 	type SingleBlockMigrations = ();
 	type MultiBlockMigrator = ();
 	type PreInherents = ();
-	type PostInherents = ();
+	type PostInherents = (
+		// Validate timestamp provided by the consensus client
+		NimbusAsyncBacking,
+	);
 	type PostTransactions = ();
 	type ExtensionsWeightInfo = ();
 }
@@ -432,6 +433,7 @@ pub const BLOCK_PROCESSING_VELOCITY: u32 = 1;
 
 type ConsensusHook = pallet_async_backing::consensus_hook::FixedVelocityConsensusHook<
 	Runtime,
+	RELAY_CHAIN_SLOT_DURATION_MILLIS,
 	BLOCK_PROCESSING_VELOCITY,
 	UNINCLUDED_SEGMENT_CAPACITY,
 >;
@@ -667,13 +669,14 @@ impl pallet_author_slot_filter::Config for Runtime {
 }
 
 parameter_types! {
-	pub const ExpectedBlockTime: u64 = MILLISECS_PER_BLOCK;
+	pub const SlotDuration: u64 = MILLISECS_PER_BLOCK;
 }
 
 impl pallet_async_backing::Config for Runtime {
 	type AllowMultipleBlocksPerSlot = ConstBool<false>;
 	type GetAndVerifySlot = pallet_async_backing::RelaySlot;
-	type ExpectedBlockTime = ExpectedBlockTime;
+	type SlotDuration = SlotDuration;
+	type ExpectedBlockTime = SlotDuration;
 }
 
 parameter_types! {
