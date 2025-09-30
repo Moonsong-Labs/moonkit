@@ -98,7 +98,8 @@ where
 	}
 }
 
-/// Explicitly creates the inherent data for parachain block authoring.
+/// Explicitly creates the inherent data for parachain block authoring and overrides
+/// the timestamp inherent data with the one provided, if any.
 pub(crate) async fn create_inherent_data<Block, CIDP, RClient>(
 	create_inherent_data_providers: &CIDP,
 	para_id: ParaId,
@@ -107,6 +108,7 @@ pub(crate) async fn create_inherent_data<Block, CIDP, RClient>(
 	relay_client: &RClient,
 	relay_parent: PHash,
 	author_id: NimbusId,
+	timestamp: impl Into<Option<sp_timestamp::Timestamp>>,
 ) -> Result<(ParachainInherentData, InherentData), Box<dyn Error + Send + Sync + 'static>>
 where
 	Block: BlockT,
@@ -131,13 +133,17 @@ where
 		}
 	};
 
-	let other_inherent_data = create_inherent_data_providers
+	let mut other_inherent_data = create_inherent_data_providers
 		.create_inherent_data_providers(parent, (relay_parent, validation_data.clone(), author_id))
 		.map_err(|e| e as Box<dyn Error + Send + Sync + 'static>)
 		.await?
 		.create_inherent_data()
 		.await
 		.map_err(Box::new)?;
+
+	if let Some(timestamp) = timestamp.into() {
+		other_inherent_data.replace_data(sp_timestamp::INHERENT_IDENTIFIER, &timestamp);
+	}
 
 	Ok((paras_inherent_data, other_inherent_data))
 }

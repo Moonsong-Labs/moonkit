@@ -47,6 +47,7 @@ use sc_network::{
 use sc_service::{Configuration, PartialComponents, TFullBackend, TFullClient, TaskManager};
 use sc_telemetry::{Telemetry, TelemetryHandle, TelemetryWorker, TelemetryWorkerHandle};
 use sp_api::ProvideRuntimeApi;
+use sp_consensus_slots::SlotDuration;
 use sp_keystore::KeystorePtr;
 use sp_runtime::traits::Block as BlockT;
 use substrate_prometheus_endpoint::Registry;
@@ -411,6 +412,8 @@ fn start_consensus(
 		additional_digests_provider: (),
 		collator_key,
 		authoring_duration: Duration::from_millis(500),
+		relay_chain_slot_duration: Duration::from_millis(6_000),
+		slot_duration: Some(SlotDuration::from_millis(6_000)),
 	};
 
 	let fut = nimbus_consensus::collators::basic::run::<Block, _, _, ParachainBackend, _, _, _, _, _>(
