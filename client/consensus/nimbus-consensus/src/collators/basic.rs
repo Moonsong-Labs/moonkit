@@ -73,6 +73,8 @@ pub struct Params<Proposer, BI, ParaClient, RClient, CIDP, CS, ADP = ()> {
 	pub collator_service: CS,
 	/// The amount of time to spend authoring each block.
 	pub authoring_duration: Duration,
+	/// Additional relay keys to add in the storage proof
+	pub additional_relay_keys: Vec<Vec<u8>>,
 }
 
 /// Run bare Nimbus consensus as a relay-chain-driven collator.
@@ -252,7 +254,8 @@ pub async fn run<Block, BI, CIDP, Backend, Client, RClient, Proposer, CS, ADP>(
 				&relay_client,
 				*request.relay_parent(),
 				nimbus_id.clone(),
-				Some(timestamp)
+				Some(timestamp),
+				params.additional_relay_keys.clone(),
 			)
 			.await
 		);
