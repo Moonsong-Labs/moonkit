@@ -410,6 +410,7 @@ fn start_consensus(
 		force_authoring,
 		max_pov_percentage,
 		additional_digests_provider: (),
+		additional_relay_keys: vec![],
 		collator_key,
 		authoring_duration: Duration::from_millis(500),
 		relay_chain_slot_duration: Duration::from_millis(6_000),
