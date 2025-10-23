@@ -26,29 +26,34 @@ use sp_arithmetic::traits::AtLeast16BitUnsigned;
 use staging_xcm::latest::prelude::*;
 
 #[allow(dead_code)]
-pub fn create_default_minted_asset<T: Config>(
+pub fn create_minted_asset<T: Config>(
 	amount: AssetBalance<T>,
 	receiver: T::AccountId,
+	asset_location: Option<Location>,
 ) -> (AssetId<T>, T::ForeignAsset)
 where
 	T::ForeignAsset: From<Location>,
 	T::Fungibles: fungibles::Mutate<T::AccountId>,
 	AssetId<T>: AtLeast16BitUnsigned,
 {
-	let (asset_id, foreign_asset) = create_default_asset::<T>(true);
+	let (asset_id, foreign_asset) = create_asset::<T>(true, asset_location);
 
 	assert!(T::Fungibles::mint_into(asset_id.clone(), &receiver, amount).is_ok());
 	(asset_id, foreign_asset)
 }
 
 #[allow(dead_code)]
-fn create_default_asset<T: Config>(is_sufficient: bool) -> (AssetId<T>, T::ForeignAsset)
+fn create_asset<T: Config>(
+	is_sufficient: bool,
+	asset_location: Option<Location>,
+) -> (AssetId<T>, T::ForeignAsset)
 where
 	T::ForeignAsset: From<Location>,
 	AssetId<T>: AtLeast16BitUnsigned,
 {
 	let asset_id: AssetId<T> = 1u16.into();
-	let foreign_asset: T::ForeignAsset = Location::parent().into();
+	let asset_location = asset_location.unwrap_or(Location::parent());
+	let foreign_asset: T::ForeignAsset = asset_location.into();
 	let admin: T::AccountId = whitelisted_caller();
 	let origin = T::ForeignAssetCreatorOrigin::try_successful_origin()
 		.map_err(|_| BenchmarkError::Weightless)
