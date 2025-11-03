@@ -3,11 +3,14 @@ name = "nimbus-consensus"
 description = "Client-side worker for the Nimbus family of consensus algorithms"
 edition = "2021"
 version = "0.9.0"
+
 [dependencies]
 # Substrate deps
 sc-client-api = { workspace = true }
 sc-consensus = { workspace = true }
 sc-consensus-manual-seal = { workspace = true }
+sc-consensus-babe = { workspace = true }
+sc-utils = { workspace = true }
 sp-consensus-slots = { workspace = true }
 sp-api = { workspace = true }
 sp-application-crypto = { workspace = true }
@@ -20,6 +23,8 @@ sp-timestamp = { workspace = true }
 sp-keystore = { workspace = true }
 sp-runtime = { workspace = true }
 sp-version = { workspace = true }
+sp-trie = { workspace = true }
+sp-state-machine = { workspace = true }
 substrate-prometheus-endpoint = { workspace = true }
 
 # Cumulus dependencies
@@ -35,6 +40,8 @@ cumulus-relay-chain-interface = { workspace = true }
 polkadot-node-primitives = { workspace = true }
 polkadot-node-subsystem = { workspace = true }
 polkadot-primitives = { workspace = true }
+polkadot-overseer = { workspace = true }
+polkadot-node-subsystem-util = { workspace = true }
 
 # Nimbus Dependencies
 async-backing-primitives = { workspace = true, features = ["std"] }
@@ -47,3 +54,9 @@ futures = { workspace = true }
 log = { workspace = true }
 parking_lot = { workspace = true }
 tracing = { workspace = true }
+schnellru = { workspace = true }
+tokio = { workspace = true, features = ["macros"] }
+
+[dev-dependencies]
+rstest = { workspace = true }
+sp-tracing = { workspace = true }
