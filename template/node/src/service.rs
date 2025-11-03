@@ -9,6 +9,7 @@ use moonkit_template_runtime::{
 	RuntimeApi,
 };
 
+use nimbus_consensus::collators::slot_based::SlotBasedBlockImport;
 use nimbus_consensus::NimbusManualSealConsensusDataProvider;
 
 // Cumulus Imports
@@ -25,10 +26,10 @@ use cumulus_client_service::{
 use cumulus_primitives_core::CollectCollationInfo;
 use cumulus_primitives_core::ParaId;
 use cumulus_relay_chain_inprocess_interface::build_inprocess_relay_chain;
-use cumulus_relay_chain_interface::{OverseerHandle, RelayChainInterface, RelayChainResult};
+use cumulus_relay_chain_interface::{RelayChainInterface, RelayChainResult};
 use cumulus_relay_chain_minimal_node::build_minimal_relay_chain_node_with_rpc;
 
-use polkadot_primitives::UpgradeGoAhead;
+use polkadot_primitives::{UpgradeGoAhead, ValidationCode};
 use polkadot_service::CollatorPair;
 
 // Substrate Imports
@@ -47,7 +48,6 @@ use sc_network::{
 use sc_service::{Configuration, PartialComponents, TFullBackend, TFullClient, TaskManager};
 use sc_telemetry::{Telemetry, TelemetryHandle, TelemetryWorker, TelemetryWorkerHandle};
 use sp_api::ProvideRuntimeApi;
-use sp_consensus_slots::SlotDuration;
 use sp_keystore::KeystorePtr;
 use sp_runtime::traits::Block as BlockT;
 use substrate_prometheus_endpoint::Registry;
@@ -348,6 +348,7 @@ where
 	if validator {
 		start_consensus(
 			client.clone(),
+			backend.clone(),
 			block_import,
 			prometheus_registry.as_ref(),
 			telemetry.as_ref().map(|t| t.handle()),
@@ -358,7 +359,6 @@ where
 			para_id,
 			collator_key.expect("Command line arguments do not allow this. qed"),
 			peer_id,
-			overseer_handle,
 			announce_block,
 			force_authoring,
 			max_pov_percentage,
@@ -370,6 +370,7 @@ where
 
 fn start_consensus(
 	client: Arc<ParachainClient>,
+	backend: Arc<ParachainBackend>,
 	block_import: ParachainBlockImport,
 	prometheus_registry: Option<&Registry>,
 	telemetry: Option<TelemetryHandle>,
@@ -380,7 +381,6 @@ fn start_consensus(
 	para_id: ParaId,
 	collator_key: CollatorPair,
 	collator_peer_id: PeerId,
-	overseer_handle: OverseerHandle,
 	announce_block: Arc<dyn Fn(Hash, Option<Vec<u8>>) + Send + Sync>,
 	force_authoring: bool,
 	max_pov_percentage: u8,
@@ -400,33 +400,54 @@ fn start_consensus(
 		client.clone(),
 	);
 
-	let params = nimbus_consensus::collators::basic::Params {
+	let client_for_nimbus = client.clone();
+
+	let params = nimbus_consensus::collators::slot_based::Params {
+		additional_digests_provider: (),
 		para_id,
-		overseer_handle,
 		proposer,
-		create_inherent_data_providers: move |_, _| async move { Ok(()) },
-		block_import,
+		create_inherent_data_providers: move |_, ()| async move { Ok(()) },
+		block_import: block_import.clone(),
 		relay_client: relay_chain_interface,
-		para_client: client,
+		para_client: client.clone(),
 		keystore,
 		collator_service,
 		force_authoring,
-		max_pov_percentage,
-		additional_digests_provider: (),
+		max_pov_percentage: Some(max_pov_percentage as u32),
 		collator_key,
 		collator_peer_id,
 		additional_relay_state_keys: vec![],
 		authoring_duration: Duration::from_millis(500),
 		relay_chain_slot_duration: Duration::from_millis(6_000),
-		slot_duration: Some(SlotDuration::from_millis(6_000)),
+		para_slot_duration: Some(Duration::from_millis(6_000)),
+		slot_offset: Duration::from_millis(6_000),
+		reinitialize: false,
+		para_backend: backend,
+		code_hash_provider: move |block_hash| {
+			client_for_nimbus
+				.code_at(block_hash)
+				.ok()
+				.map(|c| ValidationCode::from(c).hash())
+		},
+		block_import_handle: SlotBasedBlockImport::new(block_import, client).1,
+		spawner: task_manager.spawn_essential_handle(),
+		export_pov: None,
 	};
 
-	let fut = nimbus_consensus::collators::basic::run::<Block, _, _, ParachainBackend, _, _, _, _, _>(
-		params,
-	);
-	task_manager
-		.spawn_essential_handle()
-		.spawn("nimbus", None, fut);
+	nimbus_consensus::collators::slot_based::run::<
+		Block,
+		nimbus_primitives::NimbusPair,
+		_,
+		_,
+		_,
+		_,
+		_,
+		_,
+		_,
+		_,
+		_,
+		_,
+	>(params);
 
 	Ok(())
 }

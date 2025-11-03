@@ -6782,11 +6782,17 @@ dependencies = [
  "parking_lot 0.12.3",
  "polkadot-node-primitives",
  "polkadot-node-subsystem",
+ "polkadot-node-subsystem-util",
+ "polkadot-overseer",
  "polkadot-primitives",
+ "rstest",
  "sc-client-api",
  "sc-consensus",
+ "sc-consensus-babe",
  "sc-consensus-manual-seal",
  "sc-network-types",
+ "sc-utils",
+ "schnellru",
  "sp-api",
  "sp-application-crypto",
  "sp-block-builder",
@@ -6797,9 +6803,13 @@ dependencies = [
  "sp-inherents",
  "sp-keystore",
  "sp-runtime",
+ "sp-state-machine",
  "sp-timestamp",
+ "sp-tracing",
+ "sp-trie",
  "sp-version",
  "substrate-prometheus-endpoint",
+ "tokio",
  "tracing",
 ]
 
@@ -11077,6 +11087,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "2b15c43186be67a4fd63bee50d0303afffcef381492ebe2c5d87f324e1b8815c"
 
 [[package]]
+name = "relative-path"
+version = "1.9.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ba39f3699c378cd8970968dcbff9c43159ea4cfbd88d43c00b22f2ef10a435d2"
+
+[[package]]
 name = "resolv-conf"
 version = "0.7.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -11291,6 +11307,35 @@ dependencies = [
  "libc",
  "rtoolbox",
  "windows-sys 0.59.0",
+]
+
+[[package]]
+name = "rstest"
+version = "0.18.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "97eeab2f3c0a199bc4be135c36c924b6590b88c377d416494288c14f2db30199"
+dependencies = [
+ "futures 0.3.31",
+ "futures-timer",
+ "rstest_macros",
+ "rustc_version 0.4.1",
+]
+
+[[package]]
+name = "rstest_macros"
+version = "0.18.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d428f8247852f894ee1be110b375111b586d4fa431f6c46e64ba5a0dcccbe605"
+dependencies = [
+ "cfg-if",
+ "glob",
+ "proc-macro2",
+ "quote",
+ "regex",
+ "relative-path",
+ "rustc_version 0.4.1",
+ "syn 2.0.101",
+ "unicode-ident",
 ]
 
 [[package]]
