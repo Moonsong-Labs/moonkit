@@ -67,8 +67,9 @@ pub struct Params<BI, CIDP, Client, Backend, RClient, CHP, SO, Proposer, CS, DP 
 	pub create_inherent_data_providers: CIDP,
 	/// Force production of the block even if the collator is not eligible
 	pub force_authoring: bool,
-	/// Maximum percentage of POV size to use (0-85)
-	pub max_pov_percentage: u8,
+	/// The maximum percentage of the maximum PoV size that the collator can use.
+	/// It will be removed once https://github.com/paritytech/polkadot-sdk/issues/6020 is fixed.
+	pub max_pov_percentage: Option<u32>,
 	/// The underlying keystore, which should contain Aura consensus keys.
 	pub keystore: KeystorePtr,
 	/// A handle to the relay-chain client's "Overseer" or task orchestrator.
@@ -149,6 +150,34 @@ where
 				return;
 			}
 		};
+
+		// Helper for pre-connecting to backing groups (fix for single collator scenarios)
+		let mut connection_helper = super::BackingGroupConnectionHelper::new(
+			params.keystore.clone(),
+			params.overseer_handle.clone(),
+		);
+
+		// Create a Collator instance for inherent data creation and block building
+		type CIDPContext = (PHash, PersistedValidationData, NimbusId);
+		let collator_params = crate::collator::Params {
+			create_inherent_data_providers: params.create_inherent_data_providers,
+			block_import: params.block_import,
+			relay_client: params.relay_client.clone(),
+			keystore: params.keystore.clone(),
+			para_id: params.para_id,
+			proposer: params.proposer,
+			collator_service: params.collator_service,
+		};
+		let mut collator = crate::collator::Collator::<
+			Block,
+			nimbus_primitives::NimbusPair,
+			_,
+			_,
+			_,
+			_,
+			_,
+			CIDPContext,
+		>::new(collator_params);
 
 		// React to each new relay block
 		while let Some(relay_parent_header) = import_notifications.next().await {
@@ -297,6 +326,12 @@ where
 			let mut parent_hash = initial_parent.hash;
 			let mut parent_header = initial_parent.header;
 			let overseer_handle = &mut params.overseer_handle;
+
+			// Proactively connect to backing groups. This is especially important for single
+			// collator setups where we always own the slot and thus would never trigger
+			// pre-connection through the normal code path.
+			connection_helper.update(slot_now).await;
+
 			for n_built in 0..2 {
 				// Ask to the runtime if we are authorized to create a new parablock on top of this parent.
 				// (This will claim the slot internally)
@@ -331,31 +366,30 @@ where
 				//
 
 				// Create inherents data for the next parablock
-				let (parachain_inherent_data, other_inherent_data) =
-					match crate::create_inherent_data(
-						&params.create_inherent_data_providers,
-						params.para_id,
-						parent_hash,
-						&PersistedValidationData {
-							parent_head: parent_header.encode().into(),
-							relay_parent_number: *relay_parent_header.number(),
-							relay_parent_storage_root: *relay_parent_header.state_root(),
-							max_pov_size,
-						},
-						&params.relay_client,
+				let validation_data = PersistedValidationData {
+					parent_head: parent_header.encode().into(),
+					relay_parent_number: *relay_parent_header.number(),
+					relay_parent_storage_root: *relay_parent_header.state_root(),
+					max_pov_size,
+				};
+				let cidp_context = (relay_parent, validation_data.clone(), author_id.clone());
+				let (parachain_inherent_data, other_inherent_data) = match collator
+					.create_inherent_data(
 						relay_parent,
-						author_id.clone(),
+						&validation_data,
+						parent_hash,
 						Some(timestamp),
 						params.additional_relay_keys.clone(),
+						cidp_context,
 					)
 					.await
-					{
-						Err(err) => {
-							tracing::error!(target: crate::LOG_TARGET, ?err);
-							break;
-						}
-						Ok(x) => x,
-					};
+				{
+					Err(err) => {
+						tracing::error!(target: crate::LOG_TARGET, ?err);
+						break;
+					}
+					Ok(x) => x,
+				};
 
 				// Compute the hash of the parachain runtime bytecode that we using to build the block.
 				// The hash will be send to relay validators alongside the candidate.
@@ -374,28 +408,36 @@ where
 				)
 				.await;
 
-				let allowed_pov_size = {
-					// Cap the percentage at 85% (see https://github.com/paritytech/polkadot-sdk/issues/6020)
-					let capped_percentage = params.max_pov_percentage.min(85);
-					// Calculate the allowed POV size based on the percentage
-					(max_pov_size as u128)
-						.saturating_mul(capped_percentage as u128)
-						.saturating_div(100) as usize
-				};
+				let allowed_pov_size = if let Some(max_pov_percentage) = params.max_pov_percentage {
+					max_pov_size * max_pov_percentage / 100
+				} else {
+					// Set the block limit to 85% of the maximum PoV size.
+					//
+					// Once https://github.com/paritytech/polkadot-sdk/issues/6020 issue is
+					// fixed, this should be removed.
+					max_pov_size * 85 / 100
+				} as usize;
 
-				match super::collate(
-					&params.additional_digests_provider,
-					author_id,
-					&mut params.block_import,
-					&params.collator_service,
-					keystore,
-					&parent_header,
-					&mut params.proposer,
-					(parachain_inherent_data, other_inherent_data),
-					params.authoring_duration,
-					allowed_pov_size,
-				)
-				.await
+				// Create slot claim and get additional digests
+				let slot_claim = crate::collator::SlotClaim::unchecked::<
+					nimbus_primitives::NimbusPair,
+				>(author_id.clone(), timestamp);
+				let additional_digests: Vec<_> = params
+					.additional_digests_provider
+					.provide_digests(author_id, parent_hash)
+					.into_iter()
+					.collect();
+
+				match collator
+					.collate(
+						&parent_header,
+						&slot_claim,
+						additional_digests,
+						(parachain_inherent_data, other_inherent_data),
+						params.authoring_duration,
+						allowed_pov_size,
+					)
+					.await
 				{
 					Ok(Some((collation, block_data))) => {
 						let Some(new_block_header) =
@@ -409,7 +451,9 @@ where
 
 						// Here we are assuming that the import logic protects against equivocations
 						// and provides sybil-resistance, as it should.
-						params.collator_service.announce_block(new_block_hash, None);
+						collator
+							.collator_service()
+							.announce_block(new_block_hash, None);
 
 						// TODO: Add PoV export functionality
 
