@@ -474,8 +474,6 @@ where
 	P::Signature: Codec,
 {
 	let runtime_api = client.runtime_api();
-	//let authorities = runtime_api.authorities(parent_hash).ok()?;
-	//let author_pub = crate::claim_slot::<P>(para_slot, &authorities, keystore).await?;
 	let author_pub = crate::claim_slot::<Block, Client>(
 		keystore,
 		client,

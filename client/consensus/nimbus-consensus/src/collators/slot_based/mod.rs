@@ -87,7 +87,9 @@ mod relay_chain_data_cache;
 mod slot_timer;
 
 /// Parameters for [`run`].
-pub struct Params<Block, BI, CIDP, Client, Backend, RClient, CHP, Proposer, CS, Spawner> {
+pub struct Params<Block, BI, CIDP, Client, Backend, RClient, CHP, Proposer, CS, Spawner, DP = ()> {
+	/// Additional digest provider
+	pub additional_digests_provider: DP,
 	/// Inherent data providers. Only non-consensus inherent data should be provided, i.e.
 	/// the timestamp, slot, and paras inherents should be omitted, as they are set by this
 	/// collator.
@@ -135,11 +137,12 @@ pub struct Params<Block, BI, CIDP, Client, Backend, RClient, CHP, Proposer, CS, 
 	pub max_pov_percentage: Option<u32>,
 	/// Force production of the block even if the collator is not eligible
 	pub force_authoring: bool,
+	pub additional_relay_state_keys: Vec<Vec<u8>>,
 }
 
 /// Run aura-based block building and collation task.
-pub fn run<Block, P, BI, CIDP, Client, Backend, RClient, CHP, Proposer, CS, Spawner>(
-	params: Params<Block, BI, CIDP, Client, Backend, RClient, CHP, Proposer, CS, Spawner>,
+pub fn run<Block, P, BI, CIDP, Client, Backend, RClient, CHP, Proposer, CS, Spawner, DP>(
+	params: Params<Block, BI, CIDP, Client, Backend, RClient, CHP, Proposer, CS, Spawner, DP>,
 ) where
 	Block: BlockT,
 	Client: ProvideRuntimeApi<Block>
@@ -167,8 +170,13 @@ pub fn run<Block, P, BI, CIDP, Client, Backend, RClient, CHP, Proposer, CS, Spaw
 	P::Public: AppPublic + Member + Codec,
 	P::Signature: TryFrom<Vec<u8>> + Member + Codec,
 	Spawner: SpawnNamed,
+	DP: nimbus_primitives::DigestsProvider<P::Public, <Block as BlockT>::Hash>
+		+ Send
+		+ Sync
+		+ 'static,
 {
 	let Params {
+		additional_digests_provider,
 		create_inherent_data_providers,
 		block_import,
 		para_client,
@@ -190,6 +198,7 @@ pub fn run<Block, P, BI, CIDP, Client, Backend, RClient, CHP, Proposer, CS, Spaw
 		para_slot_duration,
 		max_pov_percentage,
 		force_authoring,
+		additional_relay_state_keys,
 	} = params;
 
 	let (tx, rx) = tracing_unbounded("mpsc_builder_to_collator", 100);
@@ -207,6 +216,7 @@ pub fn run<Block, P, BI, CIDP, Client, Backend, RClient, CHP, Proposer, CS, Spaw
 	let collation_task_fut = run_collation_task::<Block, _, _>(collator_task_params);
 
 	let block_builder_params = block_builder_task::BuilderTaskParams {
+		additional_digests_provider,
 		create_inherent_data_providers,
 		block_import,
 		para_client,
@@ -224,10 +234,11 @@ pub fn run<Block, P, BI, CIDP, Client, Backend, RClient, CHP, Proposer, CS, Spaw
 		slot_offset,
 		max_pov_percentage,
 		force_authoring,
+		additional_relay_state_keys,
 	};
 
 	let block_builder_fut =
-		run_block_builder::<Block, P, _, _, _, _, _, _, _, _>(block_builder_params);
+		run_block_builder::<Block, P, _, _, _, _, _, _, _, _, _>(block_builder_params);
 
 	spawner.spawn_blocking(
 		"slot-based-block-builder",

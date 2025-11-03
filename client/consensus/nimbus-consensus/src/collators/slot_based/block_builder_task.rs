@@ -53,7 +53,10 @@ pub struct BuilderTaskParams<
 	CHP,
 	Proposer,
 	CS,
+	DP,
 > {
+	/// Additional digest provider
+	pub additional_digests_provider: DP,
 	/// Inherent data providers. Only non-consensus inherent data should be provided, i.e.
 	/// the timestamp, slot, and paras inherents should be omitted, as they are set by this
 	/// collator.
@@ -98,11 +101,12 @@ pub struct BuilderTaskParams<
 	pub max_pov_percentage: Option<u32>,
 	/// Force production of the block even if the collator is not eligible
 	pub force_authoring: bool,
+	pub additional_relay_state_keys: Vec<Vec<u8>>,
 }
 
 /// Run block-builder.
-pub fn run_block_builder<Block, P, BI, CIDP, Client, Backend, RelayClient, CHP, Proposer, CS>(
-	params: BuilderTaskParams<Block, BI, CIDP, Client, Backend, RelayClient, CHP, Proposer, CS>,
+pub fn run_block_builder<Block, P, BI, CIDP, Client, Backend, RelayClient, CHP, Proposer, CS, DP>(
+	params: BuilderTaskParams<Block, BI, CIDP, Client, Backend, RelayClient, CHP, Proposer, CS, DP>,
 ) -> impl Future<Output = ()> + Send + 'static
 where
 	Block: BlockT,
@@ -130,10 +134,15 @@ where
 	P: Pair<Public = NimbusId>,
 	P::Public: AppPublic + Member + Codec,
 	P::Signature: TryFrom<Vec<u8>> + Member + Codec,
+	DP: nimbus_primitives::DigestsProvider<P::Public, <Block as BlockT>::Hash>
+		+ Send
+		+ Sync
+		+ 'static,
 {
 	async move {
 		tracing::info!(target: LOG_TARGET, "Starting slot-based block-builder task.");
 		let BuilderTaskParams {
+			additional_digests_provider,
 			relay_client,
 			create_inherent_data_providers,
 			para_client,
@@ -151,6 +160,7 @@ where
 			slot_offset,
 			max_pov_percentage,
 			force_authoring,
+			additional_relay_state_keys,
 		} = params;
 
 		let mut slot_timer = SlotTimer::<Block, P>::new_with_offset(
@@ -363,6 +373,7 @@ where
 					parent_hash,
 					slot_claim.timestamp(),
 					Some(rp_data),
+					additional_relay_state_keys.clone(),
 				)
 				.await
 			{
@@ -399,19 +410,31 @@ where
 				validation_data.max_pov_size * 85 / 100
 			} as usize;
 
-			let Ok(Some(candidate)) = collator
+			let additional_pre_digests: Vec<sp_runtime::DigestItem> = additional_digests_provider
+				.provide_digests(slot_claim.author_id(), parent_header.hash())
+				.into_iter()
+				.collect();
+
+			let candidate = collator
 				.build_block_and_import(
 					&parent_header,
 					&slot_claim,
-					None,
+					Some(additional_pre_digests),
 					(parachain_inherent_data, other_inherent_data),
 					authoring_duration,
 					allowed_pov_size,
 				)
-				.await
-			else {
-				tracing::error!(target: crate::LOG_TARGET, "Unable to build block at slot.");
-				continue;
+				.await;
+
+			let candidate = match candidate {
+				Ok(Some(candidate)) => candidate,
+				other => {
+					tracing::error!(target: crate::LOG_TARGET, "Unable to build block at slot.");
+					if let Err(error) = other {
+						tracing::error!(target: crate::LOG_TARGET, "Error: {error:?}");
+					}
+					continue;
+				}
 			};
 
 			let new_block_hash = candidate.block.header().hash();

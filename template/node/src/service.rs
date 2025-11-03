@@ -400,6 +400,7 @@ fn start_consensus(
 	let client_for_nimbus = client.clone();
 
 	let params = nimbus_consensus::collators::slot_based::Params {
+		additional_digests_provider: (),
 		para_id,
 		proposer,
 		create_inherent_data_providers: move |_, ()| async move { Ok(()) },
@@ -410,6 +411,7 @@ fn start_consensus(
 		collator_service,
 		force_authoring,
 		max_pov_percentage: Some(max_pov_percentage as u32),
+		additional_relay_state_keys: vec![],
 		collator_key,
 		authoring_duration: Duration::from_millis(500),
 		relay_chain_slot_duration: Duration::from_millis(6_000),
@@ -431,6 +433,7 @@ fn start_consensus(
 	nimbus_consensus::collators::slot_based::run::<
 		Block,
 		nimbus_primitives::NimbusPair,
+		_,
 		_,
 		_,
 		_,

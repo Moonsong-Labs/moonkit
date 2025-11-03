@@ -97,6 +97,7 @@ where
 		parent_hash: Block::Hash,
 		timestamp: impl Into<Option<Timestamp>>,
 		relay_parent_descendants: Option<RelayParentData>,
+		_additional_relay_state_keys: Vec<Vec<u8>>,
 	) -> Result<(ParachainInherentData, InherentData), Box<dyn Error + Send + Sync + 'static>> {
 		let paras_inherent_data = ParachainInherentDataProvider::create_at(
 			relay_parent,
@@ -142,6 +143,7 @@ where
 		validation_data: &PersistedValidationData,
 		parent_hash: Block::Hash,
 		timestamp: impl Into<Option<Timestamp>>,
+		additional_relay_state_keys: Vec<Vec<u8>>,
 	) -> Result<(ParachainInherentData, InherentData), Box<dyn Error + Send + Sync + 'static>> {
 		self.create_inherent_data_with_rp_offset(
 			relay_parent,
@@ -149,6 +151,7 @@ where
 			parent_hash,
 			timestamp,
 			None,
+			additional_relay_state_keys,
 		)
 		.await
 	}
@@ -163,8 +166,13 @@ where
 		proposal_duration: Duration,
 		max_pov_size: usize,
 	) -> Result<Option<ParachainCandidate<Block>>, Box<dyn Error + Send + 'static>> {
-		let mut digest = additional_pre_digest.into().unwrap_or_default();
-		digest.push(slot_claim.pre_digest.clone());
+		//let mut digest = additional_pre_digest.into().unwrap_or_default();
+		//digest.push(slot_claim.pre_digest.clone());
+		//log::error!("digest: {:?}", digest);
+		let mut logs = vec![CompatibleDigestItem::nimbus_pre_digest(
+			slot_claim.author_id.clone(),
+		)];
+		logs.extend(additional_pre_digest.into().unwrap_or_default());
 
 		let maybe_proposal = self
 			.proposer
@@ -172,7 +180,7 @@ where
 				&parent_header,
 				&inherent_data.0,
 				inherent_data.1,
-				Digest { logs: digest },
+				Digest { logs },
 				proposal_duration,
 				Some(max_pov_size),
 			)
@@ -187,7 +195,7 @@ where
 		let sealed_importable = seal::<_, P>(
 			proposal.block,
 			proposal.storage_changes,
-			&slot_claim.author_pub,
+			&slot_claim.author_id,
 			&self.keystore,
 		)
 		.map_err(|e| e as Box<dyn Error + Send>)?;
@@ -217,7 +225,7 @@ where
 	/// Provide the slot to build at as well as any other necessary pre-digest logs,
 	/// the inherent data, and the proposal duration and PoV size limits.
 	///
-	/// The Aura pre-digest should not be explicitly provided and is set internally.
+	/// The Nimbus pre-digest should not be explicitly provided and is set internally.
 	///
 	/// This does not announce the collation to the parachain network or the relay chain.
 	pub async fn collate(
@@ -275,7 +283,7 @@ where
 
 /// A claim on an Aura slot.
 pub struct SlotClaim {
-	author_pub: NimbusId,
+	author_id: NimbusId,
 	pre_digest: DigestItem,
 	timestamp: Timestamp,
 }
@@ -285,15 +293,15 @@ impl SlotClaim {
 	///
 	/// This does not check whether the author actually owns the slot or the timestamp
 	/// falls within the slot.
-	pub fn unchecked<P>(author_pub: NimbusId, timestamp: Timestamp) -> Self
+	pub fn unchecked<P>(author_id: NimbusId, timestamp: Timestamp) -> Self
 	where
 		P: Pair<Public = NimbusId>,
 		P::Public: Codec,
 		P::Signature: Codec,
 	{
-		let pre_digest = CompatibleDigestItem::nimbus_pre_digest(author_pub.clone());
+		let pre_digest = CompatibleDigestItem::nimbus_pre_digest(author_id.clone());
 		SlotClaim {
-			author_pub,
+			author_id,
 			timestamp,
 			pre_digest,
 		}
@@ -303,6 +311,10 @@ impl SlotClaim {
 	/// generated against.
 	pub fn timestamp(&self) -> Timestamp {
 		self.timestamp
+	}
+
+	pub fn author_id(&self) -> NimbusId {
+		self.author_id.clone()
 	}
 }
 
