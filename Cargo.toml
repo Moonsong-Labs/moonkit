@@ -39,6 +39,9 @@ scale-info = { version = "2.11.2", default-features = false, features = [
 schnorrkel = { version = "0.11.4", default-features = false }
 serde = { version = "1.0.195", default-features = false }
 serde_json = { version = "1.0.111", default-features = false }
+schnellru = { version = "0.2.3" }
+tokio = { version = "1.45.0", default-features = false }
+rstest = { version = "0.18.2" }
 
 smallvec = "1.6.1"
 tracing = "0.1.22"
@@ -118,6 +121,8 @@ sp-consensus = { git = "https://github.com/moonbeam-foundation/polkadot-sdk", br
 sp-storage = { git = "https://github.com/moonbeam-foundation/polkadot-sdk", branch = "moonbeam-polkadot-stable2506", default-features = false }
 sp-timestamp = { git = "https://github.com/moonbeam-foundation/polkadot-sdk", branch = "moonbeam-polkadot-stable2506", default-features = false }
 sp-trie = { git = "https://github.com/moonbeam-foundation/polkadot-sdk", branch = "moonbeam-polkadot-stable2506", default-features = false }
+sp-state-machine = { git = "https://github.com/moonbeam-foundation/polkadot-sdk", branch = "moonbeam-polkadot-stable2506", default-features = false }
+sp-tracing = { git = "https://github.com/moonbeam-foundation/polkadot-sdk", branch = "moonbeam-polkadot-stable2506", default-features = false }
 
 # Substrate (client)
 frame-benchmarking-cli = { git = "https://github.com/moonbeam-foundation/polkadot-sdk", branch = "moonbeam-polkadot-stable2506" }
@@ -131,6 +136,7 @@ sc-client-db = { git = "https://github.com/moonbeam-foundation/polkadot-sdk", br
 sc-consensus = { git = "https://github.com/moonbeam-foundation/polkadot-sdk", branch = "moonbeam-polkadot-stable2506" }
 sc-consensus-grandpa = { git = "https://github.com/moonbeam-foundation/polkadot-sdk", branch = "moonbeam-polkadot-stable2506" }
 sc-consensus-manual-seal = { git = "https://github.com/moonbeam-foundation/polkadot-sdk", branch = "moonbeam-polkadot-stable2506" }
+sc-consensus-babe = { git = "https://github.com/moonbeam-foundation/polkadot-sdk", branch = "moonbeam-polkadot-stable2506" }
 sc-executor = { git = "https://github.com/moonbeam-foundation/polkadot-sdk", branch = "moonbeam-polkadot-stable2506" }
 sc-informant = { git = "https://github.com/moonbeam-foundation/polkadot-sdk", branch = "moonbeam-polkadot-stable2506" }
 sc-network = { git = "https://github.com/moonbeam-foundation/polkadot-sdk", branch = "moonbeam-polkadot-stable2506" }
@@ -202,8 +208,10 @@ xcm-executor = { package = "staging-xcm-executor", git = "https://github.com/moo
 kusama-runtime = { git = "https://github.com/moonbeam-foundation/polkadot-sdk", branch = "moonbeam-polkadot-stable2506" }
 polkadot-cli = { git = "https://github.com/moonbeam-foundation/polkadot-sdk", branch = "moonbeam-polkadot-stable2506" }
 polkadot-node-subsystem = { git = "https://github.com/moonbeam-foundation/polkadot-sdk", branch = "moonbeam-polkadot-stable2506" }
+polkadot-node-subsystem-util = { git = "https://github.com/moonbeam-foundation/polkadot-sdk", branch = "moonbeam-polkadot-stable2506" }
 polkadot-primitives = { git = "https://github.com/moonbeam-foundation/polkadot-sdk", branch = "moonbeam-polkadot-stable2506" }
 polkadot-service = { git = "https://github.com/moonbeam-foundation/polkadot-sdk", branch = "moonbeam-polkadot-stable2506" }
+polkadot-overseer = { git = "https://github.com/moonbeam-foundation/polkadot-sdk", branch = "moonbeam-polkadot-stable2506" }
 rococo-runtime = { git = "https://github.com/moonbeam-foundation/polkadot-sdk", branch = "moonbeam-polkadot-stable2506" }
 westend-runtime = { git = "https://github.com/moonbeam-foundation/polkadot-sdk", branch = "moonbeam-polkadot-stable2506" }
 xcm-simulator = { git = "https://github.com/moonbeam-foundation/polkadot-sdk", branch = "moonbeam-polkadot-stable2506" }

@@ -20,6 +20,7 @@
 //! stored in its keystore are eligible to author at this slot. If it has an eligible
 //! key it authors.
 
+mod collator;
 pub mod collators;
 
 mod import_queue;
@@ -38,13 +39,17 @@ use cumulus_relay_chain_interface::RelayChainInterface;
 use futures::prelude::*;
 use log::{info, warn};
 use nimbus_primitives::{NimbusApi, NimbusId, NIMBUS_KEY_ID};
+use polkadot_node_primitives::PoV;
+use polkadot_primitives::HeadData;
+use polkadot_primitives::{BlockNumber as RBlockNumber, Hash as RHash};
 use sc_consensus::BlockImport;
 use sp_api::ProvideRuntimeApi;
 use sp_application_crypto::ByteArray;
+use sp_core::Encode;
 use sp_inherents::{CreateInherentDataProviders, InherentData, InherentDataProvider};
 use sp_keystore::{Keystore, KeystorePtr};
-use sp_runtime::traits::{Block as BlockT, Header as HeaderT};
-use std::error::Error;
+use sp_runtime::traits::{Block as BlockT, Header as HeaderT, NumberFor};
+use std::{error::Error, fs, path::PathBuf};
 
 const LOG_TARGET: &str = "filtering-consensus";
 
@@ -229,4 +234,43 @@ where
 	}
 
 	maybe_key
+}
+
+/// Export the given `pov` to the file system at `path`.
+///
+/// The file will be named `block_hash_block_number.pov`.
+///
+/// The `parent_header`, `relay_parent_storage_root` and `relay_parent_number` will also be
+/// stored in the file alongside the `pov`. This enables stateless validation of the `pov`.
+pub(crate) fn export_pov_to_path<Block: BlockT>(
+	path: PathBuf,
+	pov: PoV,
+	block_hash: Block::Hash,
+	block_number: NumberFor<Block>,
+	parent_header: Block::Header,
+	relay_parent_storage_root: RHash,
+	relay_parent_number: RBlockNumber,
+	max_pov_size: u32,
+) {
+	if let Err(error) = fs::create_dir_all(&path) {
+		tracing::error!(target: LOG_TARGET, %error, path = %path.display(), "Failed to create PoV export directory");
+		return;
+	}
+
+	let mut file = match fs::File::create(path.join(format!("{block_hash:?}_{block_number}.pov"))) {
+		Ok(f) => f,
+		Err(error) => {
+			tracing::error!(target: LOG_TARGET, %error, "Failed to export PoV.");
+			return;
+		}
+	};
+
+	pov.encode_to(&mut file);
+	PersistedValidationData {
+		parent_head: HeadData(parent_header.encode()),
+		relay_parent_number,
+		relay_parent_storage_root,
+		max_pov_size,
+	}
+	.encode_to(&mut file);
 }

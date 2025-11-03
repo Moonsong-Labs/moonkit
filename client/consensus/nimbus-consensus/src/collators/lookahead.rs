@@ -67,8 +67,9 @@ pub struct Params<BI, CIDP, Client, Backend, RClient, CHP, SO, Proposer, CS, DP 
 	pub create_inherent_data_providers: CIDP,
 	/// Force production of the block even if the collator is not eligible
 	pub force_authoring: bool,
-	/// Maximum percentage of POV size to use (0-85)
-	pub max_pov_percentage: u8,
+	/// The maximum percentage of the maximum PoV size that the collator can use.
+	/// It will be removed once https://github.com/paritytech/polkadot-sdk/issues/6020 is fixed.
+	pub max_pov_percentage: Option<u32>,
 	/// The underlying keystore, which should contain Aura consensus keys.
 	pub keystore: KeystorePtr,
 	/// A handle to the relay-chain client's "Overseer" or task orchestrator.
@@ -374,14 +375,15 @@ where
 				)
 				.await;
 
-				let allowed_pov_size = {
-					// Cap the percentage at 85% (see https://github.com/paritytech/polkadot-sdk/issues/6020)
-					let capped_percentage = params.max_pov_percentage.min(85);
-					// Calculate the allowed POV size based on the percentage
-					(max_pov_size as u128)
-						.saturating_mul(capped_percentage as u128)
-						.saturating_div(100) as usize
-				};
+				let allowed_pov_size = if let Some(max_pov_percentage) = params.max_pov_percentage {
+					max_pov_size * max_pov_percentage / 100
+				} else {
+					// Set the block limit to 85% of the maximum PoV size.
+					//
+					// Once https://github.com/paritytech/polkadot-sdk/issues/6020 issue is
+					// fixed, this should be removed.
+					max_pov_size * 85 / 100
+				} as usize;
 
 				match super::collate(
 					&params.additional_digests_provider,
