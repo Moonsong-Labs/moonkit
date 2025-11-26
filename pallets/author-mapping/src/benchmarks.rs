@@ -21,7 +21,7 @@ use crate::{keys_wrapper, BalanceOf, Call, Config, Pallet};
 use frame_benchmarking::{account, benchmarks, impl_benchmark_test_suite};
 use frame_support::{
 	assert_ok,
-	traits::{Currency, Get},
+	traits::{Currency, Get, Imbalance},
 };
 use frame_system::RawOrigin;
 use nimbus_primitives::NimbusId;
@@ -35,7 +35,7 @@ fn create_funded_user<T: Config + pallet_balances::Config<Balance = BalanceOf<T>
 	let amount = existential_deposit + <<T as Config>::DepositAmount as Get<BalanceOf<T>>>::get();
 
 	T::DepositCurrency::make_free_balance_be(&user, amount);
-	T::DepositCurrency::issue(amount);
+	assert_eq!(T::DepositCurrency::issue(amount).peek(), amount);
 	user
 }
 
