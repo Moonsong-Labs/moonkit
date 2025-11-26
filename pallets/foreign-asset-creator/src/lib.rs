@@ -65,9 +65,10 @@ pub mod pallet {
 			fungibles::{Create, Destroy},
 			tokens::fungibles,
 		},
+		DefaultNoBound,
 	};
 	use frame_system::pallet_prelude::*;
-	use sp_runtime::traits::MaybeEquivalence;
+	use sp_runtime::{Vec, traits::MaybeEquivalence, DeserializeOwned, Serialize};
 
 	#[pallet::pallet]
 	#[pallet::without_storage_info]
@@ -76,7 +77,13 @@ pub mod pallet {
 	#[pallet::config]
 	pub trait Config: frame_system::Config {
 		/// The Foreign Asset Kind.
-		type ForeignAsset: Parameter + Member + Ord + PartialOrd + Default;
+		type ForeignAsset: Parameter
+			+ Member
+			+ Ord
+			+ PartialOrd
+			+ Default
+			+ Serialize
+			+ DeserializeOwned;
 
 		/// Origin that is allowed to create and modify asset information for foreign assets
 		type ForeignAssetCreatorOrigin: EnsureOrigin<Self::RuntimeOrigin>;
@@ -89,7 +96,7 @@ pub mod pallet {
 
 		type Fungibles: fungibles::Create<Self::AccountId>
 			+ fungibles::Destroy<Self::AccountId>
-			+ fungibles::Inspect<Self::AccountId>;
+			+ fungibles::Inspect<Self::AccountId, AssetId: Serialize + DeserializeOwned>;
 
 		/// Weight information for extrinsics in this pallet.
 		type WeightInfo: WeightInfo;
@@ -159,6 +166,45 @@ pub mod pallet {
 	#[pallet::getter(fn asset_id_for_foreign)]
 	pub type ForeignAssetToAssetId<T: Config> =
 		StorageMap<_, Blake2_128Concat, T::ForeignAsset, AssetId<T>>;
+
+	#[pallet::genesis_config]
+	#[derive(DefaultNoBound)]
+	pub struct GenesisConfig<T: Config> {
+		// foreign_asset, asset_id, admin, is_sufficient, min_balance
+		pub assets: Vec<(
+			T::ForeignAsset,
+			AssetId<T>,
+			T::AccountId,
+			bool,
+			AssetBalance<T>,
+		)>,
+	}
+
+	#[pallet::genesis_build]
+	impl<T: Config> BuildGenesisConfig for GenesisConfig<T> {
+		fn build(&self) {
+			for (foreign_asset, asset_id, admin, is_sufficient, min_balance) in
+				self.assets.iter().cloned()
+			{
+				// Ensure such an assetId does not exist
+				assert!(
+					AssetIdToForeignAsset::<T>::get(&asset_id).is_none(),
+					"asset id already exists while registering {foreign_asset:?}"
+				);
+
+				// Important: this creates the asset without taking deposits, so the origin able to do this should be priviledged
+				T::Fungibles::create(asset_id.clone(), admin, is_sufficient, min_balance)
+					.expect("failed to create fungible while registering {foreign_asset:?}");
+
+				// Insert the association assetId->foreigAsset
+				// Insert the association foreigAsset->assetId
+				AssetIdToForeignAsset::<T>::insert(&asset_id, &foreign_asset);
+				ForeignAssetToAssetId::<T>::insert(&foreign_asset, &asset_id);
+
+				T::OnForeignAssetCreated::on_asset_created(&foreign_asset, &asset_id, &min_balance);
+			}
+		}
+	}
 
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
