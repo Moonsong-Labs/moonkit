@@ -68,7 +68,7 @@ pub mod pallet {
 		DefaultNoBound,
 	};
 	use frame_system::pallet_prelude::*;
-	use sp_runtime::{Vec, traits::MaybeEquivalence, DeserializeOwned, Serialize};
+	use sp_runtime::{traits::MaybeEquivalence, DeserializeOwned, Serialize, Vec};
 
 	#[pallet::pallet]
 	#[pallet::without_storage_info]
