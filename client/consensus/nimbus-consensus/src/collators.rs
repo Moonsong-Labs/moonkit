@@ -22,22 +22,31 @@
 
 pub mod basic;
 pub mod lookahead;
+pub mod slot_based;
 
-use crate::*;
+use crate::{collator::SlotClaim, *};
+use async_backing_primitives::Slot;
+use async_backing_primitives::UnincludedSegmentApi;
 use cumulus_client_collator::service::ServiceInterface as CollatorServiceInterface;
-use cumulus_client_consensus_common::{ParachainBlockImportMarker, ParachainCandidate};
+use cumulus_client_consensus_common::{
+	ParachainBlockImportMarker, ParachainCandidate, ParentSearchParams, PotentialParent,
+};
 use cumulus_client_consensus_proposer::ProposerInterface;
 use cumulus_primitives_core::{
-	relay_chain::{OccupiedCoreAssumption, ValidationCodeHash},
-	ParachainBlockData,
+	relay_chain::{Header as RelayHeader, OccupiedCoreAssumption, ValidationCodeHash},
+	ClaimQueueOffset, ParachainBlockData,
 };
 use cumulus_primitives_parachain_inherent::ParachainInherentData;
 use futures::prelude::*;
 use log::{debug, info};
 use nimbus_primitives::{CompatibleDigestItem, DigestsProvider, NimbusId, NIMBUS_KEY_ID};
+use parity_scale_codec::Codec;
 use polkadot_node_primitives::{Collation, MaybeCompressedPoV};
-use polkadot_primitives::Hash as RelayHash;
+use polkadot_node_subsystem::messages::RuntimeApiRequest;
+use polkadot_node_subsystem_util::runtime::ClaimQueueSnapshot;
+use polkadot_primitives::{CoreIndex, Hash as RelayHash};
 use sc_consensus::{BlockImport, BlockImportParams};
+use sp_api::{ApiExt, RuntimeApiInfo};
 use sp_application_crypto::ByteArray;
 use sp_consensus::{BlockOrigin, Proposal};
 use sp_core::{crypto::CryptoTypeId, sr25519};
@@ -47,9 +56,19 @@ use sp_runtime::{
 	traits::{Block as BlockT, Header as HeaderT},
 	DigestItem,
 };
+use sp_timestamp::Timestamp;
 use std::convert::TryInto;
 use std::error::Error;
 use std::time::Duration;
+
+// This is an arbitrary value which is likely guaranteed to exceed any reasonable
+// limit, as it would correspond to 30 non-included blocks.
+//
+// Since we only search for parent blocks which have already been imported,
+// we can guarantee that all imported blocks respect the unincluded segment
+// rules specified by the parachain's runtime and thus will never be too deep. This is just an extra
+// sanity check.
+const PARENT_SEARCH_DEPTH: usize = 30;
 
 /// Propose, seal, and import a block, packaging it into a collation.
 ///
@@ -249,4 +268,247 @@ async fn check_validation_code_or_log(
 			);
 		}
 	}
+}
+
+/// Holds a relay parent and its descendants.
+pub struct RelayParentData {
+	/// The relay parent block header
+	relay_parent: RelayHeader,
+	/// Ordered collection of descendant block headers, from oldest to newest
+	descendants: Vec<RelayHeader>,
+}
+
+impl RelayParentData {
+	/// Creates a new instance with the given relay parent and no descendants.
+	pub fn new(relay_parent: RelayHeader) -> Self {
+		Self {
+			relay_parent,
+			descendants: Default::default(),
+		}
+	}
+
+	/// Creates a new instance with the given relay parent and descendants.
+	pub fn new_with_descendants(relay_parent: RelayHeader, descendants: Vec<RelayHeader>) -> Self {
+		Self {
+			relay_parent,
+			descendants,
+		}
+	}
+
+	/// Returns a reference to the relay parent header.
+	pub fn relay_parent(&self) -> &RelayHeader {
+		&self.relay_parent
+	}
+
+	/// Returns the number of descendants.
+	#[cfg(test)]
+	pub fn descendants_len(&self) -> usize {
+		self.descendants.len()
+	}
+
+	/// Consumes the structure and returns a vector containing the relay parent followed by its
+	/// descendants in chronological order. The resulting list should be provided to the parachain
+	/// inherent data.
+	pub fn into_inherent_descendant_list(self) -> Vec<RelayHeader> {
+		let Self {
+			relay_parent,
+			mut descendants,
+		} = self;
+
+		if descendants.is_empty() {
+			return Default::default();
+		}
+
+		let mut result = vec![relay_parent];
+		result.append(&mut descendants);
+		result
+	}
+}
+
+// Return all the cores assigned to the para at the provided relay parent, using the claim queue
+// offset.
+// Will return an empty vec if the provided offset is higher than the claim queue length (which
+// corresponds to the scheduling_lookahead on the relay chain).
+async fn cores_scheduled_for_para(
+	relay_parent: RelayHash,
+	para_id: ParaId,
+	relay_client: &impl RelayChainInterface,
+	claim_queue_offset: ClaimQueueOffset,
+) -> Vec<CoreIndex> {
+	// Get `ClaimQueue` from runtime
+	let claim_queue: ClaimQueueSnapshot = match relay_client.claim_queue(relay_parent).await {
+		Ok(claim_queue) => claim_queue.into(),
+		Err(error) => {
+			tracing::error!(
+				target: crate::LOG_TARGET,
+				?error,
+				?relay_parent,
+				"Failed to query claim queue runtime API",
+			);
+			return Vec::new();
+		}
+	};
+
+	claim_queue
+		.iter_claims_at_depth(claim_queue_offset.0 as usize)
+		.filter_map(|(core_index, core_para_id)| (core_para_id == para_id).then_some(core_index))
+		.collect()
+}
+
+/// Fetch scheduling lookahead at given relay parent.
+async fn scheduling_lookahead(
+	relay_parent: RelayHash,
+	relay_client: &impl RelayChainInterface,
+) -> Option<u32> {
+	let runtime_api_version = relay_client
+		.version(relay_parent)
+		.await
+		.map_err(|e| {
+			tracing::error!(
+				target: super::LOG_TARGET,
+				error = ?e,
+				"Failed to fetch relay chain runtime version.",
+			)
+		})
+		.ok()?;
+
+	let parachain_host_runtime_api_version = runtime_api_version
+		.api_version(
+			&<dyn polkadot_primitives::runtime_api::ParachainHost<polkadot_primitives::Block>>::ID,
+		)
+		.unwrap_or_default();
+
+	if parachain_host_runtime_api_version
+		< RuntimeApiRequest::SCHEDULING_LOOKAHEAD_RUNTIME_REQUIREMENT
+	{
+		return None;
+	}
+
+	match relay_client.scheduling_lookahead(relay_parent).await {
+		Ok(scheduling_lookahead) => Some(scheduling_lookahead),
+		Err(err) => {
+			tracing::error!(
+				target: crate::LOG_TARGET,
+				?err,
+				?relay_parent,
+				"Failed to fetch scheduling lookahead from relay chain",
+			);
+			None
+		}
+	}
+}
+
+/// Use [`cumulus_client_consensus_common::find_potential_parents`] to find parachain blocks that
+/// we can build on. Once a list of potential parents is retrieved, return the last one of the
+/// longest chain.
+async fn find_parent<Block>(
+	relay_parent: RelayHash,
+	para_id: ParaId,
+	para_backend: &impl sc_client_api::Backend<Block>,
+	relay_client: &impl RelayChainInterface,
+) -> Option<(<Block as BlockT>::Header, PotentialParent<Block>)>
+where
+	Block: BlockT,
+{
+	let parent_search_params = ParentSearchParams {
+		relay_parent,
+		para_id,
+		ancestry_lookback: scheduling_lookahead(relay_parent, relay_client)
+			.await
+			.unwrap_or(polkadot_primitives::DEFAULT_SCHEDULING_LOOKAHEAD)
+			.saturating_sub(1) as usize,
+		max_depth: PARENT_SEARCH_DEPTH,
+		ignore_alternative_branches: true,
+	};
+
+	let potential_parents = cumulus_client_consensus_common::find_potential_parents::<Block>(
+		parent_search_params,
+		para_backend,
+		relay_client,
+	)
+	.await;
+
+	let potential_parents = match potential_parents {
+		Err(e) => {
+			tracing::error!(
+				target: crate::LOG_TARGET,
+				?relay_parent,
+				err = ?e,
+				"Could not fetch potential parents to build upon"
+			);
+
+			return None;
+		}
+		Ok(x) => x,
+	};
+
+	let included_block = potential_parents
+		.iter()
+		.find(|x| x.depth == 0)?
+		.header
+		.clone();
+	potential_parents
+		.into_iter()
+		.max_by_key(|a| a.depth)
+		.map(|parent| (included_block, parent))
+}
+
+// Checks if we own the slot at the given block and whether there
+// is space in the unincluded segment.
+async fn can_build_upon<Block: BlockT, Client, P>(
+	para_slot: Slot,
+	relay_slot: Slot,
+	timestamp: Timestamp,
+	relay_parent: PHeader,
+	parent_header: Block::Header,
+	included_block: Block::Hash,
+	client: &Client,
+	keystore: &KeystorePtr,
+	force_authoring: bool,
+) -> Option<SlotClaim>
+where
+	Client: ProvideRuntimeApi<Block>,
+	Client::Api: NimbusApi<Block> + UnincludedSegmentApi<Block> + ApiExt<Block>,
+	P: sp_core::Pair<Public = NimbusId>,
+	P::Public: Codec,
+	P::Signature: Codec,
+{
+	let runtime_api = client.runtime_api();
+	let author_pub = crate::claim_slot::<Block, Client>(
+		keystore,
+		client,
+		&parent_header,
+		&relay_parent,
+		force_authoring,
+	)
+	.await
+	.ok()
+	.flatten()?;
+
+	let parent_hash = parent_header.hash();
+
+	// This function is typically called when we want to build block N. At that point, the
+	// unincluded segment in the runtime is unaware of the hash of block N-1. If the unincluded
+	// segment in the runtime is full, but block N-1 is the included block, the unincluded segment
+	// should have length 0 and we can build. Since the hash is not available to the runtime
+	// however, we need this extra check here.
+	if parent_hash == included_block {
+		return Some(SlotClaim::unchecked::<P>(author_pub, timestamp));
+	}
+
+	let api_version = runtime_api
+		.api_version::<dyn UnincludedSegmentApi<Block>>(parent_hash)
+		.ok()
+		.flatten()?;
+
+	let slot = if api_version > 1 {
+		relay_slot
+	} else {
+		para_slot
+	};
+
+	runtime_api
+		.can_build_upon(parent_hash, included_block, slot)
+		.ok()?
+		.then(|| SlotClaim::unchecked::<P>(author_pub, timestamp))
 }
