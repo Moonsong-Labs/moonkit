@@ -25,7 +25,7 @@ use crate::{
 use frame_benchmarking::{account, benchmarks, impl_benchmark_test_suite};
 use frame_support::{
 	dispatch::DispatchResult,
-	traits::{Currency, Get, OnInitialize},
+	traits::{Currency, Get, Imbalance, OnInitialize},
 };
 use frame_system::RawOrigin;
 use nimbus_primitives::{digests::CompatibleDigestItem as NimbusDigest, NimbusId};
@@ -52,7 +52,7 @@ fn fund_user<T: Config + pallet_balances::Config<Balance = BalanceOf<T>>>(
 	let total_minted =
 		existential_deposit + fee + <<T as Config>::Deposit as Get<BalanceOf<T>>>::get();
 	T::Currency::make_free_balance_be(&T::AddressMapping::convert(user), total_minted);
-	T::Currency::issue(total_minted);
+	assert_eq!(T::Currency::issue(total_minted).peek(), total_minted);
 }
 
 fn fund_pallet_account_with_existential_deposit<
@@ -60,7 +60,10 @@ fn fund_pallet_account_with_existential_deposit<
 >() {
 	let existential_deposit = <T as pallet_balances::Config>::ExistentialDeposit::get();
 	T::Currency::make_free_balance_be(&Pallet::<T>::account_id(), existential_deposit);
-	T::Currency::issue(existential_deposit);
+	assert_eq!(
+		T::Currency::issue(existential_deposit).peek(),
+		existential_deposit
+	);
 }
 
 benchmarks! {
@@ -131,7 +134,7 @@ benchmarks! {
 		let last_vrf_output: T::Hash = Decode::decode(&mut vrf_input.as_slice()).expect("decode into same type");
 		LocalVrfOutput::<T>::put(Some(last_vrf_output));
 		NotFirstBlock::<T>::put(());
-		let block_num = frame_system::Pallet::<T>::block_number() + 100u32.into();
+		let block_num = frame_system::Pallet::<T>::block_number() + One::one();
 		RandomnessResults::<T>::insert(
 			RequestType::Local(block_num),
 			RandomnessResult::new().increment_request_count()
