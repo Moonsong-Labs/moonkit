@@ -54,8 +54,6 @@ pub(crate) fn verify_and_set_output<T: Config>() {
 fn get_and_verify_randomness<T: Config>() -> T::Hash {
 	let mut block_author_vrf_id: Option<VrfId> = None;
 
-	log::error!("block: {:?}", <frame_system::Pallet<T>>::block_number());
-	log::error!("digest: {:?}", <frame_system::Pallet<T>>::digest());
 	// Get VrfOutput and VrfProof from system digests
 	// Expect client to insert VrfOutput, VrfProof into digests by setting
 	// `BuildNimbusConsensusParams.additional_digests_provider` to `moonbeam_vrf::vrf_pre_digest`
