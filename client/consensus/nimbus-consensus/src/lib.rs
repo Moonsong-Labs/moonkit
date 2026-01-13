@@ -39,6 +39,7 @@ use futures::prelude::*;
 use log::{info, warn};
 use nimbus_primitives::{NimbusApi, NimbusId, NIMBUS_KEY_ID};
 use sc_consensus::BlockImport;
+use sc_network_types::PeerId;
 use sp_api::ProvideRuntimeApi;
 use sp_application_crypto::ByteArray;
 use sp_inherents::{CreateInherentDataProviders, InherentData, InherentDataProvider};
@@ -109,6 +110,7 @@ pub(crate) async fn create_inherent_data<Block, CIDP, RClient>(
 	relay_parent: PHash,
 	author_id: NimbusId,
 	timestamp: impl Into<Option<sp_timestamp::Timestamp>>,
+	collator_peer_id: PeerId,
 ) -> Result<(ParachainInherentData, InherentData), Box<dyn Error + Send + Sync + 'static>>
 where
 	Block: BlockT,
@@ -121,6 +123,8 @@ where
 		validation_data,
 		para_id,
 		vec![],
+		vec![],
+		collator_peer_id,
 	)
 	.await;
 

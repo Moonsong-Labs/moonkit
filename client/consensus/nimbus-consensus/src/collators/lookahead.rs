@@ -23,7 +23,7 @@ use cumulus_client_consensus_common::{
 };
 use cumulus_client_consensus_proposer::ProposerInterface;
 use cumulus_primitives_core::{
-	relay_chain::{vstaging::CoreState, AsyncBackingParams, CoreIndex, Hash as PHash},
+	relay_chain::{AsyncBackingParams, CoreIndex, Hash as PHash},
 	CollectCollationInfo, ParaId,
 };
 use cumulus_relay_chain_interface::{OverseerHandle, RelayChainInterface};
@@ -33,7 +33,7 @@ use polkadot_node_primitives::SubmitCollationParams;
 use polkadot_node_subsystem::messages::{
 	CollationGenerationMessage, RuntimeApiMessage, RuntimeApiRequest,
 };
-use polkadot_primitives::{CollatorPair, OccupiedCoreAssumption};
+use polkadot_primitives::{CollatorPair, CoreState, OccupiedCoreAssumption};
 use sc_client_api::{BlockBackend, BlockOf};
 use sp_api::ProvideRuntimeApi;
 use sp_blockchain::HeaderBackend;
@@ -57,6 +57,8 @@ pub struct Params<BI, CIDP, Client, Backend, RClient, CHP, SO, Proposer, CS, DP 
 	pub code_hash_provider: CHP,
 	/// The collator key used to sign collations before submitting to validators.
 	pub collator_key: CollatorPair,
+	/// The collator network peer id.
+	pub collator_peer_id: PeerId,
 	/// The generic collator service used to plug into this consensus engine.
 	pub collator_service: CS,
 	/// Inherent data providers. Only non-consensus inherent data should be provided, i.e.
@@ -344,6 +346,7 @@ where
 						relay_parent,
 						author_id.clone(),
 						Some(timestamp),
+						params.collator_peer_id,
 					)
 					.await
 					{

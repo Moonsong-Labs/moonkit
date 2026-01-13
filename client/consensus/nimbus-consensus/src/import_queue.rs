@@ -157,7 +157,7 @@ where
 				.runtime_api()
 				.check_inherents(
 					*block_params.header.parent_hash(),
-					block.clone(),
+					block.clone().into(),
 					inherent_data,
 				)
 				.map_err(|e| format!("{:?}", e))?;

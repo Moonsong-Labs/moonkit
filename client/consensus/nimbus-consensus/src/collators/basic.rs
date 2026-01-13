@@ -28,6 +28,7 @@ use nimbus_primitives::{DigestsProvider, NimbusApi, NimbusId};
 use polkadot_node_primitives::CollationResult;
 use polkadot_primitives::CollatorPair;
 use sc_client_api::{AuxStore, BlockBackend, BlockOf, StateBackend};
+use sc_network_types::PeerId;
 use sp_api::{CallApiAt, ProvideRuntimeApi};
 use sp_blockchain::HeaderBackend;
 use sp_consensus_slots::{Slot, SlotDuration};
@@ -62,6 +63,8 @@ pub struct Params<Proposer, BI, ParaClient, RClient, CIDP, CS, ADP = ()> {
 	pub keystore: KeystorePtr,
 	/// The collator key used to sign collations before submitting to validators.
 	pub collator_key: CollatorPair,
+	/// The collator network peer id.
+	pub collator_peer_id: PeerId,
 	/// Force production of the block even if the collator is not eligible
 	pub force_authoring: bool,
 	/// Maximum percentage of POV size to use (0-85)
@@ -111,6 +114,7 @@ pub async fn run<Block, BI, CIDP, Backend, Client, RClient, Proposer, CS, ADP>(
 		collator_service,
 		create_inherent_data_providers,
 		keystore,
+		collator_peer_id,
 		para_id,
 		mut proposer,
 		para_client,
@@ -252,7 +256,8 @@ pub async fn run<Block, BI, CIDP, Backend, Client, RClient, Proposer, CS, ADP>(
 				&relay_client,
 				*request.relay_parent(),
 				nimbus_id.clone(),
-				Some(timestamp)
+				Some(timestamp),
+				collator_peer_id,
 			)
 			.await
 		);

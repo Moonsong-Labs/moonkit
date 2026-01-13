@@ -24,7 +24,7 @@ use nimbus_primitives::{digests::CompatibleDigestItem, NimbusId, NIMBUS_ENGINE_I
 use sp_application_crypto::ByteArray;
 use sp_runtime::{
 	generic::DigestItem,
-	traits::{Block as BlockT, Header},
+	traits::{Block as BlockT, Header, LazyBlock},
 	RuntimeAppPublic,
 };
 
@@ -46,8 +46,12 @@ where
 	Block: BlockT,
 	I: ExecuteBlock<Block>,
 {
-	fn execute_block(block: Block) {
-		let (mut header, extrinsics) = block.deconstruct();
+	fn execute_block(block: <Block as BlockT>::LazyBlock) {
+		let mut header = block.header().clone();
+		let extrinsics = block
+			.extrinsics()
+			.map(|r| r.expect("Expected extrinsic to be valid"))
+			.collect();
 
 		debug!(target: "executive", "In hacked Executive. Initial digests are {:?}", header.digest());
 
@@ -97,6 +101,6 @@ where
 
 		// Now that we've verified the signature, hand execution off to the inner executor
 		// which is probably the normal frame executive.
-		I::execute_block(Block::new(header, extrinsics));
+		I::execute_block(Block::new(header, extrinsics).into());
 	}
 }
