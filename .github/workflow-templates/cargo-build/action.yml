@@ -15,6 +15,7 @@ runs:
     - name: Install Protoc
       uses: arduino/setup-protoc@v1
     - name: Install libclang
+      shell: bash
       run: |
         sudo apt-get update
         sudo apt-get install -y libclang-dev
