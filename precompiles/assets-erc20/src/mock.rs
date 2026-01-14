@@ -240,6 +240,7 @@ impl pallet_assets::Config<ForeignAssetInstance> for Runtime {
 	type WeightInfo = pallet_assets::weights::SubstrateWeight<Runtime>;
 	type RemoveItemsLimit = ConstU32<656>;
 	type AssetIdParameter = AssetId;
+	type ReserveData = ();
 	type CreateOrigin = AsEnsureOriginWithArg<EnsureNever<AccountId>>;
 	type CallbackHandle = ();
 	type Holder = ();

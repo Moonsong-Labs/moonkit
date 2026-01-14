@@ -116,6 +116,7 @@ impl pallet_assets::Config for Test {
 	type Balance = Balance;
 	type AssetId = AssetId;
 	type AssetIdParameter = parity_scale_codec::Compact<AssetId>;
+	type ReserveData = ();
 	type Currency = Balances;
 	type CreateOrigin = frame_support::traits::NeverEnsureOrigin<AccountId>;
 	type ForceOrigin = EnsureRoot<AccountId>;
