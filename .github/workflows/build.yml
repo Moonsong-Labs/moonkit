@@ -259,16 +259,6 @@ jobs:
         uses: arduino/setup-protoc@v1
       - name: Cargo build
         uses: ./.github/workflow-templates/cargo-build
-      - name: Upload runtimes
-        uses: actions/upload-artifact@v4.6.0
-        with:
-          name: runtimes
-          path: runtimes
-      - name: Upload binary
-        uses: actions/upload-artifact@v4.6.0
-        with:
-          name: moonkit-template
-          path: build/moonkit-template
 
   build-features:
     runs-on:
@@ -285,20 +275,11 @@ jobs:
         uses: ./.github/workflow-templates/cargo-build
         with:
           features: "try-runtime,runtime-benchmarks"
-      - name: Upload binary
-        uses: actions/upload-artifact@v4.6.0
-        with:
-          name: moonkit-template-features
-          path: build/moonkit-template
 
   rust-test:
     runs-on:
       labels: ubuntu-latest
     needs: ["set-tags"]
-    env:
-      RUSTC_WRAPPER: "sccache"
-      CARGO_INCREMENTAL: "0"
-      SCCACHE_CACHE_SIZE: "1GB"
     steps:
       - name: Checkout
         uses: actions/checkout@v3
@@ -306,8 +287,8 @@ jobs:
           ref: ${{ needs.set-tags.outputs.git_ref }}
       - name: Install Protoc
         uses: arduino/setup-protoc@v1
-      - name: Run sccache-cache
-        uses: mozilla-actions/sccache-action@v0.0.3
+      - name: Rust Cache
+        uses: Swatinem/rust-cache@779680da715d629ac1d338a641029a2f4372abb5 # v2.8.2
       - name: Setup Variables
         shell: bash
         run: |
@@ -316,18 +297,10 @@ jobs:
         shell: bash
         run: |
           mkdir -p mold
-          curl -L --retry 10 --silent --show-error https://github.com/rui314/mold/releases/download/v1.1.1/mold-1.1.1-$(uname -m)-linux.tar.gz | tar -C $(realpath mold) --strip-components=1 -xzf -
-      # With rustup's nice new toml format, we just need to run rustup show to install the toolchain
-      # https://github.com/actions-rs/toolchain/issues/126#issuecomment-782989659
+          curl -L --retry 10 --silent --show-error https://github.com/rui314/mold/releases/download/v2.40.4/mold-2.40.4-$(uname -m)-linux.tar.gz | tar -C $(realpath mold) --strip-components=1 -xzf -
       - name: Setup Rust toolchain
-        run: |
-          if ! which "rustup" > /dev/null; then
-            curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
-          fi
-          rustup show
-      # Checks are run after uploading artifacts since they are modified by the tests
+        run: rustup show
       - name: Unit tests
         run: |
-          cargo test --workspace --exclude moonkit-template-runtime
-      - name: Run sccache stat for check pre test
-        run: ${SCCACHE_PATH} --show-stats
+          curl -LsSf https://get.nexte.st/latest/linux | tar zxf - -C ${CARGO_HOME:-~/.cargo}/bin
+          cargo nextest run --release --workspace
