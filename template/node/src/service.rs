@@ -15,12 +15,12 @@ use nimbus_consensus::NimbusManualSealConsensusDataProvider;
 use cumulus_client_cli::CollatorOptions;
 use cumulus_client_collator::service::CollatorService;
 use cumulus_client_consensus_common::ParachainBlockImport as TParachainBlockImport;
-use cumulus_client_consensus_proposer::Proposer;
 use cumulus_client_network::RequireSecondedInBlockAnnounce;
 use cumulus_client_parachain_inherent::{MockValidationDataInherentDataProvider, MockXcmConfig};
 #[allow(deprecated)]
 use cumulus_client_service::{
-	prepare_node_config, start_relay_chain_tasks, DARecoveryProfile, StartRelayChainTasksParams,
+	prepare_node_config, start_relay_chain_tasks, DARecoveryProfile, ParachainTracingExecuteBlock,
+	StartRelayChainTasksParams,
 };
 use cumulus_primitives_core::CollectCollationInfo;
 use cumulus_primitives_core::ParaId;
@@ -42,7 +42,7 @@ use sc_executor::{
 };
 use sc_network::{
 	config::FullNetworkConfiguration, request_responses::IncomingRequest as GenericIncomingRequest,
-	service::traits::NetworkService, NetworkBlock,
+	service::traits::NetworkService, NetworkBlock, PeerId,
 };
 use sc_service::{Configuration, PartialComponents, TFullBackend, TFullClient, TaskManager};
 use sc_telemetry::{Telemetry, TelemetryHandle, TelemetryWorker, TelemetryWorkerHandle};
@@ -283,6 +283,8 @@ where
 			metrics,
 		})?;
 
+	let peer_id = network.local_peer_id();
+
 	let rpc_extensions_builder = {
 		let client = client.clone();
 		let transaction_pool = transaction_pool.clone();
@@ -312,6 +314,7 @@ where
 		system_rpc_tx,
 		tx_handler_controller,
 		telemetry: telemetry.as_mut(),
+		tracing_execute_block: Some(Arc::new(ParachainTracingExecuteBlock::new(client.clone()))),
 	})?;
 
 	let announce_block = {
@@ -354,6 +357,7 @@ where
 			params.keystore_container.keystore(),
 			para_id,
 			collator_key.expect("Command line arguments do not allow this. qed"),
+			peer_id,
 			overseer_handle,
 			announce_block,
 			force_authoring,
@@ -375,20 +379,19 @@ fn start_consensus(
 	keystore: KeystorePtr,
 	para_id: ParaId,
 	collator_key: CollatorPair,
+	collator_peer_id: PeerId,
 	overseer_handle: OverseerHandle,
 	announce_block: Arc<dyn Fn(Hash, Option<Vec<u8>>) + Send + Sync>,
 	force_authoring: bool,
 	max_pov_percentage: u8,
 ) -> Result<(), sc_service::Error> {
-	let proposer_factory = sc_basic_authorship::ProposerFactory::with_proof_recording(
+	let proposer = sc_basic_authorship::ProposerFactory::with_proof_recording(
 		task_manager.spawn_handle(),
 		client.clone(),
 		transaction_pool,
 		prometheus_registry,
 		telemetry.clone(),
 	);
-
-	let proposer = Proposer::new(proposer_factory);
 
 	let collator_service = CollatorService::new(
 		client.clone(),
@@ -411,6 +414,8 @@ fn start_consensus(
 		max_pov_percentage,
 		additional_digests_provider: (),
 		collator_key,
+		collator_peer_id,
+		additional_relay_state_keys: vec![],
 		authoring_duration: Duration::from_millis(500),
 		relay_chain_slot_duration: Duration::from_millis(6_000),
 		slot_duration: Some(SlotDuration::from_millis(6_000)),
@@ -541,6 +546,7 @@ where
 		config,
 		tx_handler_controller,
 		telemetry: telemetry.as_mut(),
+		tracing_execute_block: Some(Arc::new(ParachainTracingExecuteBlock::new(client.clone()))),
 	})?;
 
 	if is_authority {

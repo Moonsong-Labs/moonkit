@@ -8,6 +8,7 @@ version = "0.9.0"
 sc-client-api = { workspace = true }
 sc-consensus = { workspace = true }
 sc-consensus-manual-seal = { workspace = true }
+sc-network-types = { workspace = true }
 sp-consensus-slots = { workspace = true }
 sp-api = { workspace = true }
 sp-application-crypto = { workspace = true }
