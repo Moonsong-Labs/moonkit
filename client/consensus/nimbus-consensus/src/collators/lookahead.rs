@@ -49,6 +49,8 @@ use std::{sync::Arc, time::Duration};
 pub struct Params<BI, CIDP, Client, Backend, RClient, CHP, SO, Proposer, CS, DP = ()> {
 	/// Additional digest provider
 	pub additional_digests_provider: DP,
+	/// Additional relay keys to add in the storage proof
+	pub additional_relay_state_keys: Vec<Vec<u8>>,
 	/// The amount of time to spend authoring each block.
 	pub authoring_duration: Duration,
 	/// Used to actually import blocks.
@@ -347,6 +349,7 @@ where
 						author_id.clone(),
 						Some(timestamp),
 						params.collator_peer_id,
+						params.additional_relay_state_keys.clone(),
 					)
 					.await
 					{

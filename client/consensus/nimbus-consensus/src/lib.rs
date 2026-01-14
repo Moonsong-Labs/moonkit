@@ -111,6 +111,7 @@ pub(crate) async fn create_inherent_data<Block, CIDP, RClient>(
 	author_id: NimbusId,
 	timestamp: impl Into<Option<sp_timestamp::Timestamp>>,
 	collator_peer_id: PeerId,
+	additional_relay_state_keys: Vec<Vec<u8>>,
 ) -> Result<(ParachainInherentData, InherentData), Box<dyn Error + Send + Sync + 'static>>
 where
 	Block: BlockT,
@@ -123,7 +124,7 @@ where
 		validation_data,
 		para_id,
 		vec![],
-		vec![],
+		additional_relay_state_keys,
 		collator_peer_id,
 	)
 	.await;

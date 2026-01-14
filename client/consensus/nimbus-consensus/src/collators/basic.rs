@@ -65,6 +65,8 @@ pub struct Params<Proposer, BI, ParaClient, RClient, CIDP, CS, ADP = ()> {
 	pub collator_key: CollatorPair,
 	/// The collator network peer id.
 	pub collator_peer_id: PeerId,
+	/// Additional relay keys to add in the storage proof
+	pub additional_relay_state_keys: Vec<Vec<u8>>,
 	/// Force production of the block even if the collator is not eligible
 	pub force_authoring: bool,
 	/// Maximum percentage of POV size to use (0-85)
@@ -258,6 +260,7 @@ pub async fn run<Block, BI, CIDP, Backend, Client, RClient, Proposer, CS, ADP>(
 				nimbus_id.clone(),
 				Some(timestamp),
 				collator_peer_id,
+				params.additional_relay_state_keys.clone(),
 			)
 			.await
 		);

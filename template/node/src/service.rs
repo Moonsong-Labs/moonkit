@@ -415,6 +415,7 @@ fn start_consensus(
 		additional_digests_provider: (),
 		collator_key,
 		collator_peer_id,
+		additional_relay_state_keys: vec![],
 		authoring_duration: Duration::from_millis(500),
 		relay_chain_slot_duration: Duration::from_millis(6_000),
 		slot_duration: Some(SlotDuration::from_millis(6_000)),
