@@ -12,6 +12,12 @@ runs:
   steps:
     - name: Rust Cache
       uses: Swatinem/rust-cache@779680da715d629ac1d338a641029a2f4372abb5 # v2.8.2
+    - name: Install Protoc
+      uses: arduino/setup-protoc@v1
+    - name: Install libclang
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y libclang-dev
     - name: Setup Variables
       shell: bash
       run: |
