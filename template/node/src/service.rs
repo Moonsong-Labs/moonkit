@@ -19,7 +19,8 @@ use cumulus_client_network::RequireSecondedInBlockAnnounce;
 use cumulus_client_parachain_inherent::{MockValidationDataInherentDataProvider, MockXcmConfig};
 #[allow(deprecated)]
 use cumulus_client_service::{
-	prepare_node_config, start_relay_chain_tasks, DARecoveryProfile, StartRelayChainTasksParams,
+	prepare_node_config, start_relay_chain_tasks, DARecoveryProfile, ParachainTracingExecuteBlock,
+	StartRelayChainTasksParams,
 };
 use cumulus_primitives_core::CollectCollationInfo;
 use cumulus_primitives_core::ParaId;
@@ -313,7 +314,7 @@ where
 		system_rpc_tx,
 		tx_handler_controller,
 		telemetry: telemetry.as_mut(),
-		tracing_execute_block: None,
+		tracing_execute_block: Some(Arc::new(ParachainTracingExecuteBlock::new(client.clone()))),
 	})?;
 
 	let announce_block = {
@@ -544,7 +545,7 @@ where
 		config,
 		tx_handler_controller,
 		telemetry: telemetry.as_mut(),
-		tracing_execute_block: None,
+		tracing_execute_block: Some(Arc::new(ParachainTracingExecuteBlock::new(client.clone()))),
 	})?;
 
 	if is_authority {
