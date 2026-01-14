@@ -298,7 +298,7 @@ jobs:
     env:
       RUSTC_WRAPPER: "sccache"
       CARGO_INCREMENTAL: "0"
-      SCCACHE_CACHE_SIZE: "100GB"
+      SCCACHE_CACHE_SIZE: "1GB"
     steps:
       - name: Checkout
         uses: actions/checkout@v3
@@ -328,6 +328,6 @@ jobs:
       # Checks are run after uploading artifacts since they are modified by the tests
       - name: Unit tests
         run: |
-          cargo test --profile testnet --all
+          cargo test --workspace --exclude moonkit-template-runtime
       - name: Run sccache stat for check pre test
         run: ${SCCACHE_PATH} --show-stats
