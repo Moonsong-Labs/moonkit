@@ -19,9 +19,6 @@ scale-info = { workspace = true, default-features = false, features = [ "derive"
 serde = { workspace = true, optional = true, features = [ "derive" ] }
 smallvec = { workspace = true }
 
-# Local Dependencies
-pallet-template = { path = "../pallets/template", default-features = false }
-
 # Substrate Dependencies
 
 ## Substrate Primitive Dependencies
@@ -108,7 +105,6 @@ std = [
 	"pallet-insecure-randomness-collective-flip/std",
 	"pallet-message-queue/std",
 	"pallet-sudo/std",
-	"pallet-template/std",
 	"pallet-timestamp/std",
 	"pallet-transaction-payment-rpc-runtime-api/std",
 	"pallet-transaction-payment/std",
@@ -143,7 +139,6 @@ runtime-benchmarks = [
 	"frame-system/runtime-benchmarks",
 	"pallet-balances/runtime-benchmarks",
 	"pallet-message-queue/runtime-benchmarks",
-	"pallet-template/runtime-benchmarks",
 	"pallet-timestamp/runtime-benchmarks",
 	"pallet-xcm/runtime-benchmarks",
 	"parachains-common/runtime-benchmarks",

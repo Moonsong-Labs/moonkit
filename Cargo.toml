@@ -6,7 +6,6 @@ members = [
     "primitives/*",
     "template/node",
     "template/runtime",
-    "template/pallets/template",
 ]
 resolver = "2"
 
