@@ -46,12 +46,8 @@ where
 	Block: BlockT,
 	I: ExecuteBlock<Block>,
 {
-	fn execute_block(block: <Block as BlockT>::LazyBlock) {
-		let mut header = block.header().clone();
-		let extrinsics = block
-			.extrinsics()
-			.map(|r| r.expect("Expected extrinsic to be valid"))
-			.collect();
+	fn execute_block(mut block: Block::LazyBlock) {
+		let header = block.header_mut();
 
 		debug!(target: "executive", "In hacked Executive. Initial digests are {:?}", header.digest());
 
@@ -101,6 +97,6 @@ where
 
 		// Now that we've verified the signature, hand execution off to the inner executor
 		// which is probably the normal frame executive.
-		I::execute_block(Block::new(header, extrinsics).into());
+		I::execute_block(block);
 	}
 }

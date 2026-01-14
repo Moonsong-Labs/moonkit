@@ -210,9 +210,9 @@ westend-runtime = { git = "https://github.com/paritytech/polkadot-sdk", branch =
 xcm-simulator = { git = "https://github.com/paritytech/polkadot-sdk", branch = "stable2512" }
 
 # Frontier (wasm)
-fp-evm = { git = "https://github.com/polkadot-evm/frontier", branch = "master", default-features = false }
-pallet-evm = { git = "https://github.com/polkadot-evm/frontier", branch = "master", default-features = false }
-precompile-utils = { git = "https://github.com/polkadot-evm/frontier", branch = "master", default-features = false }
+fp-evm = { git = "https://github.com/polkadot-evm/frontier", branch = "stable2512", default-features = false }
+pallet-evm = { git = "https://github.com/polkadot-evm/frontier", branch = "stable2512", default-features = false }
+precompile-utils = { git = "https://github.com/polkadot-evm/frontier", branch = "stable2512", default-features = false }
 
 # EVM
 evm = { git = "https://github.com/rust-ethereum/evm.git", branch = "v0.x", default-features = false }
