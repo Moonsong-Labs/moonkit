@@ -69,8 +69,9 @@ pub struct Params<Proposer, BI, ParaClient, RClient, CIDP, CS, ADP = ()> {
 	pub additional_relay_state_keys: Vec<Vec<u8>>,
 	/// Force production of the block even if the collator is not eligible
 	pub force_authoring: bool,
-	/// Maximum percentage of POV size to use (0-85)
-	pub max_pov_percentage: u8,
+	/// The maximum percentage of the maximum PoV size that the collator can use.
+	/// It will be removed once https://github.com/paritytech/polkadot-sdk/issues/6020 is fixed.
+	pub max_pov_percentage: Option<u32>,
 	/// A builder for inherent data builders.
 	pub create_inherent_data_providers: CIDP,
 	/// The collator service used for bundling proposals into collations and announcing
@@ -112,19 +113,41 @@ pub async fn run<Block, BI, CIDP, Backend, Client, RClient, Proposer, CS, ADP>(
 
 	let Params {
 		additional_digests_provider,
-		mut block_import,
+		block_import,
 		collator_service,
 		create_inherent_data_providers,
 		keystore,
 		collator_peer_id,
 		para_id,
-		mut proposer,
+		proposer,
 		para_client,
 		relay_client,
 		force_authoring,
 		max_pov_percentage,
 		..
 	} = params;
+
+	// Create a Collator instance for inherent data creation and block building
+	type CIDPContext = (PHash, PersistedValidationData, NimbusId);
+	let collator_params = crate::collator::Params {
+		create_inherent_data_providers,
+		block_import,
+		relay_client: relay_client.clone(),
+		keystore: keystore.clone(),
+		para_id,
+		proposer,
+		collator_service,
+	};
+	let mut collator = crate::collator::Collator::<
+		Block,
+		nimbus_primitives::NimbusPair,
+		_,
+		_,
+		_,
+		_,
+		_,
+		CIDPContext,
+	>::new(collator_params);
 
 	let mut last_processed_slot = 0;
 	let mut last_relay_chain_block = Default::default();
@@ -155,7 +178,10 @@ pub async fn run<Block, BI, CIDP, Backend, Client, RClient, Proposer, CS, ADP>(
 
 		let parent_hash = parent_header.hash();
 
-		if !collator_service.check_block_status(parent_hash, &parent_header) {
+		if !collator
+			.collator_service()
+			.check_block_status(parent_hash, &parent_header)
+		{
 			continue;
 		}
 
@@ -249,52 +275,67 @@ pub async fn run<Block, BI, CIDP, Backend, Client, RClient, Proposer, CS, ADP>(
 			continue;
 		}
 
+		let cidp_context = (
+			*request.relay_parent(),
+			validation_data.clone(),
+			nimbus_id.clone(),
+		);
 		let inherent_data = try_request!(
-			create_inherent_data(
-				&create_inherent_data_providers,
-				para_id,
-				parent_header.hash(),
-				validation_data,
-				&relay_client,
-				*request.relay_parent(),
-				nimbus_id.clone(),
-				Some(timestamp),
-				collator_peer_id,
-				params.additional_relay_state_keys.clone(),
-			)
-			.await
+			collator
+				.create_inherent_data(
+					*request.relay_parent(),
+					validation_data,
+					parent_header.hash(),
+					Some(timestamp),
+					params.additional_relay_state_keys.clone(),
+					collator_peer_id,
+					cidp_context,
+				)
+				.await
 		);
 
-		let allowed_pov_size = {
-			// Cap the percentage at 85% (see https://github.com/paritytech/polkadot-sdk/issues/6020)
-			let capped_percentage = max_pov_percentage.min(85);
-			// Calculate the allowed POV size based on the percentage
-			(validation_data.max_pov_size as u128)
-				.saturating_mul(capped_percentage as u128)
-				.saturating_div(100) as usize
-		};
+		let allowed_pov_size = if let Some(max_pov_percentage) = max_pov_percentage {
+			validation_data.max_pov_size * max_pov_percentage / 100
+		} else {
+			// Set the block limit to 85% of the maximum PoV size.
+			//
+			// Once https://github.com/paritytech/polkadot-sdk/issues/6020 issue is
+			// fixed, this should be removed.
+			validation_data.max_pov_size * 85 / 100
+		} as usize;
+
+		// Create slot claim and get additional digests
+		let slot_claim = crate::collator::SlotClaim::unchecked::<nimbus_primitives::NimbusPair>(
+			nimbus_id.clone(),
+			timestamp,
+		);
+		let additional_digests: Vec<_> = additional_digests_provider
+			.provide_digests(nimbus_id, parent_hash)
+			.into_iter()
+			.collect();
 
 		let maybe_collation = try_request!(
-			super::collate::<ADP, Block, BI, CS, Proposer>(
-				&additional_digests_provider,
-				nimbus_id,
-				&mut block_import,
-				&collator_service,
-				&*keystore,
-				&parent_header,
-				&mut proposer,
-				inherent_data,
-				params.authoring_duration,
-				allowed_pov_size,
-			)
-			.await
+			collator
+				.collate(
+					&parent_header,
+					&slot_claim,
+					additional_digests,
+					inherent_data,
+					params.authoring_duration,
+					allowed_pov_size,
+				)
+				.await
 		);
 
 		if let Some((collation, block_data)) = maybe_collation {
 			let Some(block_hash) = block_data.blocks().first().map(|b| b.hash()) else {
 				continue;
 			};
-			let result_sender = Some(collator_service.announce_with_barrier(block_hash));
+			let result_sender = Some(
+				collator
+					.collator_service()
+					.announce_with_barrier(block_hash),
+			);
 			request.complete(Some(CollationResult {
 				collation,
 				result_sender,
