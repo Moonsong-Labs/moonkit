@@ -143,9 +143,9 @@ pub mod pallet {
 			let new_slot = T::SlotBeacon::slot();
 
 			// Now check that the author is valid in this slot
-			assert!(
+			ensure!(
 				T::CanAuthor::can_author(&Self::get(), &new_slot),
-				"Block invalid, supplied author is not eligible."
+				Error::<T>::CannotBeAuthor
 			);
 
 			InherentIncluded::<T>::put(true);
