@@ -94,7 +94,6 @@ pub mod pallet {
 			T::DbWeight::get().reads_writes(0, 1)
 		}
 	}
-	/// --------
 
 	/// Compute a pseudo-random subset of the input accounts by using Pallet's
 	/// source of randomness, `Config::RandomnessSource`.

@@ -19,8 +19,9 @@ pub use crate::mock::*;
 use crate::num::NonZeroU32;
 
 use frame_support::assert_ok;
-use frame_support::traits::OnRuntimeUpgrade;
+use frame_support::traits::{OnInitialize, OnRuntimeUpgrade};
 use frame_support::weights::Weight;
+use nimbus_primitives::CanAuthor;
 use sp_runtime::Percent;
 
 #[test]
@@ -95,5 +96,15 @@ fn test_migration_inserts_default_value_for_missing_eligible_ratio() {
 
 		let actual_eligible_count = AuthorSlotFilter::eligible_count();
 		assert_eq!(expected_default_eligible_count, actual_eligible_count);
+	});
+}
+
+#[test]
+fn test_using_fake_author_works() {
+	new_test_ext().execute_with(|| {
+		using_fake_author(|| {
+			AuthorSlotFilter::on_initialize(System::block_number());
+			assert!(AuthorSlotFilter::can_author(&42, &42));
+		});
 	});
 }
