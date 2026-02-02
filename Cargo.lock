@@ -7265,6 +7265,7 @@ dependencies = [
 name = "pallet-author-slot-filter"
 version = "0.9.0"
 dependencies = [
+ "environmental",
  "frame-benchmarking",
  "frame-support",
  "frame-support-test",
