@@ -6,6 +6,7 @@ edition = "2021"
 version = "0.9.0"
 
 [dependencies]
+environmental = { workspace = true }
 frame-support = { workspace = true }
 frame-system = { workspace = true }
 log = { workspace = true }
