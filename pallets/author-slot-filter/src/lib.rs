@@ -48,13 +48,22 @@ pub mod pallet {
 	use super::*;
 	use crate::num::NonZeroU32;
 	use crate::weights::WeightInfo;
-	use frame_support::{pallet_prelude::*, traits::Randomness};
+	use frame_support::{pallet_prelude::*, storage::unhashed, traits::Randomness};
 	use frame_system::pallet_prelude::*;
 	use log::debug;
 	use nimbus_primitives::CanAuthor;
 	use sp_core::H256;
 	use sp_runtime::Percent;
 	use sp_std::vec::Vec;
+
+	/// Storage key to be used for fake author logic
+	pub(crate) const IS_FAKE_AUTHOR_KEY: &[u8] = b"AuthorSlotFilter:IsFakeAuthor";
+
+	environmental::environmental!(IS_FAKE_AUTHOR: ());
+	/// Use fake author logic
+	pub fn using_fake_author<R, F: FnOnce() -> R>(mutator: F) -> R {
+		IS_FAKE_AUTHOR::using(&mut (), mutator)
+	}
 
 	/// The Author Filter pallet
 	#[pallet::pallet]
@@ -74,6 +83,18 @@ pub mod pallet {
 		/// The starting point of the filtering.
 		type PotentialAuthors: Get<Vec<Self::AccountId>>;
 		type WeightInfo: WeightInfo;
+	}
+
+	/// Hook to set the fake author logic storage key when using fake author logic
+	#[pallet::hooks]
+	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {
+		fn on_initialize(_now: BlockNumberFor<T>) -> Weight {
+			if IS_FAKE_AUTHOR::with(|_| ()).is_some() {
+				unhashed::put(IS_FAKE_AUTHOR_KEY, &());
+			}
+			// Account for 1 write to the fake author logic storage key
+			T::DbWeight::get().writes(1)
+		}
 	}
 
 	/// Compute a pseudo-random subset of the input accounts by using Pallet's
@@ -127,6 +148,11 @@ pub mod pallet {
 	impl<T: Config> CanAuthor<T::AccountId> for Pallet<T> {
 		#[cfg(not(feature = "try-runtime"))]
 		fn can_author(author: &T::AccountId, slot: &u32) -> bool {
+			// Check if fake author logic is being used
+			if unhashed::get::<()>(IS_FAKE_AUTHOR_KEY).is_some() {
+				return true;
+			}
+
 			// Compute pseudo-random subset of potential authors
 			let (eligible, ineligible) =
 				compute_pseudo_random_subset::<T>(T::PotentialAuthors::get(), slot);
