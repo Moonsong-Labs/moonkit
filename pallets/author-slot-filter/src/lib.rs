@@ -57,7 +57,7 @@ pub mod pallet {
 	use sp_std::vec::Vec;
 
 	/// Storage key to be used for fake author logic
-	const IS_FAKE_AUTHOR_KEY: &[u8] = b"AuthorSlotFilter:IsFakeAuthor";
+	pub(crate) const IS_FAKE_AUTHOR_KEY: &[u8] = b"AuthorSlotFilter:IsFakeAuthor";
 
 	environmental::environmental!(IS_FAKE_AUTHOR: ());
 	/// Use fake author logic
@@ -85,13 +85,15 @@ pub mod pallet {
 		type WeightInfo: WeightInfo;
 	}
 
+	/// Hook to set the fake author logic storage key when using fake author logic
 	#[pallet::hooks]
 	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {
 		fn on_initialize(_now: BlockNumberFor<T>) -> Weight {
 			if IS_FAKE_AUTHOR::with(|_| ()).is_some() {
 				unhashed::put(IS_FAKE_AUTHOR_KEY, &());
 			}
-			T::DbWeight::get().reads_writes(0, 1)
+			// Account for 1 write to the fake author logic storage key
+			T::DbWeight::get().writes(1)
 		}
 	}
 
