@@ -30,7 +30,7 @@ frame_support::construct_runtime!(
 	pub enum Test
 	{
 		System: frame_system::{Pallet, Call, Config<T>, Storage, Event<T>},
-		AuthorInherent: pallet_testing::{Pallet, Call, Storage},
+		AuthorInherent: pallet_testing::{Pallet, Storage},
 	}
 );
 
@@ -72,14 +72,14 @@ impl frame_system::Config for Test {
 	type SingleBlockMigrations = ();
 	type MultiBlockMigrator = ();
 	type PreInherents = ();
-	type PostInherents = ();
+	type PostInherents = AuthorInherent;
 	type PostTransactions = ();
 }
 
 pub struct DummyBeacon {}
 impl nimbus_primitives::SlotBeacon for DummyBeacon {
 	fn slot() -> u32 {
-		0
+		System::block_number() as u32 + 1
 	}
 }
 
@@ -98,10 +98,17 @@ impl AccountLookup<u64> for MockAccountLookup {
 	}
 }
 
+pub struct TestCanAuthor;
+impl nimbus_primitives::CanAuthor<u64> for TestCanAuthor {
+	fn can_author(author: &u64, slot: &u32) -> bool {
+		Authors::get().contains(author) && slot > &0
+	}
+}
+
 impl pallet_testing::Config for Test {
 	type AuthorId = u64;
 	type AccountLookup = MockAccountLookup;
-	type CanAuthor = ();
+	type CanAuthor = TestCanAuthor;
 	type SlotBeacon = DummyBeacon;
 	type WeightInfo = ();
 }

@@ -22,13 +22,10 @@
 
 extern crate alloc;
 
-use alloc::string::String;
 use frame_support::traits::{FindAuthor, Get};
-use nimbus_primitives::{
-	AccountLookup, CanAuthor, NimbusId, SlotBeacon, INHERENT_IDENTIFIER, NIMBUS_ENGINE_ID,
-};
-use parity_scale_codec::{Decode, Encode, FullCodec};
-use sp_inherents::{InherentIdentifier, IsFatalError};
+use nimbus_primitives::{AccountLookup, CanAuthor, NimbusId, SlotBeacon, NIMBUS_ENGINE_ID};
+use parity_scale_codec::{Decode, FullCodec};
+use sp_core::ByteArray;
 use sp_runtime::ConsensusEngineId;
 
 pub use crate::weights::WeightInfo;
@@ -98,84 +95,22 @@ pub mod pallet {
 	#[pallet::storage]
 	pub type Author<T: Config> = StorageValue<_, T::AuthorId, OptionQuery>;
 
-	/// Check if the inherent was included
-	#[pallet::storage]
-	pub type InherentIncluded<T: Config> = StorageValue<_, bool, ValueQuery>;
-
 	#[pallet::hooks]
 	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {
-		fn on_initialize(_: BlockNumberFor<T>) -> Weight {
-			// Now extract the author from the digest
-			let digest = <frame_system::Pallet<T>>::digest();
-			let pre_runtime_digests = digest.logs.iter().filter_map(|d| d.as_pre_runtime());
-			if let Some(author) = Self::find_author(pre_runtime_digests) {
-				// Store the author so we can confirm eligibility after the inherents have executed
-				<Author<T>>::put(&author);
-			}
-
-			// on_initialize: 1 write
-			// on_finalize: 1 read + 1 write
-			T::DbWeight::get().reads_writes(1, 2)
-		}
-		fn on_finalize(_: BlockNumberFor<T>) {
-			// According to parity, the only way to ensure that a mandatory inherent is included
-			// is by checking on block finalization that the inherent set a particular storage item:
-			// https://github.com/paritytech/polkadot-sdk/issues/2841#issuecomment-1876040854
+		fn integrity_test() {
+			// Test that SlotBeacon can be called and returns a valid slot
+			let slot = T::SlotBeacon::slot();
+			// Author storage should be accessible (this is a compile-time check)
 			assert!(
-				InherentIncluded::<T>::take(),
-				"Block invalid, missing inherent `kick_off_authorship_validation`"
-			);
-		}
-	}
-
-	#[pallet::call]
-	impl<T: Config> Pallet<T> {
-		/// This inherent is a workaround to run code after the "real" inherents have executed,
-		/// but before transactions are executed.
-		// This should go into on_post_inherents when it is ready https://github.com/paritytech/substrate/pull/10128
-		// TODO better weight. For now we just set a somewhat conservative fudge factor
-		#[pallet::call_index(0)]
-		#[pallet::weight((T::WeightInfo::kick_off_authorship_validation(), DispatchClass::Mandatory))]
-		pub fn kick_off_authorship_validation(origin: OriginFor<T>) -> DispatchResultWithPostInfo {
-			ensure_none(origin)?;
-
-			// First check that the slot number is valid (greater than the previous highest)
-			let new_slot = T::SlotBeacon::slot();
-
-			// Now check that the author is valid in this slot
-			assert!(
-				T::CanAuthor::can_author(&Self::get(), &new_slot),
-				"Block invalid, supplied author is not eligible."
+				Author::<T>::get().is_none(),
+				"Author storage should be none"
 			);
 
-			InherentIncluded::<T>::put(true);
-
-			Ok(Pays::No.into())
-		}
-	}
-
-	#[pallet::inherent]
-	impl<T: Config> ProvideInherent for Pallet<T> {
-		type Call = Call<T>;
-		type Error = InherentError;
-		const INHERENT_IDENTIFIER: InherentIdentifier = INHERENT_IDENTIFIER;
-
-		fn is_inherent_required(_: &InherentData) -> Result<Option<Self::Error>, Self::Error> {
-			// Return Ok(Some(_)) unconditionally because this inherent is required in every block
-			// If it is not found, throw an AuthorInherentRequired error.
-			Ok(Some(InherentError::Other(String::from(
-				"Inherent required to manually initiate author validation",
-			))))
-		}
-
-		// Regardless of whether the client is still supplying the author id,
-		// we will create the new empty-payload inherent extrinsic.
-		fn create_inherent(_data: &InherentData) -> Option<Self::Call> {
-			Some(Call::kick_off_authorship_validation {})
-		}
-
-		fn is_inherent(call: &Self::Call) -> bool {
-			matches!(call, Call::kick_off_authorship_validation { .. })
+			// Test that CanAuthor trait can be called
+			let _ = Pallet::<T>::can_author(
+				&NimbusId::from_slice(&[0u8; 32]).expect("Valid NimbusId"),
+				&slot,
+			);
 		}
 	}
 
@@ -230,28 +165,22 @@ pub mod pallet {
 	}
 }
 
-#[derive(Encode)]
-#[cfg_attr(feature = "std", derive(Debug, Decode))]
-pub enum InherentError {
-	Other(String),
-}
-
-impl IsFatalError for InherentError {
-	fn is_fatal_error(&self) -> bool {
-		match *self {
-			InherentError::Other(_) => true,
-		}
-	}
-}
-
-impl InherentError {
-	/// Try to create an instance ouf of the given identifier and data.
-	#[cfg(feature = "std")]
-	pub fn try_from(id: &InherentIdentifier, data: &[u8]) -> Option<Self> {
-		if id == &INHERENT_IDENTIFIER {
-			<InherentError as parity_scale_codec::Decode>::decode(&mut &data[..]).ok()
+impl<T: Config> frame_support::traits::PostInherents for Pallet<T> {
+	fn post_inherents() {
+		// Extract the author from the digest
+		let digest = <frame_system::Pallet<T>>::digest();
+		let pre_runtime_digests = digest.logs.iter().filter_map(|d| d.as_pre_runtime());
+		if let Some(author) = Self::find_author(pre_runtime_digests) {
+			// First check that the slot number is valid (greater than the previous highest)
+			let new_slot = T::SlotBeacon::slot();
+			// Now check that the author is valid in this slot
+			assert!(
+				T::CanAuthor::can_author(&author, &new_slot),
+				"Block invalid, supplied author is not eligible."
+			);
+			<Author<T>>::put(&author);
 		} else {
-			None
+			panic!("Block invalid, missing author in pre-runtime digest");
 		}
 	}
 }
