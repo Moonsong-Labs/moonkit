@@ -343,6 +343,8 @@ impl frame_system::Config for Runtime {
 	type PostInherents = (
 		// Validate timestamp provided by the consensus client
 		NimbusAsyncBacking,
+		// Validate author provided by the consensus client
+		AuthorInherent,
 	);
 	type PostTransactions = ();
 	type ExtensionsWeightInfo = ();
@@ -698,7 +700,7 @@ construct_runtime!(
 		TransactionPayment: pallet_transaction_payment::{Pallet, Storage, Event<T>} = 11,
 
 		// Nimbus support. The order of these are important and shall not change.
-		AuthorInherent: pallet_author_inherent::{Pallet, Call, Storage, Inherent} = 20,
+		AuthorInherent: pallet_author_inherent::{Pallet, Storage} = 20,
 		AuthorFilter: pallet_author_slot_filter::{Pallet, Storage, Event, Config<T>} = 21,
 		PotentialAuthorSet: pallet_account_set::{Pallet, Storage, Config<T>} = 22,
 		NimbusAsyncBacking: pallet_async_backing::{Pallet, Storage} = 23,

@@ -16,22 +16,14 @@
 
 use crate::mock::*;
 use crate::pallet::Author;
-use frame_support::traits::{OnFinalize, OnInitialize};
+use frame_support::traits::PostInherents;
 use nimbus_primitives::{NimbusId, NIMBUS_ENGINE_ID};
 use parity_scale_codec::Encode;
 use sp_core::{ByteArray, H256};
 use sp_runtime::{Digest, DigestItem};
 
 #[test]
-fn kick_off_authorship_validation_is_mandatory() {
-	use frame_support::dispatch::{DispatchClass, GetDispatchInfo};
-
-	let info = crate::Call::<Test>::kick_off_authorship_validation {}.get_dispatch_info();
-	assert_eq!(info.class, DispatchClass::Mandatory);
-}
-
-#[test]
-fn test_author_is_available_after_on_initialize() {
+fn test_author_is_extracted_and_stored_from_pre_runtime_digest() {
 	new_test_ext().execute_with(|| {
 		let block_number = 1;
 		System::initialize(
@@ -45,29 +37,14 @@ fn test_author_is_available_after_on_initialize() {
 			},
 		);
 
-		AuthorInherent::on_initialize(block_number);
-		assert_eq!(Some(ALICE), <Author<Test>>::get());
-	});
-}
+		// Initially, no author is set
+		assert_eq!(None, <Author<Test>>::get());
 
-#[test]
-fn test_author_is_still_available_after_on_finalize() {
-	new_test_ext().execute_with(|| {
-		let block_number = 1;
-		System::initialize(
-			&block_number,
-			&H256::default(),
-			&Digest {
-				logs: vec![DigestItem::PreRuntime(
-					NIMBUS_ENGINE_ID,
-					NimbusId::from_slice(&ALICE_NIMBUS).unwrap().encode(),
-				)],
-			},
-		);
+		// Call post_inherents which extracts the author from the digest
+		// and stores it in the Author storage
+		AuthorInherent::post_inherents();
 
-		AuthorInherent::on_initialize(block_number);
-		let _ = AuthorInherent::kick_off_authorship_validation(None.into());
-		AuthorInherent::on_finalize(block_number);
+		// Author should now be stored
 		assert_eq!(Some(ALICE), <Author<Test>>::get());
 	});
 }
