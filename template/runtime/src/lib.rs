@@ -657,7 +657,6 @@ impl pallet_author_inherent::Config for Runtime {
 	type SlotBeacon = cumulus_pallet_parachain_system::RelaychainDataProvider<Self>;
 	type AccountLookup = PotentialAuthorSet;
 	type CanAuthor = AuthorFilter;
-	type WeightInfo = ();
 }
 
 impl pallet_author_slot_filter::Config for Runtime {

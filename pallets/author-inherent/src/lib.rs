@@ -28,14 +28,8 @@ use parity_scale_codec::{Decode, FullCodec};
 use sp_core::ByteArray;
 use sp_runtime::ConsensusEngineId;
 
-pub use crate::weights::WeightInfo;
 pub use exec::BlockExecutor;
 pub use pallet::*;
-
-#[cfg(any(test, feature = "runtime-benchmarks"))]
-mod benchmarks;
-
-pub mod weights;
 
 mod exec;
 
@@ -73,8 +67,6 @@ pub mod pallet {
 
 		/// Some way of determining the current slot for purposes of verifying the author's eligibility
 		type SlotBeacon: SlotBeacon;
-
-		type WeightInfo: WeightInfo;
 	}
 
 	impl<T> sp_runtime::BoundToRuntimeAppPublic for Pallet<T> {
