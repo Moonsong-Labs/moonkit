@@ -110,7 +110,6 @@ impl pallet_testing::Config for Test {
 	type AccountLookup = MockAccountLookup;
 	type CanAuthor = TestCanAuthor;
 	type SlotBeacon = DummyBeacon;
-	type WeightInfo = ();
 }
 
 /// Build genesis storage according to the mock runtime.

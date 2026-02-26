@@ -54,11 +54,7 @@ fn test_author_is_extracted_and_stored_from_pre_runtime_digest() {
 fn test_post_inherents_panics_when_author_missing_from_digest() {
 	new_test_ext().execute_with(|| {
 		let block_number = 1;
-		System::initialize(
-			&block_number,
-			&H256::default(),
-			&Digest { logs: vec![] },
-		);
+		System::initialize(&block_number, &H256::default(), &Digest { logs: vec![] });
 
 		// post_inherents should panic because there is no pre-runtime digest with the author
 		AuthorInherent::post_inherents();
