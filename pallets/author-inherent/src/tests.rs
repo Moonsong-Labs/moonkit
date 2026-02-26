@@ -16,7 +16,7 @@
 
 use crate::mock::*;
 use crate::pallet::Author;
-use frame_support::traits::PostInherents;
+use frame_support::traits::{Hooks, PostInherents};
 use nimbus_primitives::{NimbusId, NIMBUS_ENGINE_ID};
 use parity_scale_codec::Encode;
 use sp_core::{ByteArray, H256};
@@ -58,5 +58,58 @@ fn test_post_inherents_panics_when_author_missing_from_digest() {
 
 		// post_inherents should panic because there is no pre-runtime digest with the author
 		AuthorInherent::post_inherents();
+	});
+}
+
+#[test]
+fn test_on_initialize_then_post_inherents_lifecycle() {
+	new_test_ext().execute_with(|| {
+		// Block 1: full block with author
+		let block_1 = 1;
+		System::initialize(
+			&block_1,
+			&H256::default(),
+			&Digest {
+				logs: vec![DigestItem::PreRuntime(
+					NIMBUS_ENGINE_ID,
+					NimbusId::from_slice(&ALICE_NIMBUS).unwrap().encode(),
+				)],
+			},
+		);
+		AuthorInherent::on_initialize(block_1);
+		assert_eq!(
+			None,
+			<Author<Test>>::get(),
+			"Author must be None after on_initialize"
+		);
+		AuthorInherent::post_inherents();
+		assert_eq!(Some(ALICE), <Author<Test>>::get());
+
+		System::finalize();
+
+		// Block 2: on_initialize clears, then post_inherents sets again
+		let block_2 = 2;
+		System::initialize(
+			&block_2,
+			&H256::default(),
+			&Digest {
+				logs: vec![DigestItem::PreRuntime(
+					NIMBUS_ENGINE_ID,
+					NimbusId::from_slice(&ALICE_NIMBUS).unwrap().encode(),
+				)],
+			},
+		);
+		AuthorInherent::on_initialize(block_2);
+		assert_eq!(
+			None,
+			<Author<Test>>::get(),
+			"Author must be None after on_initialize"
+		);
+		AuthorInherent::post_inherents();
+		assert_eq!(
+			Some(ALICE),
+			<Author<Test>>::get(),
+			"Author set again after post_inherents"
+		);
 	});
 }

@@ -88,6 +88,14 @@ pub mod pallet {
 
 	#[pallet::hooks]
 	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {
+		fn on_initialize(_n: BlockNumberFor<T>) -> Weight {
+			// Clear author from previous block so that no pallet reads stale data
+			// before post_inherents() sets it for this block.
+			Author::<T>::kill();
+			// One storage write (kill clears the value)
+			T::DbWeight::get().writes(1)
+		}
+
 		fn integrity_test() {
 			// Test that SlotBeacon can be called and returns a valid slot
 			let slot = T::SlotBeacon::slot();
