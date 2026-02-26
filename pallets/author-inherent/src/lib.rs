@@ -170,11 +170,10 @@ impl<T: Config> frame_support::traits::PostInherents for Pallet<T> {
 		let digest = <frame_system::Pallet<T>>::digest();
 		let pre_runtime_digests = digest.logs.iter().filter_map(|d| d.as_pre_runtime());
 		if let Some(author) = Self::find_author(pre_runtime_digests) {
-			// First check that the slot number is valid (greater than the previous highest)
-			let new_slot = T::SlotBeacon::slot();
-			// Now check that the author is valid in this slot
+			let slot = T::SlotBeacon::slot();
+			// Check that the author is eligible for this slot
 			assert!(
-				T::CanAuthor::can_author(&author, &new_slot),
+				T::CanAuthor::can_author(&author, &slot),
 				"Block invalid, supplied author is not eligible."
 			);
 			<Author<T>>::put(&author);
