@@ -14,9 +14,10 @@
 // You should have received a copy of the GNU General Public License
 // along with Moonkit.  If not, see <http://www.gnu.org/licenses/>.
 
-//! Pallet that allows block authors to include their identity in a block via an inherent.
-//! Currently the author does not _prove_ their identity, just states it. So it should not be used,
-//! for things like equivocation slashing that require authenticated authorship information.
+//! Pallet that extracts the block author identity from the pre-runtime digest and validates
+//! eligibility via a `PostInherents` hook. Currently the author does not _prove_ their identity,
+//! just states it. So it should not be used for things like equivocation slashing that require
+//! authenticated authorship information.
 
 #![cfg_attr(not(feature = "std"), no_std)]
 
