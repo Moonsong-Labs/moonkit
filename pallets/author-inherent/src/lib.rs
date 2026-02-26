@@ -20,8 +20,6 @@
 
 #![cfg_attr(not(feature = "std"), no_std)]
 
-extern crate alloc;
-
 use frame_support::traits::{FindAuthor, Get};
 use nimbus_primitives::{AccountLookup, CanAuthor, NimbusId, SlotBeacon, NIMBUS_ENGINE_ID};
 use parity_scale_codec::{Decode, FullCodec};
