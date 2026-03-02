@@ -3202,8 +3202,7 @@ dependencies = [
 [[package]]
 name = "ethereum"
 version = "0.18.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3ee371ebb7479ed3258617557ab0b3247e741075cb6b02b820d188f68da44441"
+source = "git+https://github.com/moonbeam-foundation/ethereum?branch=moonbeam-polkadot-stable2512#d7bdf2888253a30f160d434688e378636e253870"
 dependencies = [
  "bytes",
  "ethereum-types",
@@ -3264,7 +3263,7 @@ dependencies = [
 [[package]]
 name = "evm"
 version = "0.43.4"
-source = "git+https://github.com/moonbeam-foundation/evm?branch=moonbeam-polkadot-stable2512#a656db9050c65170b050360c3fa66c0fd8bf226a"
+source = "git+https://github.com/moonbeam-foundation/evm?branch=moonbeam-polkadot-stable2512#bb9cdde4034856f055cca7208375e11741245b49"
 dependencies = [
  "auto_impl",
  "environmental",
@@ -3284,7 +3283,7 @@ dependencies = [
 [[package]]
 name = "evm-core"
 version = "0.43.0"
-source = "git+https://github.com/moonbeam-foundation/evm?branch=moonbeam-polkadot-stable2512#a656db9050c65170b050360c3fa66c0fd8bf226a"
+source = "git+https://github.com/moonbeam-foundation/evm?branch=moonbeam-polkadot-stable2512#bb9cdde4034856f055cca7208375e11741245b49"
 dependencies = [
  "parity-scale-codec",
  "primitive-types",
@@ -3295,7 +3294,7 @@ dependencies = [
 [[package]]
 name = "evm-gasometer"
 version = "0.43.0"
-source = "git+https://github.com/moonbeam-foundation/evm?branch=moonbeam-polkadot-stable2512#a656db9050c65170b050360c3fa66c0fd8bf226a"
+source = "git+https://github.com/moonbeam-foundation/evm?branch=moonbeam-polkadot-stable2512#bb9cdde4034856f055cca7208375e11741245b49"
 dependencies = [
  "environmental",
  "evm-core",
@@ -3306,7 +3305,7 @@ dependencies = [
 [[package]]
 name = "evm-runtime"
 version = "0.43.0"
-source = "git+https://github.com/moonbeam-foundation/evm?branch=moonbeam-polkadot-stable2512#a656db9050c65170b050360c3fa66c0fd8bf226a"
+source = "git+https://github.com/moonbeam-foundation/evm?branch=moonbeam-polkadot-stable2512#bb9cdde4034856f055cca7208375e11741245b49"
 dependencies = [
  "auto_impl",
  "environmental",
@@ -3523,7 +3522,7 @@ dependencies = [
 [[package]]
 name = "fp-account"
 version = "1.0.0-dev"
-source = "git+https://github.com/moonbeam-foundation/frontier?branch=moonbeam-polkadot-stable2512#ad9361cc6d031be86908ca69dc98ecb5fb12dd5d"
+source = "git+https://github.com/moonbeam-foundation/frontier?branch=moonbeam-polkadot-stable2512#7396ae16c1d3ce1b61bd15978bd75e1e4969bf8c"
 dependencies = [
  "hex",
  "impl-serde",
@@ -3541,7 +3540,7 @@ dependencies = [
 [[package]]
 name = "fp-evm"
 version = "3.0.0-dev"
-source = "git+https://github.com/moonbeam-foundation/frontier?branch=moonbeam-polkadot-stable2512#ad9361cc6d031be86908ca69dc98ecb5fb12dd5d"
+source = "git+https://github.com/moonbeam-foundation/frontier?branch=moonbeam-polkadot-stable2512#7396ae16c1d3ce1b61bd15978bd75e1e4969bf8c"
 dependencies = [
  "environmental",
  "evm",
@@ -7609,7 +7608,7 @@ dependencies = [
 [[package]]
 name = "pallet-evm"
 version = "6.0.0-dev"
-source = "git+https://github.com/moonbeam-foundation/frontier?branch=moonbeam-polkadot-stable2512#ad9361cc6d031be86908ca69dc98ecb5fb12dd5d"
+source = "git+https://github.com/moonbeam-foundation/frontier?branch=moonbeam-polkadot-stable2512#7396ae16c1d3ce1b61bd15978bd75e1e4969bf8c"
 dependencies = [
  "cumulus-primitives-storage-weight-reclaim",
  "environmental",
@@ -10305,7 +10304,7 @@ dependencies = [
 [[package]]
 name = "precompile-utils"
 version = "0.1.0"
-source = "git+https://github.com/moonbeam-foundation/frontier?branch=moonbeam-polkadot-stable2512#ad9361cc6d031be86908ca69dc98ecb5fb12dd5d"
+source = "git+https://github.com/moonbeam-foundation/frontier?branch=moonbeam-polkadot-stable2512#7396ae16c1d3ce1b61bd15978bd75e1e4969bf8c"
 dependencies = [
  "derive_more 1.0.0",
  "environmental",
@@ -10334,7 +10333,7 @@ dependencies = [
 [[package]]
 name = "precompile-utils-macro"
 version = "0.1.0"
-source = "git+https://github.com/moonbeam-foundation/frontier?branch=moonbeam-polkadot-stable2512#ad9361cc6d031be86908ca69dc98ecb5fb12dd5d"
+source = "git+https://github.com/moonbeam-foundation/frontier?branch=moonbeam-polkadot-stable2512#7396ae16c1d3ce1b61bd15978bd75e1e4969bf8c"
 dependencies = [
  "case",
  "num_enum",
