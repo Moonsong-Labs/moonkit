@@ -3473,7 +3473,7 @@ dependencies = [
 [[package]]
 name = "ethereum"
 version = "0.18.2"
-source = "git+https://github.com/moonbeam-foundation/ethereum?branch=moonbeam-polkadot-stable2506#cf3076f07e61102eec686f6816da668f97d94f1f"
+source = "git+https://github.com/moonbeam-foundation/ethereum?branch=moonbeam-polkadot-stable2506#301236b0cbbbd38dda2fadd68658e9a26e5c7e7a"
 dependencies = [
  "bytes",
  "ethereum-types",
@@ -3859,7 +3859,7 @@ dependencies = [
 [[package]]
 name = "fp-account"
 version = "1.0.0-dev"
-source = "git+https://github.com/moonbeam-foundation/frontier?branch=moonbeam-polkadot-stable2506#22da39d0de6571c799d48512232e6b89fc6ee42d"
+source = "git+https://github.com/moonbeam-foundation/frontier?branch=moonbeam-polkadot-stable2506#c28328d37827463cd287bf8288979bc77e2e27c0"
 dependencies = [
  "hex",
  "impl-serde",
@@ -3877,7 +3877,7 @@ dependencies = [
 [[package]]
 name = "fp-evm"
 version = "3.0.0-dev"
-source = "git+https://github.com/moonbeam-foundation/frontier?branch=moonbeam-polkadot-stable2506#22da39d0de6571c799d48512232e6b89fc6ee42d"
+source = "git+https://github.com/moonbeam-foundation/frontier?branch=moonbeam-polkadot-stable2506#c28328d37827463cd287bf8288979bc77e2e27c0"
 dependencies = [
  "environmental",
  "evm",
@@ -8057,7 +8057,7 @@ dependencies = [
 [[package]]
 name = "pallet-evm"
 version = "6.0.0-dev"
-source = "git+https://github.com/moonbeam-foundation/frontier?branch=moonbeam-polkadot-stable2506#22da39d0de6571c799d48512232e6b89fc6ee42d"
+source = "git+https://github.com/moonbeam-foundation/frontier?branch=moonbeam-polkadot-stable2506#c28328d37827463cd287bf8288979bc77e2e27c0"
 dependencies = [
  "cumulus-primitives-storage-weight-reclaim",
  "environmental",
@@ -10899,7 +10899,7 @@ dependencies = [
 [[package]]
 name = "precompile-utils"
 version = "0.1.0"
-source = "git+https://github.com/moonbeam-foundation/frontier?branch=moonbeam-polkadot-stable2506#22da39d0de6571c799d48512232e6b89fc6ee42d"
+source = "git+https://github.com/moonbeam-foundation/frontier?branch=moonbeam-polkadot-stable2506#c28328d37827463cd287bf8288979bc77e2e27c0"
 dependencies = [
  "derive_more 1.0.0",
  "environmental",
@@ -10928,7 +10928,7 @@ dependencies = [
 [[package]]
 name = "precompile-utils-macro"
 version = "0.1.0"
-source = "git+https://github.com/moonbeam-foundation/frontier?branch=moonbeam-polkadot-stable2506#22da39d0de6571c799d48512232e6b89fc6ee42d"
+source = "git+https://github.com/moonbeam-foundation/frontier?branch=moonbeam-polkadot-stable2506#c28328d37827463cd287bf8288979bc77e2e27c0"
 dependencies = [
  "case",
  "num_enum",
