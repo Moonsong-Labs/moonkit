@@ -3490,6 +3490,24 @@ dependencies = [
 ]
 
 [[package]]
+name = "ethereum"
+version = "0.18.2"
+source = "git+https://github.com/moonbeam-foundation/ethereum?branch=moonbeam-polkadot-stable2506#301236b0cbbbd38dda2fadd68658e9a26e5c7e7a"
+dependencies = [
+ "bytes",
+ "ethereum-types",
+ "hash-db",
+ "hash256-std-hasher",
+ "k256",
+ "parity-scale-codec",
+ "rlp 0.6.1",
+ "scale-info",
+ "serde",
+ "sha3",
+ "trie-root",
+]
+
+[[package]]
 name = "ethereum-standards"
 version = "0.1.1"
 source = "git+https://github.com/moonbeam-foundation/polkadot-sdk?branch=moonbeam-polkadot-stable2506#373ff2c1dd3b3a647d4ae81c637168dca5c86f36"
@@ -3558,7 +3576,7 @@ source = "git+https://github.com/moonbeam-foundation/evm?branch=moonbeam-polkado
 dependencies = [
  "auto_impl",
  "environmental",
- "ethereum",
+ "ethereum 0.18.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "evm-core",
  "evm-gasometer",
  "evm-runtime",
@@ -3860,7 +3878,7 @@ dependencies = [
 [[package]]
 name = "fp-account"
 version = "1.0.0-dev"
-source = "git+https://github.com/moonbeam-foundation/frontier?branch=moonbeam-polkadot-stable2506#388d33ed0a0890a8fca5214cc3db999f36fafd45"
+source = "git+https://github.com/moonbeam-foundation/frontier?branch=artur%2Fmoon-stalled-latest#281df4d9bb76b994dfc83ec0bb65700f3548d7e1"
 dependencies = [
  "hex",
  "impl-serde",
@@ -3878,7 +3896,7 @@ dependencies = [
 [[package]]
 name = "fp-evm"
 version = "3.0.0-dev"
-source = "git+https://github.com/moonbeam-foundation/frontier?branch=moonbeam-polkadot-stable2506#388d33ed0a0890a8fca5214cc3db999f36fafd45"
+source = "git+https://github.com/moonbeam-foundation/frontier?branch=artur%2Fmoon-stalled-latest#281df4d9bb76b994dfc83ec0bb65700f3548d7e1"
 dependencies = [
  "environmental",
  "evm",
@@ -8058,11 +8076,11 @@ dependencies = [
 [[package]]
 name = "pallet-evm"
 version = "6.0.0-dev"
-source = "git+https://github.com/moonbeam-foundation/frontier?branch=moonbeam-polkadot-stable2506#388d33ed0a0890a8fca5214cc3db999f36fafd45"
+source = "git+https://github.com/moonbeam-foundation/frontier?branch=artur%2Fmoon-stalled-latest#281df4d9bb76b994dfc83ec0bb65700f3548d7e1"
 dependencies = [
  "cumulus-primitives-storage-weight-reclaim",
  "environmental",
- "ethereum",
+ "ethereum 0.18.2 (git+https://github.com/moonbeam-foundation/ethereum?branch=moonbeam-polkadot-stable2506)",
  "evm",
  "fp-account",
  "fp-evm",
@@ -10900,7 +10918,7 @@ dependencies = [
 [[package]]
 name = "precompile-utils"
 version = "0.1.0"
-source = "git+https://github.com/moonbeam-foundation/frontier?branch=moonbeam-polkadot-stable2506#388d33ed0a0890a8fca5214cc3db999f36fafd45"
+source = "git+https://github.com/moonbeam-foundation/frontier?branch=artur%2Fmoon-stalled-latest#281df4d9bb76b994dfc83ec0bb65700f3548d7e1"
 dependencies = [
  "derive_more 1.0.0",
  "environmental",
@@ -10929,7 +10947,7 @@ dependencies = [
 [[package]]
 name = "precompile-utils-macro"
 version = "0.1.0"
-source = "git+https://github.com/moonbeam-foundation/frontier?branch=moonbeam-polkadot-stable2506#388d33ed0a0890a8fca5214cc3db999f36fafd45"
+source = "git+https://github.com/moonbeam-foundation/frontier?branch=artur%2Fmoon-stalled-latest#281df4d9bb76b994dfc83ec0bb65700f3548d7e1"
 dependencies = [
  "case",
  "num_enum",
