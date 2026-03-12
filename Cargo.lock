@@ -3522,7 +3522,7 @@ dependencies = [
 [[package]]
 name = "fp-account"
 version = "1.0.0-dev"
-source = "git+https://github.com/moonbeam-foundation/frontier?branch=moonbeam-polkadot-stable2512#b6d0dfba6170b2eb00bfe8f16d7c9f48ef4d345b"
+source = "git+https://github.com/moonbeam-foundation/frontier?branch=moonbeam-polkadot-stable2512#8ff24823827ca5e04a495aafbd3ded0cab242e91"
 dependencies = [
  "hex",
  "impl-serde",
@@ -3540,7 +3540,7 @@ dependencies = [
 [[package]]
 name = "fp-evm"
 version = "3.0.0-dev"
-source = "git+https://github.com/moonbeam-foundation/frontier?branch=moonbeam-polkadot-stable2512#b6d0dfba6170b2eb00bfe8f16d7c9f48ef4d345b"
+source = "git+https://github.com/moonbeam-foundation/frontier?branch=moonbeam-polkadot-stable2512#8ff24823827ca5e04a495aafbd3ded0cab242e91"
 dependencies = [
  "environmental",
  "evm",
@@ -7608,7 +7608,7 @@ dependencies = [
 [[package]]
 name = "pallet-evm"
 version = "6.0.0-dev"
-source = "git+https://github.com/moonbeam-foundation/frontier?branch=moonbeam-polkadot-stable2512#b6d0dfba6170b2eb00bfe8f16d7c9f48ef4d345b"
+source = "git+https://github.com/moonbeam-foundation/frontier?branch=moonbeam-polkadot-stable2512#8ff24823827ca5e04a495aafbd3ded0cab242e91"
 dependencies = [
  "cumulus-primitives-storage-weight-reclaim",
  "environmental",
@@ -10304,7 +10304,7 @@ dependencies = [
 [[package]]
 name = "precompile-utils"
 version = "0.1.0"
-source = "git+https://github.com/moonbeam-foundation/frontier?branch=moonbeam-polkadot-stable2512#b6d0dfba6170b2eb00bfe8f16d7c9f48ef4d345b"
+source = "git+https://github.com/moonbeam-foundation/frontier?branch=moonbeam-polkadot-stable2512#8ff24823827ca5e04a495aafbd3ded0cab242e91"
 dependencies = [
  "derive_more 1.0.0",
  "environmental",
@@ -10333,7 +10333,7 @@ dependencies = [
 [[package]]
 name = "precompile-utils-macro"
 version = "0.1.0"
-source = "git+https://github.com/moonbeam-foundation/frontier?branch=moonbeam-polkadot-stable2512#b6d0dfba6170b2eb00bfe8f16d7c9f48ef4d345b"
+source = "git+https://github.com/moonbeam-foundation/frontier?branch=moonbeam-polkadot-stable2512#8ff24823827ca5e04a495aafbd3ded0cab242e91"
 dependencies = [
  "case",
  "num_enum",
