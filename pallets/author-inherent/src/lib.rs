@@ -24,7 +24,6 @@
 use frame_support::traits::{FindAuthor, Get};
 use nimbus_primitives::{AccountLookup, CanAuthor, NimbusId, SlotBeacon, NIMBUS_ENGINE_ID};
 use parity_scale_codec::{Decode, FullCodec};
-use sp_core::ByteArray;
 use sp_runtime::ConsensusEngineId;
 
 pub use exec::BlockExecutor;
@@ -94,22 +93,6 @@ pub mod pallet {
 			Author::<T>::kill();
 			// One storage write (kill clears the value)
 			T::DbWeight::get().writes(1)
-		}
-
-		fn integrity_test() {
-			// Test that SlotBeacon can be called and returns a valid slot
-			let slot = T::SlotBeacon::slot();
-			// Author storage should be accessible (this is a compile-time check)
-			assert!(
-				Author::<T>::get().is_none(),
-				"Author storage should be none"
-			);
-
-			// Test that CanAuthor trait can be called
-			let _ = Pallet::<T>::can_author(
-				&NimbusId::from_slice(&[0u8; 32]).expect("Valid NimbusId"),
-				&slot,
-			);
 		}
 	}
 

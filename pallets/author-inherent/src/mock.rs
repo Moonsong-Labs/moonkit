@@ -85,6 +85,8 @@ impl nimbus_primitives::SlotBeacon for DummyBeacon {
 
 pub const ALICE: u64 = 1;
 pub const ALICE_NIMBUS: [u8; 32] = [1; 32];
+pub const BOB: u64 = 99;
+pub const BOB_NIMBUS: [u8; 32] = [2; 32];
 pub struct MockAccountLookup;
 impl AccountLookup<u64> for MockAccountLookup {
 	fn lookup_account(nimbus_id: &NimbusId) -> Option<u64> {
@@ -92,6 +94,8 @@ impl AccountLookup<u64> for MockAccountLookup {
 
 		if nimbus_id_bytes == ALICE_NIMBUS {
 			Some(ALICE)
+		} else if nimbus_id_bytes == BOB_NIMBUS {
+			Some(BOB)
 		} else {
 			None
 		}
