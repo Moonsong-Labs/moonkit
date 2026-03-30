@@ -91,8 +91,11 @@ pub mod pallet {
 			// Clear author from previous block so that no pallet reads stale data
 			// before post_inherents() sets it for this block.
 			Author::<T>::kill();
-			// One storage write (kill clears the value)
-			T::DbWeight::get().writes(1)
+			// Pre-charge for `post_inherents()` which cannot return weight.
+			// This is mandatory per-block overhead so only DB ops matter:
+			//   reads:  AccountLookup + SlotBeacon + CanAuthor (1-3 reads)
+			//   writes: kill + Author::put (2 writes)
+			T::DbWeight::get().reads_writes(3, 2)
 		}
 	}
 
