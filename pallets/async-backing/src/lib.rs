@@ -78,6 +78,7 @@ where
 #[frame_support::pallet]
 pub mod pallet {
 	use super::*;
+	use frame_system::pallet_prelude::*;
 
 	/// The current storage version.
 	const STORAGE_VERSION: StorageVersion = StorageVersion::new(1);
@@ -117,6 +118,39 @@ pub mod pallet {
 	#[pallet::storage]
 	#[pallet::getter(fn slot_info)]
 	pub type SlotInfo<T: Config> = StorageValue<_, (Slot, u32), OptionQuery>;
+
+	#[pallet::type_value]
+	pub fn DefaultRelayParentOffset<T: Config>() -> u32 {
+		1
+	}
+
+	/// Relay parent offset enforced by the parachain-system inherent check.
+	#[pallet::storage]
+	#[pallet::getter(fn relay_parent_offset)]
+	pub type RelayParentOffset<T: Config> =
+		StorageValue<_, u32, ValueQuery, DefaultRelayParentOffset<T>>;
+
+	#[pallet::call]
+	impl<T: Config> Pallet<T> {
+		/// Update the relay parent offset. Intended to be called by governance.
+		#[pallet::call_index(0)]
+		#[pallet::weight(T::DbWeight::get().writes(1))]
+		pub fn set_relay_parent_offset(
+			origin: OriginFor<T>,
+			new: u32,
+		) -> DispatchResultWithPostInfo {
+			ensure_root(origin)?;
+			RelayParentOffset::<T>::put(new);
+
+			Ok(Default::default())
+		}
+	}
+}
+
+impl<T: Config> Get<u32> for Pallet<T> {
+	fn get() -> u32 {
+		RelayParentOffset::<T>::get()
+	}
 }
 
 impl<T: Config> frame_support::traits::PostInherents for Pallet<T> {
