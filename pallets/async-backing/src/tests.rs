@@ -16,6 +16,7 @@
 
 use crate::consensus_hook::FixedVelocityConsensusHook;
 use crate::mock::*;
+use frame_support::{assert_noop, assert_ok};
 use std::ops::Deref;
 
 type ConsensusHook = FixedVelocityConsensusHook<Test, 6_000, 1, 1>;
@@ -66,5 +67,23 @@ fn can_skip_a_relay_slot() {
 		assert_slot_info_eq(1, 1);
 		ConsensusHook::on_state_proof_inner(3.into());
 		assert_slot_info_eq(3, 1);
+	});
+}
+
+#[test]
+fn relay_parent_offset_defaults_to_one_and_can_be_changed_by_root() {
+	new_test_ext().execute_with(|| {
+		assert_eq!(AsyncBacking::relay_parent_offset(), 1);
+
+		assert_noop!(
+			AsyncBacking::set_relay_parent_offset(RuntimeOrigin::signed(1), 2),
+			sp_runtime::DispatchError::BadOrigin,
+		);
+
+		assert_ok!(AsyncBacking::set_relay_parent_offset(
+			RuntimeOrigin::root(),
+			2
+		));
+		assert_eq!(AsyncBacking::relay_parent_offset(), 2);
 	});
 }
