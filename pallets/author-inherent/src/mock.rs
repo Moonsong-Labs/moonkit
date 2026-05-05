@@ -30,7 +30,7 @@ frame_support::construct_runtime!(
 	pub enum Test
 	{
 		System: frame_system::{Pallet, Call, Config<T>, Storage, Event<T>},
-		AuthorInherent: pallet_testing::{Pallet, Call, Storage},
+		AuthorInherent: pallet_testing::{Pallet, Storage},
 	}
 );
 
@@ -72,19 +72,21 @@ impl frame_system::Config for Test {
 	type SingleBlockMigrations = ();
 	type MultiBlockMigrator = ();
 	type PreInherents = ();
-	type PostInherents = ();
+	type PostInherents = AuthorInherent;
 	type PostTransactions = ();
 }
 
 pub struct DummyBeacon {}
 impl nimbus_primitives::SlotBeacon for DummyBeacon {
 	fn slot() -> u32 {
-		0
+		System::block_number() as u32 + 1
 	}
 }
 
 pub const ALICE: u64 = 1;
 pub const ALICE_NIMBUS: [u8; 32] = [1; 32];
+pub const BOB: u64 = 99;
+pub const BOB_NIMBUS: [u8; 32] = [2; 32];
 pub struct MockAccountLookup;
 impl AccountLookup<u64> for MockAccountLookup {
 	fn lookup_account(nimbus_id: &NimbusId) -> Option<u64> {
@@ -92,18 +94,26 @@ impl AccountLookup<u64> for MockAccountLookup {
 
 		if nimbus_id_bytes == ALICE_NIMBUS {
 			Some(ALICE)
+		} else if nimbus_id_bytes == BOB_NIMBUS {
+			Some(BOB)
 		} else {
 			None
 		}
 	}
 }
 
+pub struct TestCanAuthor;
+impl nimbus_primitives::CanAuthor<u64> for TestCanAuthor {
+	fn can_author(author: &u64, slot: &u32) -> bool {
+		Authors::get().contains(author) && slot > &0
+	}
+}
+
 impl pallet_testing::Config for Test {
 	type AuthorId = u64;
 	type AccountLookup = MockAccountLookup;
-	type CanAuthor = ();
+	type CanAuthor = TestCanAuthor;
 	type SlotBeacon = DummyBeacon;
-	type WeightInfo = ();
 }
 
 /// Build genesis storage according to the mock runtime.
