@@ -128,6 +128,7 @@ pub fn new_partial(
 			config,
 			telemetry.as_ref().map(|(_, telemetry)| telemetry.handle()),
 			executor,
+			Vec::new(),
 		)?;
 	let client = Arc::new(client);
 
@@ -273,6 +274,7 @@ where
 			client: client.clone(),
 			transaction_pool: transaction_pool.clone(),
 			spawn_handle: task_manager.spawn_handle(),
+			spawn_essential_handle: task_manager.spawn_essential_handle(),
 			import_queue: params.import_queue,
 			block_announce_validator_builder: Some(Box::new(|_| {
 				Box::new(block_announce_validator)
@@ -505,6 +507,7 @@ where
 			client: client.clone(),
 			transaction_pool: transaction_pool.clone(),
 			spawn_handle: task_manager.spawn_handle(),
+			spawn_essential_handle: task_manager.spawn_essential_handle(),
 			import_queue,
 			block_announce_validator_builder: None,
 			warp_sync_config: None,
@@ -628,6 +631,7 @@ where
 						current_para_block: 0,
 						current_para_block_head: None,
 						relay_offset: 0,
+						relay_parent_offset: 0,
 						relay_blocks_per_para_block: 0,
 						para_blocks_per_relay_epoch: 0,
 						relay_randomness_config: (),

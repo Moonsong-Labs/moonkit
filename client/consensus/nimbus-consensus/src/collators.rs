@@ -29,7 +29,7 @@ pub mod slot_based;
 use crate::{collator::SlotClaim, *};
 use async_backing_primitives::Slot;
 use async_backing_primitives::UnincludedSegmentApi;
-use cumulus_client_consensus_common::{ParentSearchParams, PotentialParent};
+use cumulus_client_consensus_common::ParentSearchParams;
 use cumulus_primitives_core::{
 	relay_chain::{Header as RelayHeader, OccupiedCoreAssumption, ValidationCodeHash},
 	ParaId,
@@ -240,15 +240,14 @@ async fn scheduling_lookahead(
 	}
 }
 
-/// Use [`cumulus_client_consensus_common::find_potential_parents`] to find parachain blocks that
-/// we can build on. Once a list of potential parents is retrieved, return the last one of the
-/// longest chain.
+/// Use [`cumulus_client_consensus_common::find_parent_for_building`] to find the best parachain
+/// block to build on. Returns the included block header alongside the best parent header.
 async fn find_parent<Block>(
 	relay_parent: RelayHash,
 	para_id: ParaId,
 	para_backend: &impl sc_client_api::Backend<Block>,
 	relay_client: &impl RelayChainInterface,
-) -> Option<(<Block as BlockT>::Header, PotentialParent<Block>)>
+) -> Option<(<Block as BlockT>::Header, <Block as BlockT>::Header)>
 where
 	Block: BlockT,
 {
@@ -259,18 +258,24 @@ where
 			.await
 			.unwrap_or(polkadot_primitives::DEFAULT_SCHEDULING_LOOKAHEAD)
 			.saturating_sub(1) as usize,
-		max_depth: PARENT_SEARCH_DEPTH,
-		ignore_alternative_branches: true,
 	};
 
-	let potential_parents = cumulus_client_consensus_common::find_potential_parents::<Block>(
+	match cumulus_client_consensus_common::find_parent_for_building::<Block>(
 		parent_search_params,
 		para_backend,
 		relay_client,
 	)
-	.await;
-
-	let potential_parents = match potential_parents {
+	.await
+	{
+		Ok(Some(result)) => Some((result.included_header, result.best_parent_header)),
+		Ok(None) => {
+			tracing::warn!(
+				target: crate::LOG_TARGET,
+				?relay_parent,
+				"Could not find parent to build upon.",
+			);
+			None
+		}
 		Err(e) => {
 			tracing::error!(
 				target: crate::LOG_TARGET,
@@ -278,21 +283,9 @@ where
 				err = ?e,
 				"Could not fetch potential parents to build upon"
 			);
-
-			return None;
+			None
 		}
-		Ok(x) => x,
-	};
-
-	let included_block = potential_parents
-		.iter()
-		.find(|x| x.depth == 0)?
-		.header
-		.clone();
-	potential_parents
-		.into_iter()
-		.max_by_key(|a| a.depth)
-		.map(|parent| (included_block, parent))
+	}
 }
 
 /// Helper for managing pre-connections to backing groups.

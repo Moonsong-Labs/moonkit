@@ -25,11 +25,11 @@ use serde::{Deserialize, Serialize};
 use sp_core::{ByteArray, H256};
 use sp_runtime::{
 	traits::{BlakeTwo256, IdentityLookup},
-	BuildStorage, Perbill, RuntimeDebug,
+	BuildStorage, Perbill, Debug,
 };
 
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
-#[derive(Eq, PartialEq, Clone, Copy, Encode, Decode, RuntimeDebug, TypeInfo, Default)]
+#[derive(Eq, PartialEq, Clone, Copy, Encode, Decode, Debug, TypeInfo, Default)]
 pub enum TestAuthor {
 	#[default]
 	Alice,

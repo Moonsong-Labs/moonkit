@@ -19,10 +19,10 @@ use parity_scale_codec::{Codec, Encode};
 
 use cumulus_client_collator::service::ServiceInterface as CollatorServiceInterface;
 use cumulus_client_consensus_common::{self as consensus_common, ParachainBlockImportMarker};
-use cumulus_client_consensus_proposer::ProposerInterface;
+use crate::ProposerInterface;
 use cumulus_relay_chain_interface::RelayChainInterface;
 use sp_consensus_slots::SlotDuration;
-use sp_runtime::SaturatedConversion;
+use sp_runtime::{SaturatedConversion, Saturating};
 
 use super::CollatorMessage;
 use crate::{
@@ -250,15 +250,19 @@ where
 			let relay_parent = rp_data.relay_parent().hash();
 			let relay_parent_header = rp_data.relay_parent().clone();
 
-			let Some((included_header, parent)) =
+			let Some((included_header, parent_header)) =
 				crate::collators::find_parent(relay_parent, para_id, &*para_backend, &relay_client)
 					.await
 			else {
 				continue;
 			};
 
-			let parent_hash = parent.hash;
-			let parent_header = &parent.header;
+			let parent_hash = parent_header.hash();
+			let parent_header = &parent_header;
+			// Distance from included block to best parent (unincluded segment length).
+			let unincluded_segment_len = parent_header
+				.number()
+				.saturating_sub(*included_header.number());
 
 			// Retrieve the core.
 			let core = match determine_core(
@@ -352,7 +356,7 @@ where
 				None => {
 					tracing::debug!(
 						target: crate::LOG_TARGET,
-						unincluded_segment_len = parent.depth,
+						unincluded_segment_len = ?unincluded_segment_len,
 						relay_parent = ?relay_parent,
 						relay_parent_num = %relay_parent_header.number(),
 						included_hash = ?included_header_hash,
@@ -367,7 +371,7 @@ where
 
 			tracing::debug!(
 				target: crate::LOG_TARGET,
-				unincluded_segment_len = parent.depth,
+				unincluded_segment_len = ?unincluded_segment_len,
 				relay_parent = %relay_parent,
 				relay_parent_num = %relay_parent_header.number(),
 				relay_parent_offset,
@@ -438,7 +442,7 @@ where
 			let Some(adjusted_authoring_duration) = adjusted_authoring_duration else {
 				tracing::debug!(
 					target: crate::LOG_TARGET,
-					unincluded_segment_len = parent.depth,
+					unincluded_segment_len = ?unincluded_segment_len,
 					relay_parent = ?relay_parent,
 					relay_parent_num = %relay_parent_header.number(),
 					included_hash = ?included_header_hash,

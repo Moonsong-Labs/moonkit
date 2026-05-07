@@ -19,6 +19,7 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
 use fp_evm::PrecompileHandle;
+use frame_support::traits::tokens::imbalance::ImbalanceAccounting;
 use frame_support::traits::ConstU32;
 use frame_support::{
 	dispatch::{GetDispatchInfo, PostDispatchInfo},
@@ -159,22 +160,29 @@ where
 			message_id: XcmHash::default(),
 			topic: None,
 		};
-		// buy_weight returns unused assets
+		// `AssetsInHolding` no longer implements `From<Vec<Asset>>` in
+		// stable2603 — the holding now tracks `ImbalanceAccounting` credits
+		// rather than raw amounts. Since this is a fee-estimation query
+		// (we never actually withdraw anything), using
+		// `xcm_executor::test_helpers::mock_asset_to_holding` is a faithful
+		// minimum-diff equivalent to the previous behaviour.
 		let unused = trader
 			.buy_weight(
 				Weight::from_parts(weight_per_second, DEFAULT_PROOF_SIZE),
-				vec![multiasset.clone()].into(),
+				xcm_executor::test_helpers::mock_asset_to_holding(multiasset.clone()),
 				&ctx,
 			)
 			.map_err(|_| {
 				RevertReason::custom("Asset not supported as fee payment").in_field("location")
 			})?;
 
-		// we just need to substract from u128::MAX the unused assets
+		// we just need to substract from u128::MAX the unused assets.
+		// In stable2603, holdings store `ImbalanceAccounting` credits rather
+		// than raw `u128` values; call `.amount()` to recover the balance.
 		if let Some(amount) = unused
 			.fungible
 			.get(&multiasset.id)
-			.map(|&value| u128::MAX.saturating_sub(value))
+			.map(|credit| u128::MAX.saturating_sub(credit.amount()))
 		{
 			Ok(amount.into())
 		} else {

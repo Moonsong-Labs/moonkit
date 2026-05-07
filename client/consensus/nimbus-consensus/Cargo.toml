@@ -26,12 +26,17 @@ sp-runtime = { workspace = true }
 sp-version = { workspace = true }
 sp-trie = { workspace = true }
 sp-state-machine = { workspace = true }
+sp-externalities = { workspace = true }
+sc-basic-authorship = { workspace = true }
+sc-block-builder = { workspace = true }
+sc-transaction-pool-api = { workspace = true }
 substrate-prometheus-endpoint = { workspace = true }
+anyhow = { workspace = true }
+thiserror = { workspace = true }
 
 # Cumulus dependencies
 cumulus-client-collator = { workspace = true }
 cumulus-client-consensus-common = { workspace = true }
-cumulus-client-consensus-proposer = { workspace = true }
 cumulus-client-parachain-inherent = { workspace = true }
 cumulus-primitives-core = { workspace = true }
 cumulus-primitives-parachain-inherent = { workspace = true }

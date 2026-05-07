@@ -72,7 +72,7 @@ pub use block_import::{SlotBasedBlockImport, SlotBasedBlockImportHandle};
 use consensus_common::ParachainCandidate;
 use cumulus_client_collator::service::ServiceInterface as CollatorServiceInterface;
 use cumulus_client_consensus_common::{self as consensus_common, ParachainBlockImportMarker};
-use cumulus_client_consensus_proposer::ProposerInterface;
+use crate::ProposerInterface;
 use cumulus_primitives_core::RelayParentOffsetApi;
 use cumulus_relay_chain_interface::RelayChainInterface;
 use futures::FutureExt;

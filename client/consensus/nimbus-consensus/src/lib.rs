@@ -25,9 +25,11 @@ pub mod collators;
 
 mod import_queue;
 mod manual_seal;
+mod proposer;
 
 pub use import_queue::import_queue;
 pub use manual_seal::NimbusManualSealConsensusDataProvider;
+pub use proposer::{Error as ProposerError, ProposerInterface};
 
 use cumulus_primitives_core::{relay_chain::Header as PHeader, PersistedValidationData};
 use log::{info, warn};

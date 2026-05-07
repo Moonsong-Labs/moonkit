@@ -16,7 +16,7 @@
 
 use cumulus_client_collator::service::ServiceInterface as CollatorServiceInterface;
 use cumulus_client_consensus_common::{ParachainBlockImportMarker, ParachainCandidate};
-use cumulus_client_consensus_proposer::ProposerInterface;
+use crate::ProposerInterface;
 use cumulus_client_parachain_inherent::{ParachainInherentData, ParachainInherentDataProvider};
 use cumulus_primitives_core::{
 	relay_chain::Hash as PHash, DigestItem, ParachainBlockData, PersistedValidationData,
@@ -124,6 +124,17 @@ where
 		collator_peer_id: PeerId,
 		cidp_context: CIDPContext,
 	) -> Result<(ParachainInherentData, InherentData), Box<dyn Error + Send + Sync + 'static>> {
+		// stable2603 introduced `RelayProofRequest` (cumulus_primitives_core)
+		// which wraps a typed list of relay-chain storage keys; previously the
+		// API took a raw `Vec<Vec<u8>>` of top-level keys. We faithfully
+		// translate every key as `RelayStorageKey::Top` since the call sites
+		// only ever passed top-level keys.
+		let relay_proof_request = cumulus_primitives_core::RelayProofRequest {
+			keys: additional_relay_state_keys
+				.into_iter()
+				.map(cumulus_primitives_core::RelayStorageKey::Top)
+				.collect(),
+		};
 		let paras_inherent_data = ParachainInherentDataProvider::create_at(
 			relay_parent,
 			&self.relay_client,
@@ -132,7 +143,7 @@ where
 			relay_parent_descendants
 				.map(RelayParentData::into_inherent_descendant_list)
 				.unwrap_or_default(),
-			additional_relay_state_keys,
+			relay_proof_request,
 			collator_peer_id,
 		)
 		.await;
@@ -202,6 +213,15 @@ where
 		)];
 		logs.extend(additional_pre_digest.into().unwrap_or_default());
 
+		// Caller now owns the proof recorder and the runtime extensions; see
+		// paritytech/polkadot-sdk#9947. Register `ProofSizeExt` so the runtime
+		// can observe its own PoV growth during block production.
+		let storage_proof_recorder = sp_api::ProofRecorder::<Block>::default();
+		let mut extra_extensions = sp_externalities::Extensions::new();
+		extra_extensions.register(sp_trie::proof_size_extension::ProofSizeExt::new(
+			storage_proof_recorder.clone(),
+		));
+
 		let maybe_proposal = self
 			.proposer
 			.propose(
@@ -211,6 +231,8 @@ where
 				Digest { logs },
 				proposal_duration,
 				Some(max_pov_size),
+				Some(storage_proof_recorder.clone()),
+				extra_extensions,
 			)
 			.await
 			.map_err(|e| Box::new(e) as Box<dyn Error + Send>)?;
@@ -219,6 +241,8 @@ where
 			None => return Ok(None),
 			Some(p) => p,
 		};
+
+		let proof = storage_proof_recorder.drain_storage_proof();
 
 		let sealed_importable = seal::<_, P>(
 			proposal.block,
@@ -242,10 +266,7 @@ where
 			.map_err(|e| Box::new(e) as Box<dyn Error + Send>)
 			.await?;
 
-		Ok(Some(ParachainCandidate {
-			block,
-			proof: proposal.proof,
-		}))
+		Ok(Some(ParachainCandidate { block, proof }))
 	}
 
 	/// Propose, seal, import a block and packaging it into a collation.

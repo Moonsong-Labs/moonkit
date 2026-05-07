@@ -71,7 +71,7 @@ impl<T: Config> From<RequestInfo<T>> for RequestType<T> {
 	}
 }
 
-#[derive(PartialEq, Clone, Encode, Decode, RuntimeDebug, TypeInfo)]
+#[derive(PartialEq, Clone, Encode, Decode, Debug, TypeInfo)]
 /// Raw randomness snapshot, the unique value for a `RequestType` in `RandomnessResults` map
 pub struct RandomnessResult<Hash> {
 	/// Randomness once available
