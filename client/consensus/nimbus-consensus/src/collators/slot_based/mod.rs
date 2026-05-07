@@ -28,8 +28,8 @@
 //!
 //! 1. Awaits the next production signal from the internal timer
 //! 2. Retrieves the current best relay chain block and identifies a valid parent block (see
-//!    [find_potential_parents][cumulus_client_consensus_common::find_potential_parents] for parent
-//!    selection criteria)
+//!    [find_parent_for_building][cumulus_client_consensus_common::find_parent_for_building] for
+//!    parent selection criteria)
 //! 3. Validates that:
 //!    - The parachain has an assigned core on the relay chain
 //!    - No block has been previously built on the target core
@@ -67,12 +67,12 @@
 
 use self::{block_builder_task::run_block_builder, collation_task::run_collation_task};
 use crate::NimbusApi;
+use crate::ProposerInterface;
 use async_backing_primitives::UnincludedSegmentApi;
 pub use block_import::{SlotBasedBlockImport, SlotBasedBlockImportHandle};
 use consensus_common::ParachainCandidate;
 use cumulus_client_collator::service::ServiceInterface as CollatorServiceInterface;
 use cumulus_client_consensus_common::{self as consensus_common, ParachainBlockImportMarker};
-use crate::ProposerInterface;
 use cumulus_primitives_core::RelayParentOffsetApi;
 use cumulus_relay_chain_interface::RelayChainInterface;
 use futures::FutureExt;

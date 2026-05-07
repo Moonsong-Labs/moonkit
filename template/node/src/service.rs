@@ -387,7 +387,7 @@ fn start_consensus(
 	force_authoring: bool,
 	max_pov_percentage: u8,
 ) -> Result<(), sc_service::Error> {
-	let proposer = sc_basic_authorship::ProposerFactory::with_proof_recording(
+	let proposer = sc_basic_authorship::ProposerFactory::new(
 		task_manager.spawn_handle(),
 		client.clone(),
 		transaction_pool,

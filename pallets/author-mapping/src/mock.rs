@@ -25,7 +25,7 @@ use serde::{Deserialize, Serialize};
 use sp_core::{ByteArray, H256};
 use sp_runtime::{
 	traits::{BlakeTwo256, IdentityLookup},
-	BuildStorage, Perbill, Debug,
+	BuildStorage, Debug, Perbill,
 };
 
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]

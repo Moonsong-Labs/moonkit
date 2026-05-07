@@ -51,15 +51,6 @@ use sp_runtime::{
 use sp_timestamp::Timestamp;
 use std::convert::TryInto;
 
-// This is an arbitrary value which is likely guaranteed to exceed any reasonable
-// limit, as it would correspond to 30 non-included blocks.
-//
-// Since we only search for parent blocks which have already been imported,
-// we can guarantee that all imported blocks respect the unincluded segment
-// rules specified by the parachain's runtime and thus will never be too deep. This is just an extra
-// sanity check.
-const PARENT_SEARCH_DEPTH: usize = 30;
-
 pub(crate) fn seal_header<Block>(
 	header: &Block::Header,
 	keystore: &dyn Keystore,

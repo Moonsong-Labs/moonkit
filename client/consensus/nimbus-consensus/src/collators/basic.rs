@@ -17,7 +17,6 @@
 use crate::*;
 use cumulus_client_collator::service::ServiceInterface as CollatorServiceInterface;
 use cumulus_client_consensus_common::{self as consensus_common, ParachainBlockImportMarker};
-use crate::ProposerInterface;
 use cumulus_primitives_core::{
 	relay_chain::{BlockId as RBlockId, Hash as PHash, ValidationCode},
 	CollectCollationInfo, ParaId, PersistedValidationData,

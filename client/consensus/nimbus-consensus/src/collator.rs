@@ -14,9 +14,9 @@
 // You should have received a copy of the GNU General Public License
 // along with Moonkit.  If not, see <http://www.gnu.org/licenses/>.
 
+use crate::ProposerInterface;
 use cumulus_client_collator::service::ServiceInterface as CollatorServiceInterface;
 use cumulus_client_consensus_common::{ParachainBlockImportMarker, ParachainCandidate};
-use crate::ProposerInterface;
 use cumulus_client_parachain_inherent::{ParachainInherentData, ParachainInherentDataProvider};
 use cumulus_primitives_core::{
 	relay_chain::Hash as PHash, DigestItem, ParachainBlockData, PersistedValidationData,

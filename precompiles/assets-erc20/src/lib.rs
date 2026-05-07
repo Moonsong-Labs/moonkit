@@ -17,7 +17,7 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
 use core::fmt::Display;
-use fp_evm::{ExitError, PrecompileHandle};
+use fp_evm::PrecompileHandle;
 use frame_support::traits::fungibles::Inspect;
 use frame_support::traits::fungibles::{
 	approvals::Inspect as ApprovalInspect, metadata::Inspect as MetadataInspect,

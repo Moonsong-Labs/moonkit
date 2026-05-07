@@ -17,9 +17,9 @@
 use nimbus_primitives::NimbusId;
 use parity_scale_codec::{Codec, Encode};
 
+use crate::ProposerInterface;
 use cumulus_client_collator::service::ServiceInterface as CollatorServiceInterface;
 use cumulus_client_consensus_common::{self as consensus_common, ParachainBlockImportMarker};
-use crate::ProposerInterface;
 use cumulus_relay_chain_interface::RelayChainInterface;
 use sp_consensus_slots::SlotDuration;
 use sp_runtime::{SaturatedConversion, Saturating};

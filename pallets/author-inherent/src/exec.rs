@@ -94,10 +94,6 @@ where
 		if !valid_signature {
 			panic!("Block signature invalid");
 		}
-
-		// Strip the seal from the inner executive's view as well, since we already
-		// consumed it above for signature verification.
-		I::verify_and_remove_seal(block);
 	}
 
 	fn execute_verified_block(block: Block::LazyBlock) {

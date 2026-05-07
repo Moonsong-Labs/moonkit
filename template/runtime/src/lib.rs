@@ -265,8 +265,10 @@ parameter_types! {
 	//  The `RuntimeBlockLength` and `RuntimeBlockWeights` exist here because the
 	// `DeletionWeightLimit` and `DeletionQueueDepth` depend on those to parameterize
 	// the lazy contract deletion.
-	pub RuntimeBlockLength: BlockLength =
-		BlockLength::max_with_normal_ratio(5 * 1024 * 1024, NORMAL_DISPATCH_RATIO);
+	pub RuntimeBlockLength: BlockLength = BlockLength::builder()
+		.max_length(5 * 1024 * 1024)
+		.modify_max_length_for_class(DispatchClass::Normal, |m| *m = NORMAL_DISPATCH_RATIO * *m)
+		.build();
 	pub RuntimeBlockWeights: BlockWeights = BlockWeights::builder()
 		.base_block(BlockExecutionWeight::get())
 		.for_class(DispatchClass::all(), |weights| {
@@ -860,7 +862,7 @@ impl_runtime_apis! {
 
 	impl cumulus_primitives_core::RelayParentOffsetApi<Block> for Runtime {
 		fn relay_parent_offset() -> u32 {
-			2
+			0
 		}
 	}
 
@@ -885,7 +887,7 @@ impl_runtime_apis! {
 
 		fn dispatch_benchmark(
 			config: frame_benchmarking::BenchmarkConfig
-		) -> Result<Vec<frame_benchmarking::BenchmarkBatch>, sp_runtime::RuntimeString> {
+		) -> Result<Vec<frame_benchmarking::BenchmarkBatch>, scale_info::prelude::string::String> {
 			use frame_benchmarking::{BenchmarkBatch, add_benchmark};
 			use frame_support::traits::TrackedStorageKey;
 

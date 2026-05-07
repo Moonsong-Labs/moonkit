@@ -21,7 +21,6 @@ use cumulus_client_consensus_common::{
 	self as consensus_common, load_abridged_host_configuration, ParachainBlockImportMarker,
 	ParentSearchParams,
 };
-use crate::ProposerInterface;
 use cumulus_primitives_core::{
 	relay_chain::{AsyncBackingParams, CoreIndex, Hash as PHash},
 	CollectCollationInfo, ParaId,
@@ -123,14 +122,6 @@ where
 	CHP: consensus_common::ValidationCodeHashProvider<Block::Hash> + Send + 'static,
 	DP: DigestsProvider<NimbusId, <Block as BlockT>::Hash> + Send + Sync + 'static,
 {
-	// This is an arbitrary value which is likely guaranteed to exceed any reasonable
-	// limit, as it would correspond to 10 non-included blocks.
-	//
-	// Since we only search for parent blocks which have already been imported,
-	// we can guarantee that all imported blocks respect the unincluded segment
-	// rules specified by the parachain's runtime and thus will never be too deep.
-	const PARENT_SEARCH_DEPTH: usize = 10;
-
 	async move {
 		cumulus_client_collator::initialize_collator_subsystems(
 			&mut params.overseer_handle,
@@ -312,8 +303,8 @@ where
 			let included_block = included_header.hash();
 
 			// Distance from included block to best parent (unincluded segment length).
-			let initial_parent_depth = (*initial_parent_header.number())
-				.saturating_sub(*included_header.number());
+			let initial_parent_depth =
+				(*initial_parent_header.number()).saturating_sub(*included_header.number());
 
 			// Build in a loop until not allowed. Note that the selected collators can change
 			// at any block, so we need to re-claim our slot every time.

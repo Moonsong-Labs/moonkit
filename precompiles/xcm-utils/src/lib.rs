@@ -19,7 +19,6 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
 use fp_evm::PrecompileHandle;
-use frame_support::traits::tokens::imbalance::ImbalanceAccounting;
 use frame_support::traits::ConstU32;
 use frame_support::{
 	dispatch::{GetDispatchInfo, PostDispatchInfo},
@@ -34,7 +33,6 @@ use sp_core::{H160, U256};
 use sp_runtime::traits::Dispatchable;
 use sp_std::boxed::Box;
 use sp_std::marker::PhantomData;
-use sp_std::vec;
 use sp_std::vec::Vec;
 use sp_weights::Weight;
 use xcm::{latest::prelude::*, VersionedXcm, MAX_XCM_DECODE_DEPTH};
