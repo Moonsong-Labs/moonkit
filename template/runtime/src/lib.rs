@@ -29,7 +29,7 @@ use frame_support::{
 	dispatch::DispatchClass,
 	genesis_builder_helper::{build_state, get_preset},
 	parameter_types,
-	traits::{ConstBool, Contains, Everything, Nothing, OnInitialize, TransformOrigin},
+	traits::{ConstBool, Contains, Everything, Get, Nothing, OnInitialize, TransformOrigin},
 	weights::{
 		constants::{
 			BlockExecutionWeight, ExtrinsicBaseWeight, RocksDbWeight, WEIGHT_REF_TIME_PER_SECOND,
@@ -862,7 +862,7 @@ impl_runtime_apis! {
 
 	impl cumulus_primitives_core::RelayParentOffsetApi<Block> for Runtime {
 		fn relay_parent_offset() -> u32 {
-			0
+			<Runtime as cumulus_pallet_parachain_system::Config>::RelayParentOffset::get()
 		}
 	}
 
