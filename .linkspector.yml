@@ -1,0 +1,7 @@
+# Linkspector configuration (https://github.com/UmbrellaDocs/linkspector)
+dirs:
+  - .
+ignorePatterns:
+  # npmjs.com returns HTTP 403 to automated link checkers (bot protection).
+  # The links resolve fine in a browser, so skip them to avoid false positives.
+  - pattern: "^https://www\\.npmjs\\.com/"
