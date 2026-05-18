@@ -222,7 +222,7 @@ where
 			storage_proof_recorder.clone(),
 		));
 
-		let maybe_proposal = self
+		let proposal = self
 			.proposer
 			.propose(
 				&parent_header,
@@ -236,11 +236,6 @@ where
 			)
 			.await
 			.map_err(|e| Box::new(e) as Box<dyn Error + Send>)?;
-
-		let proposal = match maybe_proposal {
-			None => return Ok(None),
-			Some(p) => p,
-		};
 
 		let proof = storage_proof_recorder.drain_storage_proof();
 

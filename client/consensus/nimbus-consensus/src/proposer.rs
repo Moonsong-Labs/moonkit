@@ -77,7 +77,7 @@ pub trait ProposerInterface<Block: BlockT> {
 		block_size_limit: Option<usize>,
 		storage_proof_recorder: Option<ProofRecorder<Block>>,
 		extra_extensions: Extensions,
-	) -> Result<Option<Proposal<Block>>, Error>;
+	) -> Result<Proposal<Block>, Error>;
 }
 
 #[async_trait]
@@ -98,7 +98,7 @@ where
 		block_size_limit: Option<usize>,
 		storage_proof_recorder: Option<ProofRecorder<Block>>,
 		extra_extensions: Extensions,
-	) -> Result<Option<Proposal<Block>>, Error> {
+	) -> Result<Proposal<Block>, Error> {
 		let proposer = self
 			.init(parent_header)
 			.await
@@ -120,7 +120,6 @@ where
 				extra_extensions,
 			})
 			.await
-			.map(Some)
 			.map_err(|e| Error::proposing(anyhow::Error::new(e)))
 	}
 }

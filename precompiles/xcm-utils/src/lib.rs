@@ -164,6 +164,11 @@ where
 		// (we never actually withdraw anything), using
 		// `xcm_executor::test_helpers::mock_asset_to_holding` is a faithful
 		// minimum-diff equivalent to the previous behaviour.
+		//
+		// TODO: `test_helpers` is a test-only module upstream; it may be
+		// feature-gated or removed without a deprecation cycle. Replace with a
+		// stable public API (or a moonkit-local helper) before relying on it
+		// long-term.
 		let unused = trader
 			.buy_weight(
 				Weight::from_parts(weight_per_second, DEFAULT_PROOF_SIZE),

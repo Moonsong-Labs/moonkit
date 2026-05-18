@@ -296,7 +296,14 @@ where
 
 						continue;
 					}
-					Ok(None) => continue,
+					Ok(None) => {
+						tracing::debug!(
+							target: crate::LOG_TARGET,
+							?relay_parent,
+							"No parent found to build upon; skipping slot.",
+						);
+						continue;
+					}
 					Ok(Some(result)) => (result.included_header, result.best_parent_header),
 				};
 
