@@ -19,6 +19,9 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
 use fp_evm::PrecompileHandle;
+use frame_support::traits::tokens::imbalance::{
+	ImbalanceAccounting, UnsafeConstructorDestructor, UnsafeManualAccounting,
+};
 use frame_support::traits::ConstU32;
 use frame_support::{
 	dispatch::{GetDispatchInfo, PostDispatchInfo},
@@ -51,6 +54,63 @@ pub type XcmAccountIdOf<XcmConfig> =
 pub type CallOf<Runtime> = <Runtime as pallet_xcm::Config>::RuntimeCall;
 pub const XCM_SIZE_LIMIT: u32 = 2u32.pow(16);
 type GetXcmSizeLimit = ConstU32<XCM_SIZE_LIMIT>;
+
+/// A minimal fungible credit used to build an [`xcm_executor::AssetsInHolding`]
+/// for the `get_units_per_second` fee-estimation query.
+///
+/// In stable2603 the holding register tracks dynamic `ImbalanceAccounting`
+/// credits rather than raw `u128` amounts, so a concrete credit type is needed
+/// to populate it. This is a moonkit-local, production-stable equivalent of the
+/// upstream `xcm_executor::test_helpers::MockCredit`, which lives in a
+/// test-only module that may be feature-gated or removed without a deprecation
+/// cycle. The query never withdraws the holding it builds — it only reads back
+/// the unused amount — so faithfully tracking a `u128` balance is sufficient.
+struct HoldingCredit(u128);
+
+impl UnsafeConstructorDestructor<u128> for HoldingCredit {
+	fn unsafe_clone(&self) -> Box<dyn ImbalanceAccounting<u128>> {
+		Box::new(HoldingCredit(self.0))
+	}
+	fn forget_imbalance(&mut self) -> u128 {
+		let amount = self.0;
+		self.0 = 0;
+		amount
+	}
+}
+
+impl UnsafeManualAccounting<u128> for HoldingCredit {
+	fn saturating_subsume(&mut self, mut other: Box<dyn ImbalanceAccounting<u128>>) {
+		self.0 = self.0.saturating_add(other.forget_imbalance());
+	}
+}
+
+impl ImbalanceAccounting<u128> for HoldingCredit {
+	fn amount(&self) -> u128 {
+		self.0
+	}
+	fn saturating_take(&mut self, amount: u128) -> Box<dyn ImbalanceAccounting<u128>> {
+		let taken = self.0.min(amount);
+		self.0 -= taken;
+		Box::new(HoldingCredit(taken))
+	}
+}
+
+/// Convert an [`Asset`] into the [`xcm_executor::AssetsInHolding`] expected by
+/// [`WeightTrader::buy_weight`].
+///
+/// Stable, moonkit-local replacement for
+/// `xcm_executor::test_helpers::mock_asset_to_holding`.
+fn asset_to_holding(asset: Asset) -> xcm_executor::AssetsInHolding {
+	match asset.fun {
+		Fungible(amount) => xcm_executor::AssetsInHolding::new_from_fungible_credit(
+			asset.id,
+			Box::new(HoldingCredit(amount)),
+		),
+		NonFungible(instance) => {
+			xcm_executor::AssetsInHolding::new_from_non_fungible(asset.id, instance)
+		}
+	}
+}
 
 #[cfg(test)]
 mod mock;
@@ -161,18 +221,13 @@ where
 		// `AssetsInHolding` no longer implements `From<Vec<Asset>>` in
 		// stable2603 — the holding now tracks `ImbalanceAccounting` credits
 		// rather than raw amounts. Since this is a fee-estimation query
-		// (we never actually withdraw anything), using
-		// `xcm_executor::test_helpers::mock_asset_to_holding` is a faithful
-		// minimum-diff equivalent to the previous behaviour.
-		//
-		// TODO: `test_helpers` is a test-only module upstream; it may be
-		// feature-gated or removed without a deprecation cycle. Replace with a
-		// stable public API (or a moonkit-local helper) before relying on it
-		// long-term.
+		// (we never actually withdraw anything), the moonkit-local
+		// `asset_to_holding` adapter is a faithful minimum-diff equivalent to
+		// the previous behaviour, without depending on upstream test helpers.
 		let unused = trader
 			.buy_weight(
 				Weight::from_parts(weight_per_second, DEFAULT_PROOF_SIZE),
-				xcm_executor::test_helpers::mock_asset_to_holding(multiasset.clone()),
+				asset_to_holding(multiasset.clone()),
 				&ctx,
 			)
 			.map_err(|_| {
