@@ -598,7 +598,6 @@ where
 				keystore: keystore_container.keystore(),
 				client: client.clone(),
 				additional_digests_provider: (),
-				_phantom: Default::default(),
 			})),
 			create_inherent_data_providers: move |block, _extra_args| {
 				let downward_xcm_receiver = downward_xcm_receiver.clone();

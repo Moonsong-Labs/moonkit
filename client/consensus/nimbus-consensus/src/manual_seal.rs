@@ -32,7 +32,7 @@ use sp_runtime::{
 	Digest, DigestItem,
 };
 use sp_state_machine::StorageProof;
-use std::{marker::PhantomData, sync::Arc};
+use std::sync::Arc;
 
 /// Provides nimbus-compatible pre-runtime digests for use with manual seal consensus
 pub struct NimbusManualSealConsensusDataProvider<C, DP = ()> {
@@ -44,8 +44,6 @@ pub struct NimbusManualSealConsensusDataProvider<C, DP = ()> {
 	// Could have a skip_prediction field here if it becomes desireable
 	/// Additional digests provider
 	pub additional_digests_provider: DP,
-
-	pub _phantom: PhantomData<()>,
 }
 
 impl<B, C, DP> ConsensusDataProvider<B> for NimbusManualSealConsensusDataProvider<C, DP>
