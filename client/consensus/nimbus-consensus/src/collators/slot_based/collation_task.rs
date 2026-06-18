@@ -180,6 +180,9 @@ async fn handle_collation_message<Block: BlockT, RClient: RelayChainInterface + 
 				validation_code_hash,
 				core_index,
 				result_sender: None,
+				// `None` keeps V2 candidate-descriptor semantics; set to
+				// `Some(hash)` to opt into V3 with a custom scheduling parent.
+				scheduling_parent: None,
 			}),
 			"SubmitCollation",
 		)

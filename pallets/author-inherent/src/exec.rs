@@ -46,7 +46,7 @@ where
 	Block: BlockT,
 	I: ExecuteBlock<Block>,
 {
-	fn execute_block(mut block: Block::LazyBlock) {
+	fn verify_and_remove_seal(block: &mut Block::LazyBlock) {
 		let header = block.header_mut();
 
 		debug!(target: "executive", "In hacked Executive. Initial digests are {:?}", header.digest());
@@ -94,9 +94,11 @@ where
 		if !valid_signature {
 			panic!("Block signature invalid");
 		}
+	}
 
-		// Now that we've verified the signature, hand execution off to the inner executor
-		// which is probably the normal frame executive.
-		I::execute_block(block);
+	fn execute_verified_block(block: Block::LazyBlock) {
+		// Hand execution off to the inner executor (typically the normal frame
+		// executive) once the seal has been stripped and verified above.
+		I::execute_verified_block(block);
 	}
 }

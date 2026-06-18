@@ -268,6 +268,7 @@ impl pallet_evm::Config for Runtime {
 	type ChainId = ();
 	type OnChargeTransaction = ();
 	type BlockGasLimit = BlockGasLimit;
+	type TransactionGasLimit = ();
 	type BlockHashMapping = pallet_evm::SubstrateBlockHashMapping<Self>;
 	type FindAuthor = ();
 	type OnCreate = ();
@@ -433,7 +434,11 @@ impl SendXcm for DoNothingRouter {
 
 pub struct DummyAssetTransactor;
 impl TransactAsset for DummyAssetTransactor {
-	fn deposit_asset(_what: &Asset, _who: &Location, _context: Option<&XcmContext>) -> XcmResult {
+	fn deposit_asset(
+		_what: AssetsInHolding,
+		_who: &Location,
+		_context: Option<&XcmContext>,
+	) -> Result<(), (AssetsInHolding, XcmError)> {
 		Ok(())
 	}
 
@@ -442,7 +447,7 @@ impl TransactAsset for DummyAssetTransactor {
 		_who: &Location,
 		_maybe_context: Option<&XcmContext>,
 	) -> Result<AssetsInHolding, XcmError> {
-		Ok(AssetsInHolding::default())
+		Ok(AssetsInHolding::new())
 	}
 }
 
@@ -457,8 +462,8 @@ impl WeightTrader for DummyWeightTrader {
 		_weight: Weight,
 		_payment: AssetsInHolding,
 		_context: &XcmContext,
-	) -> Result<AssetsInHolding, XcmError> {
-		Ok(AssetsInHolding::default())
+	) -> Result<AssetsInHolding, (AssetsInHolding, XcmError)> {
+		Ok(AssetsInHolding::new())
 	}
 }
 
@@ -509,7 +514,6 @@ impl xcm_executor::Config for XcmConfig {
 	type ResponseHandler = ();
 	type SubscriptionService = ();
 	type AssetTrap = ();
-	type AssetClaims = ();
 	type CallDispatcher = RuntimeCall;
 	type AssetLocker = ();
 	type AssetExchanger = ();

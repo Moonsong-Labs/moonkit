@@ -21,7 +21,6 @@ use cumulus_client_consensus_common::{
 	self as consensus_common, load_abridged_host_configuration, ParachainBlockImportMarker,
 	ParentSearchParams,
 };
-use cumulus_client_consensus_proposer::ProposerInterface;
 use cumulus_primitives_core::{
 	relay_chain::{AsyncBackingParams, CoreIndex, Hash as PHash},
 	CollectCollationInfo, ParaId,
@@ -43,6 +42,7 @@ use sp_core::Encode;
 use sp_inherents::CreateInherentDataProviders;
 use sp_keystore::KeystorePtr;
 use sp_runtime::traits::{Block as BlockT, Header as HeaderT};
+use sp_runtime::Saturating;
 use std::{sync::Arc, time::Duration};
 
 /// Parameters for [`run`].
@@ -122,14 +122,6 @@ where
 	CHP: consensus_common::ValidationCodeHashProvider<Block::Hash> + Send + 'static,
 	DP: DigestsProvider<NimbusId, <Block as BlockT>::Hash> + Send + Sync + 'static,
 {
-	// This is an arbitrary value which is likely guaranteed to exceed any reasonable
-	// limit, as it would correspond to 10 non-included blocks.
-	//
-	// Since we only search for parent blocks which have already been imported,
-	// we can guarantee that all imported blocks respect the unincluded segment
-	// rules specified by the parachain's runtime and thus will never be too deep.
-	const PARENT_SEARCH_DEPTH: usize = 10;
-
 	async move {
 		cumulus_client_collator::initialize_collator_subsystems(
 			&mut params.overseer_handle,
@@ -273,9 +265,13 @@ where
 				}
 			};
 
-			// Search potential parents to build upon
-			let mut potential_parents =
-				match cumulus_client_consensus_common::find_potential_parents::<Block>(
+			// Find the best parent to build upon. The new
+			// `find_parent_for_building` returns the included block plus the
+			// deepest descendant that fits within the ancestry lookback (the
+			// stable2603 replacement for the old `find_potential_parents`
+			// + manual depth filtering).
+			let (included_header, initial_parent_header) =
+				match cumulus_client_consensus_common::find_parent_for_building::<Block>(
 					ParentSearchParams {
 						relay_parent,
 						para_id: params.para_id,
@@ -284,8 +280,6 @@ where
 							&params.relay_client,
 						)
 						.await,
-						max_depth: PARENT_SEARCH_DEPTH,
-						ignore_alternative_branches: true,
 					},
 					&*params.para_backend,
 					&params.relay_client,
@@ -302,31 +296,29 @@ where
 
 						continue;
 					}
-					Ok(potential_parents) => potential_parents,
+					Ok(None) => {
+						tracing::debug!(
+							target: crate::LOG_TARGET,
+							?relay_parent,
+							"No parent found to build upon; skipping slot.",
+						);
+						continue;
+					}
+					Ok(Some(result)) => (result.included_header, result.best_parent_header),
 				};
 
-			// Search the first potential parent parablock that is already included in the relay
-			let included_block = match potential_parents.iter().find(|x| x.depth == 0) {
-				None => continue, // also serves as an `is_empty` check.
-				Some(b) => b.hash,
-			};
+			let included_block = included_header.hash();
 
-			// At this point, we found a potential parent parablock that is already included in the relay.
-			//
-			// Sort by depth, ascending, to choose the longest chain. If the longest chain has space,
-			// build upon that. Otherwise, don't build at all.
-			potential_parents.sort_by_key(|a| a.depth);
-			let initial_parent = match potential_parents.pop() {
-				None => continue,
-				Some(initial_parent) => initial_parent,
-			};
+			// Distance from included block to best parent (unincluded segment length).
+			let initial_parent_depth =
+				(*initial_parent_header.number()).saturating_sub(*included_header.number());
 
 			// Build in a loop until not allowed. Note that the selected collators can change
 			// at any block, so we need to re-claim our slot every time.
 			// This needs to change to support elastic scaling, but for continuously
 			// scheduled chains this ensures that the backlog will grow steadily.
-			let mut parent_hash = initial_parent.hash;
-			let mut parent_header = initial_parent.header;
+			let mut parent_hash = initial_parent_header.hash();
+			let mut parent_header = initial_parent_header;
 			let overseer_handle = &mut params.overseer_handle;
 
 			// Proactively connect to backing groups. This is especially important for single
@@ -334,7 +326,7 @@ where
 			// pre-connection through the normal code path.
 			connection_helper.update(slot_now).await;
 
-			for n_built in 0..2 {
+			for n_built in 0..2u32 {
 				// Ask to the runtime if we are authorized to create a new parablock on top of this parent.
 				// (This will claim the slot internally)
 				let para_client = &*params.para_client;
@@ -358,7 +350,7 @@ where
 					target: crate::LOG_TARGET,
 					?slot_now,
 					?relay_parent,
-					unincluded_segment_len = initial_parent.depth + n_built,
+					unincluded_segment_len = ?initial_parent_depth.saturating_add(n_built.into()),
 					"Slot claimed. Building"
 				);
 
@@ -475,6 +467,10 @@ where
 										validation_code_hash,
 										result_sender: None,
 										core_index,
+										// `None` keeps V2 candidate-descriptor semantics
+										// (the relay parent is used as the scheduling
+										// parent). Set to `Some(hash)` to opt into V3.
+										scheduling_parent: None,
 									},
 								),
 								"SubmitCollation",
